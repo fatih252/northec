@@ -1,1 +1,179 @@
-testing test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What's New</title>
+    <style>
+        :root {
+            --primary: #0078d4;
+            --primary-hover: #005a9e;
+            --bg: #ffffff;
+            --text: #24292e;
+            --text-muted: #586069;
+            --border: #e1e4e8;
+            --section-bg: #f6f8fa;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 650px;
+            width: 100%;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--section-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .icon {
+            margin-right: 10px;
+            font-style: normal;
+        }
+
+        ul {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        li strong {
+            color: var(--primary);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            border-top: 1px solid var(--border);
+            padding-top: 30px;
+        }
+
+        .btn-close {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 40px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .btn-close:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Responsive tweak */
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5rem; }
+            .container { padding: 20px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="version-badge">v{{VERSION}}</div>
+        <h1>Update Successful!</h1>
+        <p class="subtitle">Thank you for updating. Here is what's new in this release.</p>
+    </div>
+
+    <div class="section">
+        <h3><i class="icon">🚀</i> New Features</h3>
+        <ul>
+            <li><strong>WebView2 Integration:</strong> Enjoy a smoother, faster UI for all embedded web content.</li>
+            <li><strong>Dark Mode Support:</strong> The application now respects your system's theme settings.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3><i class="icon">✨</i> Improvements</h3>
+        <ul>
+            <li><strong>Performance:</strong> Reduced memory footprint by 20% during startup.</li>
+            <li><strong>Security:</strong> Updated all NuGet dependencies to their latest stable versions.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3><i class="icon">🔧</i> Bug Fixes</h3>
+        <ul>
+            <li>Fixed a crash that occurred when exporting large datasets to Excel.</li>
+            <li>Resolved an issue where the window would sometimes hide behind the Taskbar.</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        <button id="closeBtn" class="btn-close">Launch Application</button>
+    </div>
+</div>
+
+<script>
+    // Listen for the button click
+    document.getElementById('closeBtn').addEventListener('click', () => {
+        // Check if the WebView2 host environment is available
+        if (window.chrome && window.chrome.webview) {
+            // Send the message back to C#
+            window.chrome.webview.postMessage('close_release_notes');
+        } else {
+            console.log("Not running inside WebView2 or host not ready.");
+            // For testing in a normal browser:
+            alert("This button would close the WinForm in your app!");
+        }
+    });
+</script>
+
+</body>
+</html>
