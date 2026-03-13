@@ -1,165 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>What's New</title>
-    <style>
-        :root {
-            --primary: DarkRed;
-            --primary-hover: #8b00008f;
-            --bg: #ffffff;
-            --text: #24292e;
-            --text-muted: #586069;
-            --border: #e1e4e8;
-            --section-bg: #f6f8fa;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            max-width: 650px;
-            width: 100%;
-            padding: 20px 20px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .version-badge {
-            display: inline-block;
-            background-color: var(--primary);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        h1 {
-            font-size: 2rem;
-            margin: 0;
-            font-weight: 700;
-        }
-
-        .subtitle {
-            color: var(--text-muted);
-            margin-top: 8px;
-        }
-
-        .section {
-            margin-bottom: 20px;
-            padding: 20px;
-            background: var(--section-bg);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-
-        h3 {
-            margin-top: 0;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-        }
-
-        .icon {
-            margin-right: 10px;
-            font-style: normal;
-        }
-
-        ul {
-            padding-left: 20px;
-            margin-bottom: 0;
-        }
-
-        li {
-            margin-bottom: 10px;
-        }
-
-        li strong {
-            color: var(--primary);
-        }
-
-        .footer {
-            text-align: center;
-        }
-
-        .btn-close {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 40px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .btn-close:hover {
-            background-color: var(--primary-hover);
-        }
-
-        /* Responsive tweak */
-        @media (max-width: 480px) {
-            h1 { font-size: 1.5rem; }
-            .container { padding: 20px 15px; }
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="header">
-        <div class="version-badge">v{{VERSION}}</div>
-        <h1>Update succesvol!</h1>
-        <p class="subtitle">U heeft de laatste versie geïnstalleerd, hieronder kunt u zien wat er veranderd is.</p>
-    </div>
-
-    <div class="section">
-        <h3><i class="icon">🚀</i> Nieuw bij kassa</h3>
-        <ul>
-             </ul>
-    </div>
-    <div class="section">
-        <h3><i class="icon">🚀</i> Nieuw bij website</h3>
-        <ul>
-            <li><strong>Sluitingsplanner:</strong> Het is nu mogellijk om in toekomst uw shop af te sluiten en terug automatisch te openen</li>
-            <li><strong>Bestelling traceren:</strong> Mogelijkheid om uw klanten de status van de bestelling te zien. Dit is optioneel en kan ook uitgeschakeld worden</li>
-        </ul>
-    </div>
-
-    <div class="footer">
-        <button id="closeBtn" class="btn-close">Start Applicatie !</button>
-    </div>
+<div style="text-align: center; margin-top: 30px;">
+    <button id="btnClose" class="close-btn">Got it, thanks!</button>
 </div>
 
+<style>
+    .close-btn {
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .close-btn:hover {
+        background-color: #1d4ed8;
+    }
+</style>
+
 <script>
-    // Listen for the button click
-    document.getElementById('closeBtn').addEventListener('click', () => {
-        // Check if the WebView2 host environment is available
+    // This script communicates with your C# code
+    document.getElementById('btnClose').addEventListener('click', () => {
         if (window.chrome && window.chrome.webview) {
-            // Send the message back to C#
             window.chrome.webview.postMessage('close_release_notes');
-        } else {
-            console.log("Not running inside WebView2 or host not ready.");
-            // For testing in a normal browser:
-            alert("This button would close the WinForm in your app!");
         }
     });
 </script>
-
-</body>
-</html>

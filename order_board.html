@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PizzaApp Order Tracking</title>
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --col-bg: #ebedef;
+            --card-bg: #ffffff;
+            --text-main: #1c1e21;
+            --text-muted: #606770;
+            --primary: #0078d4;
+            --accent-new: #e7f3ff;
+            --accent-kitchen: #fff7e6;
+            --accent-done: #e6ffed;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 15px;
+            height: 100vh;
+            display: flex;
+            gap: 15px;
+            overflow: hidden;
+        }
+
+        .column {
+            flex: 1;
+            background-color: var(--col-bg);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            min-width: 320px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        .header {
+            padding: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(0,0,0,0.05);
+        }
+
+        .count-badge {
+            background: #333;
+            color: white;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .list {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Card Styling */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            border-left: 6px solid #ccc;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card.s1 { border-left-color: #0078d4; background-color: var(--accent-new); }
+        .card.s2 { border-left-color: #ff9800; background-color: var(--accent-kitchen); }
+        .card.s3 {  border-left-color: #4caf50; background-color: var(--accent-done); }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .address { font-weight: 700; font-size: 1.1rem; color: var(--text-main); }
+        .price { font-weight: 700; color: #28a745; }
+
+        .details {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .btn-next {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-next:hover { background-color: #005a9e; }
+        .btn-next:active { transform: scale(0.98); }
+
+        /* Scrollbar */
+        .list::-webkit-scrollbar { width: 6px; }
+        .list::-webkit-scrollbar-thumb { background: #bcc0c4; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="column">
+        <div class="header">NIEUW <span class="count-badge" id="c1">0</span></div>
+        <div class="list" id="l1"></div>
+    </div>
+
+    <div class="column">
+        <div class="header">KEUKEN <span class="count-badge" id="c2">0</span></div>
+        <div class="list" id="l2"></div>
+    </div>
+
+    <div class="column">
+        <div class="header">ONDERWEG <span class="count-badge" id="c3">0</span></div>
+        <div class="list" id="l3"></div>
+    </div>
+
+    <script>
+        // 1. Listen for the JSON data sent from C# (PostWebMessageAsJson)
+        window.chrome.webview.addEventListener('message', event => {
+            const msg = event.data;
+            if (msg.type === "DATA_UPDATE") {
+                renderOrders(msg.payload);
+				console.log("MSG: " + msg.payload);
+            }
+        });
+
+        /**
+         * Clears and redraws all columns based on the provided order list
+         */
+        function renderOrders(orders) {
+            const lists = { 
+                1: document.getElementById('l1'), 
+                2: document.getElementById('l2'), 
+                3: document.getElementById('l3') 
+            };
+            
+            const counts = { 1: 0, 2: 0, 3: 0 };
+
+            // Clear columns
+            Object.values(lists).forEach(el => { if(el) el.innerHTML = ''; });
+
+            if (!orders || orders.length === 0) {
+                updateBadges(counts);
+                return;
+            }
+
+            orders.forEach(order => {
+                // Ensure state is an integer
+                const s = parseInt(order.state);
+                const targetList = lists[s];
+
+                if (targetList) {
+                    counts[s]++;
+                    const card = document.createElement('div');
+                    card.className = `card s${s}`;
+                    
+                    card.innerHTML = `
+                        <div class="card-row">
+                            <span class="address">${order.address}</span>
+                            <span class="price">${order.price}</span>
+                        </div>
+                        <div class="details">
+                            🕒 ${order.time} | 💳 ${order.payment}
+                        </div>
+                        ${s < 3 ? `
+                            <button class="btn-next" onclick="moveNext('${order.id}')">
+                                ${s === 1 ? 'Starten ➔' : 'Gereed ➔'}
+                            </button>
+                        ` : ''}
+                    `;
+                    targetList.appendChild(card);
+                }
+            });
+
+            updateBadges(counts);
+        }
+
+        function updateBadges(counts) {
+            document.getElementById('c1').innerText = counts[1];
+            document.getElementById('c2').innerText = counts[2];
+            document.getElementById('c3').innerText = counts[3];
+        }
+
+        /**
+         * Sends a message back to C# to trigger the state update
+         */
+        function moveNext(orderId) {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({
+                    action: "move_next",
+                    id: orderId
+                });
+            }
+        }
+    </script>
+</body>
+</html>

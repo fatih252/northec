@@ -9,9 +9,17 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             overflow: hidden; background-color: white;
         }
-        #calendar { height: 100vh; }
+        #calendar { height: 100vh; padding: 10px; box-sizing: border-box; }
 
-        /* Standaard styling voor events */
+        /* PizzaApp Branding voor de knoppen */
+        .fc-button-primary {
+            background-color: #630303 !important;
+            border-color: #630303 !important;
+        }
+        .fc-button-primary:disabled {
+            background-color: #8c4a4a !important;
+        }
+
         .fc-event { 
             background-color: #630303 !important; 
             border: none !important; 
@@ -19,18 +27,12 @@
             padding: 2px;
         }
 
-        /* --- NIEUW: KNIPPER EFFECT --- */
-        @keyframes blinker {
-            50% { opacity: 0.3; }
-        }
-
+        @keyframes blinker { 50% { opacity: 0.3; } }
         .blink-event {
             animation: blinker 1s linear infinite;
-            background-color: #ff0000 !important; /* Felrood voor onbevestigde orders */
-            border: 2px solid yellow !important;   /* Extra opvallend */
+            background-color: #ff0000 !important;
+            border: 2px solid yellow !important;
         }
-
-        .fc-event:hover { background-color: #800000 !important; opacity: 1 !important; }
     </style>
 </head>
 <body>
@@ -44,16 +46,33 @@
             var calendarEl = document.getElementById('calendar');
             
             calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'timeGrid',
-                duration: { days: 7 }, 
+                // Toon navigatie en weergave-opties
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                initialView: 'timeGridWeek', // Begin nu met een maandoverzicht
                 locale: 'nl',
                 slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
                 eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
                 slotMinTime: '08:00:00',
-                slotMaxTime: '18:00:00',
+                slotMaxTime: '22:00:00',
                 allDaySlot: false,
                 height: '100%',
                 nowIndicator: true,
+
+                // Event afgevuurd wanneer de gebruiker navigeert (volgende maand/week)
+                datesSet: function(info) {
+                    const range = {
+                        action: 'fetchData',
+                        start: info.startStr,
+                        end: info.endStr
+                    };
+                    if (window.chrome && window.chrome.webview) {
+                        window.chrome.webview.postMessage(range);
+                    }
+                },
 
                 eventClassNames: function(arg) {
                     if (arg.event.extendedProps.processed == 0 || arg.event.extendedProps.processed === false) {
@@ -64,8 +83,8 @@
 
                 eventClick: function(info) {
                     const orderData = {
+                        action: 'openOrder',
                         title: info.event.title,
-                        description: info.event.extendedProps.description,
                         order_id: info.event.id || info.event.extendedProps.order_id,
                         processed: info.event.extendedProps.processed
                     };

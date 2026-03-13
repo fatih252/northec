@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Shop Planner</title>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/nl.global.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #007bff;
+            --danger: #dc3545;
+            --warning: #fd7e14;
+            --success: #28a745;
+            --bg-sidebar: #ffffff;
+            --bg-page: #f4f6f9;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            display: flex; margin: 0; background: var(--bg-page); 
+            height: 100vh; overflow: hidden; 
+        }
+
+        /* Sidebar Styling */
+        #sidebar { 
+            width: 350px; background: var(--bg-sidebar); padding: 20px; 
+            border-right: 1px solid #dee2e6; display: flex;
+            flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        h3 { margin-top: 0; color: #333; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 5px; color: #495057; font-size: 0.85em; }
+        
+        input[type="date"] { 
+            width: 100%; padding: 10px; border: 1px solid #ced4da; 
+            border-radius: 4px; box-sizing: border-box; font-size: 1em;
+        }
+        /* Style voor uitgeschakelde datums in browser picker */
+        input[type="date"]:invalid { color: var(--danger); }
+
+        .btn { 
+            width: 100%; padding: 12px; border: none; border-radius: 4px; 
+            cursor: pointer; font-weight: bold; margin-bottom: 10px; font-size: 14px;
+            transition: all 0.2s;
+        }
+        #btnConfirm { background: var(--success); color: white; display: none; }
+        #btnConfirm:hover { background: #218838; }
+        #btnCancel { background: #6c757d; color: white; display: none; }
+
+        /* Actieve Lijst */
+        #listHeader { margin-top: 20px; font-size: 0.9em; font-weight: bold; color: #666; }
+        #scheduleList { flex-grow: 1; overflow-y: auto; margin-top: 10px; }
+
+        .planning-card { 
+            background: #fff; border: 1px solid #e9ecef; border-left: 5px solid var(--primary); 
+            padding: 12px; margin-bottom: 10px; border-radius: 4px; 
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+        .planning-card.active { border-left-color: var(--warning); background-color: #fffaf0; }
+
+        .planning-info { font-size: 0.85em; }
+        .status-tag { 
+            display: inline-block; padding: 2px 6px; border-radius: 10px; 
+            font-size: 0.75em; font-weight: bold; margin-top: 5px;
+        }
+        .tag-active { background: #ffe8cc; color: #d9480f; }
+        .tag-scheduled { background: #e7f5ff; color: #1971c2; }
+
+        .btn-del { 
+            background: none; color: #adb5bd; border: none; 
+            cursor: pointer; font-size: 1.2em; padding: 5px;
+        }
+        .btn-del:hover { color: var(--danger); }
+
+        /* Kalender Paneel */
+        #calendar-container { flex-grow: 1; padding: 20px; background: white; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h3>Shop Planning</h3>
+    
+    <div class="input-group">
+        <label>Sluiten vanaf (Begindatum):</label>
+        <input type="date" id="startInput">
+    </div>
+    
+    <div class="input-group">
+        <label>Weer open op (Einddatum):</label>
+        <input type="date" id="endInput">
+    </div>
+
+    <button id="btnConfirm" class="btn">Planning Opslaan</button>
+    <button id="btnCancel" class="btn">Annuleren</button>
+
+    <div id="listHeader">ACTIEVE PLANNINGEN</div>
+    <div id="scheduleList">
+        <p style="color:gray; font-size:0.8em;">Laden van gegevens...</p>
+    </div>
+</div>
+
+<div id="calendar-container">
+    <div id="calendar"></div>
+</div>
+
+<script>
+    let calendar;
+    const startInput = document.getElementById('startInput');
+    const endInput = document.getElementById('endInput');
+    const btnConfirm = document.getElementById('btnConfirm');
+    const btnCancel = document.getElementById('btnCancel');
+    const listDiv = document.getElementById('scheduleList');
+
+    // Vandaag ophalen in YYYY-MM-DD formaat
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Inputs beperken tot vandaag of later
+        startInput.min = todayStr;
+        endInput.min = todayStr;
+
+        const calendarEl = document.getElementById('calendar');
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'nl',
+            selectable: true,
+            unselectAuto: false,
+            // 2. Kalender beperken: verleden is grijs/niet selecteerbaar
+            validRange: { start: todayStr },
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
+            select: function(info) {
+                startInput.value = info.startStr;
+                let d = new Date(info.end); d.setDate(d.getDate() +1);
+                endInput.value = d.toISOString().split('T')[0];
+                toggleButtons(true);
+            }
+        });
+        calendar.render();
+
+        // Sync inputs naar kalender
+        [startInput, endInput].forEach(inp => {
+            inp.addEventListener('change', () => {
+                if(startInput.value && endInput.value) {
+                    let dEnd = new Date(endInput.value); dEnd.setDate(dEnd.getDate() + 1);
+                    calendar.select(startInput.value, dEnd.toISOString().split('T')[0]);
+                    toggleButtons(true);
+                }
+            });
+        });
+    });
+
+    function toggleButtons(show) {
+        btnConfirm.style.display = show ? 'block' : 'none';
+        btnCancel.style.display = show ? 'block' : 'none';
+    }
+
+    btnCancel.onclick = () => {
+        calendar.unselect();
+        startInput.value = ''; endInput.value = '';
+        toggleButtons(false);
+    };
+
+    btnConfirm.onclick = () => {
+        // Validatie 1: Geen verleden
+        if (startInput.value < todayStr) {
+            alert("Fout: De startdatum mag niet in het verleden liggen.");
+            return;
+        }
+        // Validatie 2: Einddatum na startdatum
+        if (new Date(endInput.value) < new Date(startInput.value)) {
+            alert("Fout: De einddatum kan niet vóór de begindatum liggen.");
+            return;
+        }
+
+        window.chrome.webview.postMessage({ 
+            startDate: startInput.value, 
+            endDate: endInput.value, 
+            shopId: 101 
+        });
+        btnCancel.onclick();
+    };
+
+    /**
+     * updateUI: Ontvangt data van C# RefreshScheduleList()
+     * Verwacht: [{ JobId, FromDate, TillDate, IsCurrentlyClosed }]
+     */
+    function updateUI(data) {
+        listDiv.innerHTML = '';
+        calendar.getEvents().forEach(e => e.remove());
+
+        if (!data || data.length === 0) {
+            listDiv.innerHTML = '<p style="color:gray; font-size:0.8em; text-align:center;">Geen actieve planningen gevonden.</p>';
+            return;
+        }
+
+        data.forEach(group => {
+            const fromStr = group.FromDate.split('T')[0];
+            const tillStr = group.TillDate.split('T')[0];
+            const isClosed = group.IsCurrentlyClosed;
+
+            // 1. Sidebar Kaart
+            const card = document.createElement('div');
+            card.className = 'planning-card' + (isClosed ? ' active' : '');
+            card.innerHTML = `
+                <div class="planning-info">
+                    <strong>${fromStr} t/m ${tillStr}</strong><br>
+                    <span class="status-tag ${isClosed ? 'tag-active' : 'tag-scheduled'}">
+                        ${isClosed ? '⚠️ NU GESLOTEN' : '📅 INGEPLAND'}
+                    </span>
+                </div>
+                <button class="btn-del" onclick="deleteItem('${group.JobId}', ${isClosed})" title="Verwijderen">✕</button>
+            `;
+            listDiv.appendChild(card);
+
+            // 2. Kalender Blok
+            let calEnd = new Date(group.TillDate); calEnd.setDate(calEnd.getDate() + 1);
+            calendar.addEvent({
+                id: group.JobId,
+                title: isClosed ? 'SHOP DICHT' : 'GEPLAND',
+                start: group.FromDate,
+                end: calEnd.toISOString().split('T')[0],
+                allDay: true,
+                backgroundColor: isClosed ? '#fd7e14' : '#dc3545',
+                borderColor: 'transparent'
+            });
+        });
+    }
+
+    function deleteItem(jobId, isClosed) {
+        let msg = "Wilt u deze sluitingsperiode verwijderen?";
+        
+        if (isClosed) {
+            msg = "⚠️ KRITIEKE WAARSCHUWING:\n\nDe shop is op dit moment GESLOTEN op basis van deze planning.\n\n" +
+                  "Als u dit verwijdert, wordt de automatische heropening geannuleerd en blijft de shop mogelijk gesloten.\n\n" +
+                  "Wilt u toch doorgaan met verwijderen?";
+        }
+
+        if(confirm(msg)) {
+            // Verstuur deleteId naar C# (Case-sensitive voor root.TryGetProperty)
+            window.chrome.webview.postMessage({ deleteId: jobId.toString() });
+        }
+    }
+</script>
+</body>
+</html>
