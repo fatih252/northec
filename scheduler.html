@@ -29,6 +29,12 @@
             flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05);
             z-index: 10;
         }
+        /* Banner styling */
+        .banner-preview {
+            background: #fff3cd; border: 1px solid #ffeeba;
+            padding: 8px; border-radius: 4px; font-size: 0.8em;
+            margin-top: 5px; color: #856404; display: none;
+        }
 
         h3 { margin-top: 0; color: #333; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
 
@@ -95,6 +101,11 @@
         <label>Weer open op (Einddatum):</label>
         <input type="date" id="endInput">
     </div>
+    <div class="input-group" id="bannerGroup" style="display:none;">
+        <label>Banner Tekst (Suggestie):</label>
+        <input type="text" id="bannerInput" placeholder="Bijv: Wegens vakantie gesloten">
+        <div id="bannerHint" class="banner-preview">Test suggestie gegenereerd!</div>
+    </div>
 
     <button id="btnConfirm" class="btn">Planning Opslaan</button>
     <button id="btnCancel" class="btn">Annuleren</button>
@@ -116,7 +127,9 @@
     const btnConfirm = document.getElementById('btnConfirm');
     const btnCancel = document.getElementById('btnCancel');
     const listDiv = document.getElementById('scheduleList');
-
+    const bannerInput = document.getElementById('bannerInput');
+    const bannerGroup = document.getElementById('bannerGroup');
+    
     // Vandaag ophalen in YYYY-MM-DD formaat
     const todayStr = new Date().toISOString().split('T')[0];
 
@@ -138,7 +151,10 @@
                 startInput.value = info.startStr;
                 let d = new Date(info.end); d.setDate(d.getDate() +1);
                 endInput.value = d.toISOString().split('T')[0];
+                generateBannerSuggestion(info.startStr, endDateStr);
+                
                 toggleButtons(true);
+
             }
         });
         calendar.render();
@@ -155,6 +171,13 @@
         });
     });
 
+    function generateBannerSuggestion(start, end) {
+        // Maak een nette tekst suggestie
+        const msg = `Let op: Winkel gesloten van ${start} t/m ${end}.`;
+        bannerInput.value = msg;
+        bannerGroup.style.display = 'block';
+        document.getElementById('bannerHint').style.display = 'block';
+    }
     function toggleButtons(show) {
         btnConfirm.style.display = show ? 'block' : 'none';
         btnCancel.style.display = show ? 'block' : 'none';
