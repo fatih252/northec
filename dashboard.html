@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PizzaApp Dashboard</title>
+    <style>
+        :root {
+            --pizza-red: #973030;
+            --pizza-green: #71A783;
+            --pizza-blue: #B3DAFF;
+            --bg-gray: #E0E0E0;
+            --card-white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-gray);
+            margin: 0;
+            padding: 10px;
+            overflow-x: hidden;
+            user-select: none; /* Prevent text selection like a native app */
+        }
+
+        /* Dashboard Layout */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            height: calc(100vh - 20px);
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            background: #D3D3D3;
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid #bcbcbc;
+        }
+
+        .column-header {
+            background-color: var(--pizza-red);
+            color: white;
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .order-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Order Card Styling (ucBtn Replacement) */
+        .order-card {
+            background-color: var(--card-white);
+            border-radius: 5px;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: 1fr 100px;
+            grid-template-rows: auto auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.1s;
+            border-left: 10px solid transparent;
+        }
+
+        .order-card:active {
+            transform: scale(0.98);
+        }
+
+        .address {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #333;
+            grid-column: 1;
+        }
+
+        .price {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: var(--pizza-red);
+            text-align: right;
+            grid-column: 2;
+            grid-row: 1 / 3;
+            align-self: center;
+        }
+
+        .time-badge {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* Color States */
+        .status-new { background-color: var(--pizza-green) !important; color: white !important; }
+        .status-draft { background-color: var(--pizza-blue) !important; }
+        .status-table { border-left-color: green; }
+        
+        /* Flashing Animation for New Orders */
+        .flash {
+            animation: blinker 1s linear infinite;
+        }
+
+        @keyframes blinker {
+            50% { opacity: 0.5; }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <div class="column">
+            <div class="column-header">Online Bestellingen</div>
+            <div id="onlineOrders" class="order-list"></div>
+        </div>
+
+        <div class="column">
+            <div class="column-header">Kassa Bestellingen</div>
+            <div id="posOrders" class="order-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // Listen for data from C#
+        window.chrome.webview.addEventListener('message', event => {
+            const data = event.data;
+            renderOrders('onlineOrders', data.online);
+            renderOrders('posOrders', data.pos);
+        });
+
+        function renderOrders(containerId, orders) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = ''; // Clear current list
+
+            orders.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'order-card';
+                
+                // 1. Apply Background Logic (Mimicking your C# Switch)
+                if (order.order_status_code == "1" || order.processed == false) {
+                    card.classList.add('status-new');
+                    card.classList.add('flash');
+                } else if (order.order_status_code == "3") {
+                    card.classList.add('status-draft');
+                } else if (order.order_status_code == "6") {
+                    card.classList.add('status-table');
+                }
+
+                // 2. Format Labels
+                const addressText = order.take_away ? `Afhaling: ${order.phone_no}` : (order.table_name ? `Tafel: ${order.table_name}` : order.address);
+                const timeText = order.desired_del_time === "ZSM" ? "ZSM" : order.desired_del_time;
+                const priceText = `€${parseFloat(order.value).toFixed(2)}`;
+
+                card.innerHTML = `
+                    <div class="address">${addressText}</div>
+                    <div class="time-badge">${timeText}</div>
+                    <div class="price">${priceText}</div>
+                `;
+
+                // 3. Handle Click (Send back to C#)
+                card.onclick = () => {
+                    window.chrome.webview.postMessage({
+                        action: "open_order",
+                        orderId: order.order_id,
+                        status: order.order_status_code,
+                        processed: order.processed
+                    });
+                };
+
+                container.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
