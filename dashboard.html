@@ -3,115 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PizzaApp Pro Dashboard</title>
+    <title>PizzaApp Native Dashboard</title>
     <style>
         :root {
             --pizza-red: #973030;
             --pizza-green: #2e7d32;
             --new-order-bg: #71A783;
             --pizza-blue: #B3DAFF;
-            --bg-gray: #f4f4f4;
+            --bg-gray: #f0f0f0;
             --card-white: #FFFFFF;
             --warning-orange: #fff3e0;
             --danger-red: #ffebee;
         }
 
+        /* --- APP-LIKE LOCKDOWN STYLES --- */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, sans-serif;
             background-color: var(--bg-gray);
-            margin: 0; padding: 0; overflow: hidden; user-select: none;
+            margin: 0; padding: 0;
+            overflow: hidden;
+            /* Prevent text selection and browser-like cursor */
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: default;
+            /* Allow vertical scrolling but block pinch-zoom gestures */
             touch-action: pan-y;
+            overscroll-behavior-y: none;
         }
 
-        /* Fixed Top Section */
+        /* Fixed Header Section */
         .header-container {
             position: sticky;
             top: 0;
             z-index: 100;
             background: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
+        /* Main Navigation (Online / Kassa) */
         .main-tabs { display: flex; background-color: #bcbcbc; border-bottom: 2px solid var(--pizza-red); }
         .main-btn { 
-            flex: 1; padding: 12px; border: none; font-size: 1rem; font-weight: bold; 
+            flex: 1; padding: 14px; border: none; font-size: 1rem; font-weight: bold; 
             cursor: pointer; background: #bcbcbc; color: #444; text-transform: uppercase; 
         }
         .main-btn.active { background-color: var(--pizza-red); color: white; }
 
-        .search-bar { padding: 8px 12px; background: #eee; border-bottom: 1px solid #ddd; }
+        /* Search Bar */
+        .search-area { padding: 8px 12px; background: #f9f9f9; border-bottom: 1px solid #ddd; }
         #searchInput { 
-            width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; 
-            font-size: 1rem; box-sizing: border-box; 
+            width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; 
+            font-size: 1rem; outline: none;
         }
+        #searchInput:focus { border-color: var(--pizza-red); }
 
-        .sub-tabs { display: flex; background-color: #f9f9f9; padding: 6px; gap: 6px; overflow-x: auto; min-height: 40px; }
+        /* Sub-Filters (Dynamic visibility) */
+        .sub-tabs { display: flex; background-color: #fff; padding: 8px; gap: 6px; overflow-x: auto; min-height: 48px; }
         .sub-btn { 
-            display: none; padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px; 
+            display: none; padding: 8px 16px; border: 1px solid #ccc; border-radius: 4px; 
             cursor: pointer; font-size: 0.85rem; font-weight: 600; background: white; color: #555;
-            white-space: nowrap;
+            white-space: nowrap; transition: background 0.2s;
         }
         .sub-btn[data-code="all"] { display: block; }
         .sub-btn.active { background-color: #444; color: white; border-color: #444; }
 
-        /* Order List */
-        .content { height: calc(100vh - 155px); overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; }
+        /* Order Feed Content */
+        .content { 
+            height: calc(100vh - 160px); 
+            overflow-y: auto; 
+            padding: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+        }
 
-        /* Compact Order Card */
+        /* Compact Native-Style Order Card */
         .order-card {
             background: var(--card-white); border-radius: 6px; padding: 10px 15px;
-            display: grid; grid-template-columns: 1fr auto; align-items: center;
+            display: grid; grid-template-columns: 1fr 100px; align-items: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #ddd;
-            border-left: 8px solid transparent; cursor: pointer;
-            transition: all 0.15s ease;
+            border-left: 10px solid transparent; cursor: pointer;
+            position: relative;
         }
-        .order-card:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); background-color: #fafafa; }
-        .order-card:active { transform: scale(0.99); }
+        .order-card:active { transform: scale(0.995); background-color: #f0f0f0; }
 
-        .address-box { display: flex; flex-direction: column; }
-        .address { font-weight: 800; font-size: 1.15rem; color: #111; }
+        .address-info { display: flex; flex-direction: column; }
+        .address-title { font-weight: 800; font-size: 1.15rem; color: #111; }
         
-        .order-meta { font-size: 0.85rem; color: #666; margin-top: 2px; font-weight: 500; }
-        .time-elapsed { font-weight: bold; margin-left: 5px; }
+        .order-details { font-size: 0.85rem; color: #555; margin-top: 3px; font-weight: 500; line-height: 1.4; }
+        .time-tag { font-weight: bold; color: #d32f2f; }
 
-        .price { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.4rem; padding-left: 15px; }
+        .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.4rem; }
 
-        /* Status & Urgency */
-        .urgency-medium { border-right: 5px solid #ffa726; background-color: var(--warning-orange); }
-        .urgency-high { background-color: var(--danger-red); border-right: 5px solid #d32f2f; }
+        /* --- STATUS & URGENCY LOGIC --- */
+        .urgency-med { border-right: 6px solid #ffa726; background-color: var(--warning-orange); }
+        .urgency-high { background-color: var(--danger-red); border-right: 6px solid #d32f2f; }
         
-        .status-6 { border-left-color: #ff9800; } 
-        .status-3 { background-color: var(--pizza-blue) !important; }
-        .status-4 { opacity: 0.5; filter: grayscale(1); text-decoration: line-through; }
+        .status-6 { border-left-color: #ff9800; } /* Table */
+        .status-3 { background-color: var(--pizza-blue) !important; } /* Draft */
+        .status-4 { opacity: 0.5; filter: grayscale(1); text-decoration: line-through; } /* Cancelled */
         
-        .new-order { background-color: var(--new-order-bg) !important; color: white !important; border-color: var(--new-order-bg); }
-        .new-order .address, .new-order .order-meta, .new-order .price { color: white !important; }
-        .flash { animation: blinker 1.5s linear infinite; }
+        /* New Order Visuals */
+        .is-new { background-color: var(--new-order-bg) !important; border-color: var(--new-order-bg); }
+        .is-new .address-title, .is-new .order-details, .is-new .price-tag, .is-new .time-tag { color: white !important; }
+        .flash-anim { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.7; } }
 
-        /* Payment Badges */
-        .pay-badge { 
-            display: inline-block; font-weight: bold; font-size: 0.7rem; 
-            padding: 2px 8px; border-radius: 10px; margin-top: 5px; text-transform: uppercase;
+        /* Badges */
+        .badge { 
+            display: inline-block; font-weight: 800; font-size: 0.7rem; 
+            padding: 2px 8px; border-radius: 12px; margin-top: 6px; text-transform: uppercase;
+            border: 1px solid currentColor;
         }
-        .pay-online { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; }
-        .pay-cash { background-color: #fff3e0; color: #e65100; border: 1px solid #e65100; }
-        .new-order .pay-badge { background: rgba(255,255,255,0.2); color: white; border-color: white; }
+        .online-pay { background-color: #e8f5e9; color: #2e7d32; }
+        .cash-pay { background-color: #fafafa; color: #666; }
+        .is-new .badge { background: rgba(255,255,255,0.2); color: white; border-color: white; }
 
+        /* Custom App Scrollbars */
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #999; }
     </style>
 </head>
 <body>
 
     <div class="header-container">
         <div class="main-tabs">
-            <button id="mainOnline" class="main-btn active" onclick="setMainTab('online')">Online</button>
-            <button id="mainPos" class="main-btn" onclick="setMainTab('pos')">Kassa</button>
+            <button id="tabOnline" class="main-btn active" onclick="setMain('online')">Online Bestellingen</button>
+            <button id="tabPos" class="main-btn" onclick="setMain('pos')">Kassa Bestellingen</button>
         </div>
 
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="Zoek op adres of naam..." oninput="render()">
+        <div class="search-area">
+            <input type="text" id="searchInput" placeholder="Zoek op naam, adres of telefoon..." oninput="render()">
         </div>
 
         <div class="sub-tabs" id="subTabs">
@@ -131,20 +159,29 @@
         let activeMain = 'online';
         let activeStatus = 'all';
 
-        // Refresh the UI every 30 seconds just to update the "minutes ago" counters
+        // Auto-refresh counters every 30s
         setInterval(() => render(), 30000);
 
+        // --- BROWSER RESTRICTIONS ---
+        window.addEventListener('dragstart', (e) => e.preventDefault());
+        window.addEventListener('drop', (e) => e.preventDefault());
+        window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0')) e.preventDefault();
+        });
+
+        // Communication from C#
         window.chrome.webview.addEventListener('message', event => {
             latestData = event.data;
-            updateFilterVisibility();
+            updateFilterTabs();
             render();
         });
 
-        function setMainTab(tab) {
-            activeMain = tab;
-            document.getElementById('mainOnline').classList.toggle('active', tab === 'online');
-            document.getElementById('mainPos').classList.toggle('active', tab === 'pos');
-            updateFilterVisibility();
+        function setMain(type) {
+            activeMain = type;
+            document.getElementById('tabOnline').classList.toggle('active', type === 'online');
+            document.getElementById('tabPos').classList.toggle('active', type === 'pos');
+            updateFilterTabs();
             render();
         }
 
@@ -156,93 +193,97 @@
             render();
         }
 
-        function updateFilterVisibility() {
+        function updateFilterTabs() {
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
-            const presentCodes = new Set(list.map(o => String(o.order_status_code)));
+            const codesFound = new Set(list.map(o => String(o.order_status_code)));
+            
             document.querySelectorAll('.sub-btn').forEach(btn => {
                 const code = btn.getAttribute('data-code');
                 if (code === 'all') return;
-                btn.style.display = presentCodes.has(code) ? 'block' : 'none';
-                if (activeStatus === code && !presentCodes.has(code)) setFilter('all');
+                
+                if (codesFound.has(code)) {
+                    btn.style.display = 'block';
+                } else {
+                    btn.style.display = 'none';
+                    if (activeStatus === code) setFilter('all');
+                }
             });
         }
 
-        function getTimeInfo(dateStr) {
-            if (!dateStr) return { display: "--:--", elapsed: 0, class: "" };
-            const orderTime = new Date(dateStr);
+        function getOrderTiming(dateStr) {
+            if (!dateStr) return { time: "--:--", mins: 0, urgency: "" };
+            const start = new Date(dateStr);
             const now = new Date();
-            const diffMs = now - orderTime;
-            const diffMins = Math.floor(diffMs / 60000);
+            const mins = Math.floor((now - start) / 60000);
             
-            let urgencyClass = "";
-            if (diffMins > 30) urgencyClass = "urgency-high";
-            else if (diffMins > 15) urgencyClass = "urgency-medium";
+            let urgency = "";
+            if (mins > 30) urgency = "urgency-high";
+            else if (mins > 15) urgency = "urgency-med";
 
-            const timeString = orderTime.getHours().toString().padStart(2, '0') + ":" + 
-                               orderTime.getMinutes().toString().padStart(2, '0');
+            const hhmm = start.getHours().toString().padStart(2, '0') + ":" + 
+                         start.getMinutes().toString().padStart(2, '0');
             
-            return {
-                display: timeString,
-                elapsed: diffMins,
-                class: urgencyClass
-            };
+            return { time: hhmm, mins: mins, urgency: urgency };
         }
 
         function render() {
-            const container = document.getElementById('orderFeed');
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-            container.innerHTML = '';
+            const feed = document.getElementById('orderFeed');
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            feed.innerHTML = '';
             
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
 
             const filtered = list.filter(o => {
-                const matchesStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
-                const matchesSearch = (o.address || "").toLowerCase().includes(searchQuery) || 
-                                      (o.clientName || "").toLowerCase().includes(searchQuery) ||
-                                      (o.phone_no || "").includes(searchQuery);
-                return matchesStatus && matchesSearch;
+                const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
+                const matchSearch = (o.address || "").toLowerCase().includes(query) || 
+                                    (o.clientName || "").toLowerCase().includes(query) ||
+                                    (o.phone_no || "").includes(query);
+                return matchStatus && matchSearch;
             });
 
-            filtered.forEach(order => {
+            filtered.forEach(o => {
                 const card = document.createElement('div');
-                const code = String(order.order_status_code);
-                const timeInfo = getTimeInfo(order.order_date);
+                const status = String(o.order_status_code);
+                const timing = getOrderTiming(o.order_date);
                 
-                card.className = `order-card status-${code} ${timeInfo.class}`;
-                if (order.processed === false || code === "1") card.classList.add('new-order', 'flash');
+                card.className = `order-card status-${status} ${timing.urgency}`;
+                if (o.processed === false || status === "1") card.classList.add('is-new', 'flash-anim');
 
-                const isOnlinePay = order.payment_method === "payonline";
-                const payBadge = isOnlinePay ? '<span class="pay-badge pay-online">Online Betaald</span>' : '<span class="pay-badge pay-cash">Contant</span>';
-
-                let displayAddress = order.address || "Geen adres";
-                if (code === "6") displayAddress = `Tafel: ${order.table_name || '?'}`;
-                else if (order.take_away || code === "7") {
-                    displayAddress = `Afhaal: ${order.clientName || order.phone_no || 'Onbekend'}`;
+                // Logic for Address vs Table vs Takeaway Name
+                let title = o.address || "Geen adres opgegeven";
+                if (status === "6") {
+                    title = `Tafel: ${o.table_name || '?'}`;
+                } else if (o.take_away || status === "7") {
+                    const person = (o.clientName && o.clientName.trim() !== "") ? o.clientName : (o.phone_no || "Onbekend");
+                    title = `Afhaling: ${person}`;
                 }
 
+                const isOnline = o.payment_method === "payonline";
+                const payHtml = isOnline ? '<span class="badge online-pay">Online Betaald</span>' : '<span class="badge cash-pay">Contant</span>';
+
                 card.innerHTML = `
-                    <div class="address-box">
-                        <div class="address">${displayAddress}</div>
-                        <div class="order-meta">
-                            Besteld om ${timeInfo.display} 
-                            <span class="time-elapsed">(${timeInfo.elapsed} min geleden)</span>
-                            <br>
-                            ${getStatusName(code)} | Planning: ${order.desired_del_time}
-                            <br>
-                            ${payBadge}
+                    <div class="address-info">
+                        <div class="address-title">${title}</div>
+                        <div class="order-details">
+                            <span class="time-tag">Besteld om ${timing.time}</span> (${timing.mins} min geleden)<br>
+                            ${getStatusName(status)} | Planning: ${o.desired_del_time || 'ZSM'}<br>
+                            ${payHtml}
                         </div>
                     </div>
-                    <div class="price">€${parseFloat(order.value).toFixed(2)}</div>
+                    <div class="price-tag">€${parseFloat(o.value || 0).toFixed(2)}</div>
                 `;
 
-                card.onclick = () => window.chrome.webview.postMessage({ action: "open_order", orderId: order.order_id });
-                container.appendChild(card);
+                card.onclick = () => {
+                    window.chrome.webview.postMessage({ action: "open_order", orderId: o.order_id });
+                };
+
+                feed.appendChild(card);
             });
         }
 
         function getStatusName(code) {
-            const m = { "2":"Levering", "3":"Concept", "4":"Geannuleerd", "6":"Tafel", "7":"Afhaling" };
-            return m[code] || "Bestelling";
+            const names = { "2":"Levering", "3":"Concept", "4":"Geannuleerd", "6":"Tafel", "7":"Afhaling" };
+            return names[code] || "Bestelling";
         }
     </script>
 </body>
