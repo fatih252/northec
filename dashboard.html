@@ -94,7 +94,19 @@
             updateFilterVisibility();
             render();
         });
+// Prevent Ctrl + Wheel zoom
+window.addEventListener('wheel', (e) => {
+    if (e.ctrlKey) {
+        e.preventDefault();
+    }
+}, { passive: false });
 
+// Prevent Ctrl + +/- keys
+window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=')) {
+        e.preventDefault();
+    }
+});
         function setMainTab(tab) {
             activeMain = tab;
             document.getElementById('mainOnline').classList.toggle('active', tab === 'online');
