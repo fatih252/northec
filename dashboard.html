@@ -2,7 +2,6 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PizzaApp Pro Dashboard</title>
     <style>
@@ -11,75 +10,118 @@
             --pizza-green: #2e7d32;
             --new-order-bg: #71A783;
             --pizza-blue: #B3DAFF;
-            --bg-gray: #D6D6D6;
+            --bg-gray: #f4f4f4;
             --card-white: #FFFFFF;
+            --warning-orange: #fff3e0;
+            --danger-red: #ffebee;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, sans-serif;
             background-color: var(--bg-gray);
             margin: 0; padding: 0; overflow: hidden; user-select: none;
+            touch-action: pan-y;
         }
 
-        /* Top Navigation */
-        .main-tabs { display: flex; background-color: #bcbcbc; border-bottom: 3px solid var(--pizza-red); }
-        .main-btn { flex: 1; padding: 15px; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; background: #bcbcbc; color: #444; text-transform: uppercase; }
+        /* Fixed Top Section */
+        .header-container {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .main-tabs { display: flex; background-color: #bcbcbc; border-bottom: 2px solid var(--pizza-red); }
+        .main-btn { 
+            flex: 1; padding: 12px; border: none; font-size: 1rem; font-weight: bold; 
+            cursor: pointer; background: #bcbcbc; color: #444; text-transform: uppercase; 
+        }
         .main-btn.active { background-color: var(--pizza-red); color: white; }
 
-        /* Sub-Filters (Dynamic) */
-        .sub-tabs { display: flex; background-color: #eee; padding: 8px; gap: 6px; border-bottom: 1px solid #bbb; min-height: 45px; overflow-x: auto; }
+        .search-bar { padding: 8px 12px; background: #eee; border-bottom: 1px solid #ddd; }
+        #searchInput { 
+            width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; 
+            font-size: 1rem; box-sizing: border-box; 
+        }
+
+        .sub-tabs { display: flex; background-color: #f9f9f9; padding: 6px; gap: 6px; overflow-x: auto; min-height: 40px; }
         .sub-btn { 
-            display: none; 
-            padding: 8px 15px; border: 1px solid #aaa; border-radius: 4px; 
+            display: none; padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px; 
             cursor: pointer; font-size: 0.85rem; font-weight: 600; background: white; color: #555;
+            white-space: nowrap;
         }
         .sub-btn[data-code="all"] { display: block; }
         .sub-btn.active { background-color: #444; color: white; border-color: #444; }
 
-        /* Content Area */
-        .content { height: calc(100vh - 115px); overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; box-sizing: border-box; }
+        /* Order List */
+        .content { height: calc(100vh - 155px); overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; }
 
-        /* Order Card */
+        /* Compact Order Card */
         .order-card {
-            background: var(--card-white); border-radius: 5px; padding: 12px;
-            display: grid; grid-template-columns: 1fr 110px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-left: 10px solid transparent; cursor: pointer;
+            background: var(--card-white); border-radius: 6px; padding: 10px 15px;
+            display: grid; grid-template-columns: 1fr auto; align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #ddd;
+            border-left: 8px solid transparent; cursor: pointer;
+            transition: all 0.15s ease;
         }
-        .address { font-weight: bold; font-size: 1.1rem; }
-        .details { font-size: 0.85rem; color: #555; margin-top: 4px; line-height: 1.4; }
-        .price { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.3rem; align-self: center; }
+        .order-card:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); background-color: #fafafa; }
+        .order-card:active { transform: scale(0.99); }
 
-        /* Status Styles */
+        .address-box { display: flex; flex-direction: column; }
+        .address { font-weight: 800; font-size: 1.15rem; color: #111; }
+        
+        .order-meta { font-size: 0.85rem; color: #666; margin-top: 2px; font-weight: 500; }
+        .time-elapsed { font-weight: bold; margin-left: 5px; }
+
+        .price { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.4rem; padding-left: 15px; }
+
+        /* Status & Urgency */
+        .urgency-medium { border-right: 5px solid #ffa726; background-color: var(--warning-orange); }
+        .urgency-high { background-color: var(--danger-red); border-right: 5px solid #d32f2f; }
+        
         .status-6 { border-left-color: #ff9800; } 
         .status-3 { background-color: var(--pizza-blue) !important; }
-        .status-4 { opacity: 0.5; filter: grayscale(1); }
-        .new-order { background-color: var(--new-order-bg) !important; color: white !important; }
-        .new-order .details { color: #f0f0f0; }
-        .new-order .price { color: white; }
+        .status-4 { opacity: 0.5; filter: grayscale(1); text-decoration: line-through; }
+        
+        .new-order { background-color: var(--new-order-bg) !important; color: white !important; border-color: var(--new-order-bg); }
+        .new-order .address, .new-order .order-meta, .new-order .price { color: white !important; }
         .flash { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.7; } }
 
-        .pay-badge { display: inline-block; font-weight: bold; font-size: 0.75rem; padding: 1px 5px; border-radius: 3px; border: 1px solid #999; margin-top: 4px; }
-        .pay-online { color: #1b5e20; border-color: #1b5e20; background: #e8f5e9; }
-        
-        .time-info { font-weight: bold; color: #d32f2f; }
-        .new-order .time-info { color: #fff; }
+        /* Payment Badges */
+        .pay-badge { 
+            display: inline-block; font-weight: bold; font-size: 0.7rem; 
+            padding: 2px 8px; border-radius: 10px; margin-top: 5px; text-transform: uppercase;
+        }
+        .pay-online { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; }
+        .pay-cash { background-color: #fff3e0; color: #e65100; border: 1px solid #e65100; }
+        .new-order .pay-badge { background: rgba(255,255,255,0.2); color: white; border-color: white; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <div class="main-tabs">
-        <button id="mainOnline" class="main-btn active" onclick="setMainTab('online')">Online Bestellingen</button>
-        <button id="mainPos" class="main-btn" onclick="setMainTab('pos')">Kassa Bestellingen</button>
-    </div>
+    <div class="header-container">
+        <div class="main-tabs">
+            <button id="mainOnline" class="main-btn active" onclick="setMainTab('online')">Online</button>
+            <button id="mainPos" class="main-btn" onclick="setMainTab('pos')">Kassa</button>
+        </div>
 
-    <div class="sub-tabs" id="subTabs">
-        <button class="sub-btn active" data-code="all" onclick="setFilter('all')">Alles</button>
-        <button class="sub-btn" data-code="2" onclick="setFilter('2')">Levering</button>
-        <button class="sub-btn" data-code="7" onclick="setFilter('7')">Afhaal</button>
-        <button class="sub-btn" data-code="6" onclick="setFilter('6')">Tafels</button>
-        <button class="sub-btn" data-code="3" onclick="setFilter('3')">Concept</button>
-        <button class="sub-btn" data-code="4" onclick="setFilter('4')">Geannuleerd</button>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Zoek op adres of naam..." oninput="render()">
+        </div>
+
+        <div class="sub-tabs" id="subTabs">
+            <button class="sub-btn active" data-code="all" onclick="setFilter('all')">Alles</button>
+            <button class="sub-btn" data-code="2" onclick="setFilter('2')">Levering</button>
+            <button class="sub-btn" data-code="7" onclick="setFilter('7')">Afhaal</button>
+            <button class="sub-btn" data-code="6" onclick="setFilter('6')">Tafels</button>
+            <button class="sub-btn" data-code="3" onclick="setFilter('3')">Concept</button>
+            <button class="sub-btn" data-code="4" onclick="setFilter('4')">Geannuleerd</button>
+        </div>
     </div>
 
     <div id="orderFeed" class="content"></div>
@@ -89,24 +131,15 @@
         let activeMain = 'online';
         let activeStatus = 'all';
 
+        // Refresh the UI every 30 seconds just to update the "minutes ago" counters
+        setInterval(() => render(), 30000);
+
         window.chrome.webview.addEventListener('message', event => {
             latestData = event.data;
             updateFilterVisibility();
             render();
         });
-// Prevent Ctrl + Wheel zoom
-window.addEventListener('wheel', (e) => {
-    if (e.ctrlKey) {
-        e.preventDefault();
-    }
-}, { passive: false });
 
-// Prevent Ctrl + +/- keys
-window.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=')) {
-        e.preventDefault();
-    }
-});
         function setMainTab(tab) {
             activeMain = tab;
             document.getElementById('mainOnline').classList.toggle('active', tab === 'online');
@@ -126,81 +159,77 @@ window.addEventListener('keydown', (e) => {
         function updateFilterVisibility() {
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
             const presentCodes = new Set(list.map(o => String(o.order_status_code)));
-            
             document.querySelectorAll('.sub-btn').forEach(btn => {
                 const code = btn.getAttribute('data-code');
                 if (code === 'all') return;
-                
-                if (presentCodes.has(code)) {
-                    btn.style.display = 'block';
-                } else {
-                    btn.style.display = 'none';
-                    if (activeStatus === code) setFilter('all');
-                }
+                btn.style.display = presentCodes.has(code) ? 'block' : 'none';
+                if (activeStatus === code && !presentCodes.has(code)) setFilter('all');
             });
         }
 
-        function formatTime(dateStr) {
-            if (!dateStr) return "--:--";
-            const date = new Date(dateStr);
-            return date.getHours().toString().padStart(2, '0') + ":" + 
-                   date.getMinutes().toString().padStart(2, '0');
-        }
+        function getTimeInfo(dateStr) {
+            if (!dateStr) return { display: "--:--", elapsed: 0, class: "" };
+            const orderTime = new Date(dateStr);
+            const now = new Date();
+            const diffMs = now - orderTime;
+            const diffMins = Math.floor(diffMs / 60000);
+            
+            let urgencyClass = "";
+            if (diffMins > 30) urgencyClass = "urgency-high";
+            else if (diffMins > 15) urgencyClass = "urgency-medium";
 
-        function getStatusName(code) {
-            const m = { "2":"Levering", "3":"Concept", "4":"Geannuleerd", "6":"Tafel", "7":"Afhaling" };
-            return m[code] || "Bestelling";
+            const timeString = orderTime.getHours().toString().padStart(2, '0') + ":" + 
+                               orderTime.getMinutes().toString().padStart(2, '0');
+            
+            return {
+                display: timeString,
+                elapsed: diffMins,
+                class: urgencyClass
+            };
         }
 
         function render() {
             const container = document.getElementById('orderFeed');
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
             container.innerHTML = '';
+            
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
 
             const filtered = list.filter(o => {
-                if (activeStatus === 'all') return true;
-                return String(o.order_status_code) === activeStatus;
+                const matchesStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
+                const matchesSearch = (o.address || "").toLowerCase().includes(searchQuery) || 
+                                      (o.clientName || "").toLowerCase().includes(searchQuery) ||
+                                      (o.phone_no || "").includes(searchQuery);
+                return matchesStatus && matchesSearch;
             });
 
             filtered.forEach(order => {
                 const card = document.createElement('div');
                 const code = String(order.order_status_code);
-                card.className = `order-card status-${code}`;
+                const timeInfo = getTimeInfo(order.order_date);
                 
-                if (order.processed === false || code === "1") {
-                    card.classList.add('new-order', 'flash');
-                }
+                card.className = `order-card status-${code} ${timeInfo.class}`;
+                if (order.processed === false || code === "1") card.classList.add('new-order', 'flash');
 
-                // TABLE NAME LOGIC
-                const safeTable = (order.table_name && order.table_name.trim() !== "") ? order.table_name : "?";
-                
-                // PAYMENT LOGIC
                 const isOnlinePay = order.payment_method === "payonline";
-                const payLabel = isOnlinePay ? '<span class="pay-badge pay-online">ONLINE BETAALD</span>' : '<span class="pay-badge">CONTANT</span>';
+                const payBadge = isOnlinePay ? '<span class="pay-badge pay-online">Online Betaald</span>' : '<span class="pay-badge pay-cash">Contant</span>';
 
-                // AFHALING LOGIC (Name > Phone > Unknown)
                 let displayAddress = order.address || "Geen adres";
-                
-                if (code === "6") {
-                    displayAddress = `Tafel: ${safeTable}`;
-                } 
+                if (code === "6") displayAddress = `Tafel: ${order.table_name || '?'}`;
                 else if (order.take_away || code === "7") {
-                    let clientInfo = "Onbekend";
-                    if (order.clientName && order.clientName.trim() !== "") {
-                        clientInfo = order.clientName;
-                    } else if (order.phone_no && order.phone_no.trim() !== "") {
-                        clientInfo = order.phone_no;
-                    }
-                    displayAddress = `Afhaling: ${clientInfo}`;
+                    displayAddress = `Afhaal: ${order.clientName || order.phone_no || 'Onbekend'}`;
                 }
 
                 card.innerHTML = `
-                    <div>
+                    <div class="address-box">
                         <div class="address">${displayAddress}</div>
-                        <div class="details">
-                            <span class="time-info">Besteld om: ${formatTime(order.order_date)}</span><br>
-                            ${getStatusName(code)} | Planning: ${order.desired_del_time}<br>
-                            ${payLabel}
+                        <div class="order-meta">
+                            Besteld om ${timeInfo.display} 
+                            <span class="time-elapsed">(${timeInfo.elapsed} min geleden)</span>
+                            <br>
+                            ${getStatusName(code)} | Planning: ${order.desired_del_time}
+                            <br>
+                            ${payBadge}
                         </div>
                     </div>
                     <div class="price">€${parseFloat(order.value).toFixed(2)}</div>
@@ -209,6 +238,11 @@ window.addEventListener('keydown', (e) => {
                 card.onclick = () => window.chrome.webview.postMessage({ action: "open_order", orderId: order.order_id });
                 container.appendChild(card);
             });
+        }
+
+        function getStatusName(code) {
+            const m = { "2":"Levering", "3":"Concept", "4":"Geannuleerd", "6":"Tafel", "7":"Afhaling" };
+            return m[code] || "Bestelling";
         }
     </script>
 </body>
