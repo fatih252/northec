@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PizzaApp Dashboard v2.0</title>
+    <title>PizzaApp Dashboard v2.1</title>
     <style>
         :root {
             --pizza-red: #973030;
@@ -18,10 +18,7 @@
         }
 
         /* --- NATIVE APP LOCKDOWN --- */
-        * {
-            -webkit-tap-highlight-color: transparent;
-            box-sizing: border-box;
-        }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -35,13 +32,10 @@
             overscroll-behavior-y: none;
         }
 
-        /* Fixed Header */
+        /* Header Section */
         .header-container {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: sticky; top: 0; z-index: 100;
+            background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
         .main-tabs { display: flex; background-color: #bcbcbc; border-bottom: 2px solid var(--pizza-red); }
@@ -52,12 +46,8 @@
         .main-btn.active { background-color: var(--pizza-red); color: white; }
 
         .search-area { padding: 8px 12px; background: #f9f9f9; border-bottom: 1px solid #ddd; }
-        #searchInput { 
-            width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; 
-            font-size: 1rem; outline: none;
-        }
+        #searchInput { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; outline: none; }
 
-        /* Sub-Filters */
         .sub-tabs { display: flex; background-color: #fff; padding: 8px; gap: 6px; overflow-x: auto; min-height: 48px; }
         .sub-btn { 
             display: none; padding: 8px 16px; border: 1px solid #ccc; border-radius: 4px; 
@@ -67,10 +57,10 @@
         .sub-btn[data-code="all"] { display: block; }
         .sub-btn.active { background-color: #444; color: white; border-color: #444; }
 
-        /* Content */
+        /* Content Area */
         .content { height: calc(100vh - 160px); overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 
-        /* Order Card Layout (3 columns: Info, Price, Action) */
+        /* Grid: Info | Price | Action */
         .order-card {
             background: var(--card-white); border-radius: 6px; padding: 10px 15px;
             display: grid; grid-template-columns: 1fr 100px 140px; align-items: center;
@@ -84,16 +74,15 @@
         .time-tag { font-weight: bold; color: #d32f2f; }
         .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.35rem; padding-right: 10px; }
 
-        /* Buttons */
+        /* Action Buttons */
         .table-actions { display: flex; justify-content: flex-end; }
         .btn-checkin {
             padding: 10px 15px; border: none; border-radius: 4px; color: white;
             font-weight: bold; font-size: 0.85rem; cursor: pointer; text-transform: uppercase;
             background-color: var(--checkin-blue); min-width: 110px;
         }
-        .btn-checkin:hover { opacity: 0.9; }
 
-        /* Urgency & Status */
+        /* Urgency & Visual States */
         .urgency-med { border-right: 6px solid #ffa726; background-color: var(--warning-orange); }
         .urgency-high { background-color: var(--danger-red); border-right: 6px solid #d32f2f; }
         .status-6 { border-left-color: #ff9800; } 
@@ -105,16 +94,11 @@
         .flash-anim { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.7; } }
 
-        .badge { 
-            display: inline-block; font-weight: 800; font-size: 0.7rem; 
-            padding: 2px 8px; border-radius: 12px; margin-top: 5px; border: 1px solid currentColor; text-transform: uppercase;
-        }
+        .badge { display: inline-block; font-weight: 800; font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; margin-top: 5px; border: 1px solid currentColor; text-transform: uppercase; }
         .online-pay { background-color: #e8f5e9; color: #2e7d32; }
         .cash-pay { background-color: #fafafa; color: #666; }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
     </style>
 </head>
@@ -147,16 +131,13 @@
         let activeMain = 'online';
         let activeStatus = 'all';
 
-        // Timer to update "minutes ago" every 30s
         setInterval(() => render(), 30000);
 
-        // Security: Block browser keys/zoom
         window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
         window.addEventListener('keydown', (e) => {
             if (e.ctrlKey && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
         });
 
-        // Communication from C#
         window.chrome.webview.addEventListener('message', event => {
             latestData = event.data;
             updateFilterTabs();
@@ -228,16 +209,22 @@
                 card.className = `order-card status-${status} ${timing.urgency}`;
                 if (o.processed === false || status === "1") card.classList.add('is-new', 'flash-anim');
 
-                // Address Priority Logic
                 let title = o.address || "Geen adres";
                 let actionHtml = '';
 
+                // --- MODIFIED TABLE LOGIC ---
                 if (status === "6") {
                     title = `Tafel: ${o.table_name || '?'}`;
-                    actionHtml = `<div class="table-actions">
-                        <button class="btn-checkin" onclick="handleAction(event, 'table_checkin', '${o.order_id}')">Check In</button>
-                    </div>`;
-                } else if (o.take_away || status === "7") {
+                    
+                    // Only show button if table name exists and table is active
+                    const hasTable = o.table_name && o.table_name.trim() !== "";
+                    if (hasTable && o.table_active === true) {
+                        actionHtml = `<div class="table-actions">
+                            <button class="btn-checkin" onclick="handleAction(event, 'table_checkin', '${o.order_id}')">Check In</button>
+                        </div>`;
+                    }
+                } 
+                else if (o.take_away || status === "7") {
                     const person = (o.clientName && o.clientName.trim() !== "") ? o.clientName : (o.phone_no || "Onbekend");
                     title = `Afhaal: ${person}`;
                 }
@@ -250,7 +237,7 @@
                         <div class="address-title">${title}</div>
                         <div class="order-details">
                             <span class="time-tag">Besteld om ${timing.time}</span> (${timing.mins} min)<br>
-                            ${getStatusName(status)} | Planning: ${o.desired_del_time || 'ZSM'}<br>
+                            ${status === "6" ? "Tafelverbruik" : "Levering"} | Planning: ${o.desired_del_time || 'ZSM'}<br>
                             ${payHtml}
                         </div>
                     </div>
