@@ -25,6 +25,56 @@
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
         body {
+    /* 1. Prevent text selection (no blue highlighting when clicking fast) */
+    user-select: none;
+    -webkit-user-select: none;
+
+    /* 2. Prevent the 'I-beam' text cursor from appearing */
+    cursor: default;
+
+    /* 3. Disable 'rubber-band' / overscroll bouncing */
+    overscroll-behavior-y: none;
+
+    /* 4. Disable touch-and-hold context menus */
+    -webkit-touch-callout: none;
+    
+    /* 5. Smooth out font rendering for a 'Retina' look */
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 6. Ensure inputs (if you add any) still allow typing */
+input, textarea {
+    user-select: text;
+    -webkit-user-select: text;
+    cursor: auto;
+}
+
+/* 7. Hide the 'gray flash' highlight on mobile/touch clicks */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+    /* Styling the scrollbar track */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+/* Styling the draggable handle */
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+    border: 2px solid #f1f1f1; /* Creates padding around the handle */
+}
+
+/* Hover effect on scrollbar */
+::-webkit-scrollbar-thumb:hover {
+    background: var(--pizza-red);
+}
+        body {
             font-family: 'Segoe UI', Tahoma, sans-serif;
             background-color: var(--bg-gray);
             margin: 0; padding: 0;
@@ -149,6 +199,16 @@
         let latestData = { online: [], pos: [] };
         let activeMain = 'online';
         let activeStatus = 'all';
+        // Prevent dragging of images or links out of the window
+window.addEventListener('dragstart', (e) => e.preventDefault());
+
+// Prevent "Drop" events
+window.addEventListener('drop', (e) => e.preventDefault());
+
+// Extra safety: Prevent Zoom via MouseWheel + Ctrl even if C# fails
+window.addEventListener('wheel', (e) => {
+    if (e.ctrlKey) e.preventDefault();
+}, { passive: false });
 
         // Auto-refresh counters every 30s
         setInterval(() => render(), 30000);
