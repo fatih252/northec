@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PizzaApp Pro Dashboard</title>
+    <title>PizzaApp Dashboard v2.2</title>
     <style>
         :root {
             --pizza-red: #973030;
@@ -15,6 +15,10 @@
             --warning-orange: #fff3e0;
             --danger-red: #ffebee;
             --checkin-blue: #0288d1;
+            
+            /* --- Table Status Colors --- */
+            --table-inactive-side: #ff9800; /* Orange - Default/Reservable */
+            --table-active-side: #d32f2f;   /* Red - Occupied/In-use */
         }
 
         /* --- NATIVE APP FEEL (LOCKDOWN) --- */
@@ -32,7 +36,7 @@
             overscroll-behavior-y: none;
         }
 
-        /* Fixed Header Section */
+        /* Header Section */
         .header-container {
             position: sticky; top: 0; z-index: 100;
             background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
@@ -66,7 +70,7 @@
             background: var(--card-white); border-radius: 6px; padding: 10px 15px;
             display: grid; grid-template-columns: 1fr 100px 140px; align-items: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #ddd;
-            border-left: 8px solid transparent; cursor: pointer;
+            border-left: 10px solid transparent; cursor: pointer;
             position: relative;
         }
         .order-card:active { transform: scale(0.995); background-color: #f8f8f8; }
@@ -83,24 +87,37 @@
             font-weight: bold; font-size: 0.85rem; cursor: pointer; text-transform: uppercase;
             background-color: var(--checkin-blue); min-width: 110px;
         }
+        .btn-checkin:hover { opacity: 0.9; }
 
-        /* Urgency & States */
+        /* --- BORDER URGENCIES (Right Side) --- */
         .urgency-med { border-right: 6px solid #ffa726; background-color: var(--warning-orange); }
         .urgency-high { background-color: var(--danger-red); border-right: 6px solid #d32f2f; }
-        .status-6 { border-left-color: #ff9800; } 
-        .status-3 { background-color: var(--pizza-blue) !important; }
-        .status-4 { opacity: 0.5; filter: grayscale(1); text-decoration: line-through; }
+
+        /* --- STATUS BORDERS (Left Side) --- */
         
+        /* Default Table Style (Status 6, Inactive) */
+        .status-6 { border-left-color: var(--table-inactive-side); } 
+        
+        /* Overrides for Active Table */
+        .is-table-active { border-left-color: var(--table-active-side) !important; }
+
+        .status-3 { background-color: var(--pizza-blue) !important; } /* Draft */
+        .status-4 { opacity: 0.5; filter: grayscale(1); text-decoration: line-through; } /* Cancelled */
+        
+        /* New Order Visuals (Overrides Status) */
         .is-new { background-color: var(--new-order-bg) !important; border-color: var(--new-order-bg); }
         .is-new * { color: white !important; }
         .flash-anim { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.7; } }
 
+        /* Badges */
         .badge { display: inline-block; font-weight: 800; font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; margin-top: 5px; border: 1px solid currentColor; text-transform: uppercase; }
         .online-pay { background-color: #e8f5e9; color: #2e7d32; }
         .cash-pay { background-color: #fafafa; color: #666; }
 
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
     </style>
 </head>
@@ -133,14 +150,10 @@
         let activeMain = 'online';
         let activeStatus = 'all';
 
+        // Auto-refresh counters every 30s
         setInterval(() => render(), 30000);
 
-        // Security: Block zoom & right click via JS fallback
-        window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
-        window.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
-        });
-
+        // Communication from C#
         window.chrome.webview.addEventListener('message', event => {
             latestData = event.data;
             updateFilterTabs();
@@ -178,9 +191,16 @@
         function getTimeData(dateStr) {
             if (!dateStr) return { time: "--:--", mins: 0, urgency: "" };
             const start = new Date(dateStr);
-            const mins = Math.floor((new Date() - start) / 60000);
-            let urgency = mins > 30 ? "urgency-high" : (mins > 15 ? "urgency-med" : "");
-            const hhmm = start.getHours().toString().padStart(2, '0') + ":" + start.getMinutes().toString().padStart(2, '0');
+            const now = new Date();
+            const mins = Math.floor((now - start) / 60000);
+            
+            let urgency = "";
+            if (mins > 30) urgency = "urgency-high";
+            else if (mins > 15) urgency = "urgency-med";
+
+            const hhmm = start.getHours().toString().padStart(2, '0') + ":" + 
+                         start.getMinutes().toString().padStart(2, '0');
+            
             return { time: hhmm, mins: mins, urgency: urgency };
         }
 
@@ -200,7 +220,7 @@
                 const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
                 const matchSearch = (o.address || "").toLowerCase().includes(query) || 
                                     (o.clientName || "").toLowerCase().includes(query) ||
-                                    (o.table?.name || "").toLowerCase().includes(query); // Check nested table object
+                                    (o.table?.name || "").toLowerCase().includes(query); // Nested table search
                 return matchStatus && matchSearch;
             });
 
@@ -209,22 +229,33 @@
                 const status = String(o.order_status_code);
                 const timing = getTimeData(o.order_date);
                 
+                // Add base classes including the standard status border (status-6 is orange by default)
                 card.className = `order-card status-${status} ${timing.urgency}`;
-                if (o.processed === false || status === "1") card.classList.add('is-new', 'flash-anim');
+                
+                // Overrides: If it's a new order (Green)
+                if (o.processed === false || status === "1") {
+                    card.classList.add('is-new', 'flash-anim');
+                }
 
+                // --- MODIFIED TABLE LOGIC ---
                 let title = o.address || "Adres onbekend";
                 let actionHtml = '';
 
-                // --- NESTED TABLE OBJECT LOGIC ---
                 if (status === "6") {
                     const tableName = o.table?.name || '?';
                     title = `Tafel: ${tableName}`;
-                    
-                    // Show Check In only if Table Name exists and Table is Active
-                    if (o.table?.name && o.table.name.trim() !== "" && o.table_active === true) {
-                        actionHtml = `<div class="table-actions">
-                            <button class="btn-checkin" onclick="handleAction(event, 'table_checkin', '${o.order_id}')">Check In</button>
-                        </div>`;
+
+                    // CHECK FOR ACTIVE TABLE
+                    if (o.table_active === true) {
+                        // Override default orange left-border to RED
+                        card.classList.add('is-table-active'); 
+                        
+                        // Show "Check In" button
+                        if (o.table?.name && o.table.name.trim() !== "") {
+                            actionHtml = `<div class="table-actions">
+                                <button class="btn-checkin" onclick="handleAction(event, 'table_checkin', '${o.order_id}')">Check In</button>
+                            </div>`;
+                        }
                     }
                 } 
                 else if (o.take_away || status === "7") {
@@ -248,14 +279,17 @@
                     ${actionHtml}
                 `;
 
-                card.onclick = () => window.chrome.webview.postMessage({ action: "open_order", orderId: o.order_id });
+                card.onclick = () => {
+                    window.chrome.webview.postMessage({ action: "open_order", orderId: o.order_id });
+                };
+
                 feed.appendChild(card);
             });
         }
 
         function getStatusName(code) {
-            const m = { "2":"Levering", "3":"Concept", "4":"Geannuleerd", "6":"Tafel", "7":"Afhaling" };
-            return m[code] || "Bestelling";
+            const names = { "2":"Levering", "3":"Concept", "4":"Geannuleerd", "6":"Tafel", "7":"Afhaling" };
+            return names[code] || "Bestelling";
         }
     </script>
 </body>
