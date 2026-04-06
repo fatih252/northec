@@ -19,6 +19,7 @@
             --table-active-side: #d32f2f;
         }
 
+        /* --- NATIVE APP LOCKDOWN --- */
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
         body {
@@ -34,6 +35,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
+        /* Scrollbar Styling */
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; border: 2px solid #f1f1f1; }
@@ -73,6 +75,7 @@
             height: 100%; color: #888; text-align: center; padding-top: 50px;
         }
 
+        /* Order Card */
         .order-card {
             background: var(--card-white); border-radius: 8px; padding: 12px 18px;
             display: grid; grid-template-columns: 1fr 100px 140px; align-items: center;
@@ -93,11 +96,12 @@
             background-color: var(--checkin-blue); min-width: 110px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
+        /* Animations & Urgency */
         .urgency-med { border-right: 8px solid #ffa726; background-color: var(--warning-orange); }
         .urgency-high { 
             border-right: 8px solid #d32f2f; 
             background-color: var(--danger-red); 
-            animation: pulse-red 2s infinite; 
+            animation: pulse-red 2.5s infinite; 
         }
 
         @keyframes pulse-red {
@@ -111,11 +115,11 @@
         .status-3 { background-color: var(--pizza-blue) !important; }
         .status-4 { opacity: 0.4; filter: grayscale(1); text-decoration: line-through; }
         
-        /* Flashing Animation Logic */
+        /* New Order Visuals (Strictly controlled by o.processed) */
         .is-new { background-color: var(--new-order-bg) !important; border-color: var(--new-order-bg); }
         .is-new * { color: white !important; }
         .flash-anim { animation: blinker 1.5s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0.7; } }
+        @keyframes blinker { 50% { opacity: 0.4; } }
 
         .badge { 
             display: inline-block; font-weight: 800; font-size: 0.75rem; 
@@ -163,6 +167,7 @@
 
         setInterval(() => render(), 30000);
 
+        // Lockdown functionality
         window.addEventListener('dragstart', (e) => e.preventDefault());
         window.addEventListener('drop', (e) => e.preventDefault());
         window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
@@ -170,12 +175,15 @@
             if (e.ctrlKey && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
         });
 
+        // Communication Listener
         window.chrome.webview.addEventListener('message', event => {
             const msg = event.data;
+            
             if (msg.action === "switch_to_online") {
                 setMain('online');
                 return; 
             }
+
             latestData = msg;
             updateFilterTabs();
             render();
@@ -200,7 +208,11 @@
         function updateFilterTabs() {
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
             const counts = { "2":0, "7":0, "6":0, "3":0, "4":0, "all": list.length };
-            list.forEach(o => { if(counts[o.order_status_code] !== undefined) counts[o.order_status_code]++; });
+            
+            list.forEach(o => { 
+                const s = String(o.order_status_code);
+                if(counts[s] !== undefined) counts[s]++; 
+            });
 
             document.querySelectorAll('.sub-btn').forEach(btn => {
                 const code = btn.getAttribute('data-code');
@@ -239,6 +251,7 @@
             
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
 
+            // 1. Filter
             const filtered = list.filter(o => {
                 const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
                 const matchSearch = (o.address || "").toLowerCase().includes(query) || 
@@ -247,10 +260,9 @@
                 return matchStatus && matchSearch;
             });
 
+            // 2. Sort Descending (Newest at Top)
             const sorted = filtered.sort((a, b) => {
-                const dateA = new Date(a.order_date).getTime();
-                const dateB = new Date(b.order_date).getTime();
-                return dateB - dateA; 
+                return new Date(b.order_date).getTime() - new Date(a.order_date).getTime();
             });
 
             if (sorted.length === 0) {
@@ -260,6 +272,7 @@
                 empty.style.display = 'none';
             }
 
+            // 3. Render Loop
             sorted.forEach(o => {
                 const card = document.createElement('div');
                 const status = String(o.order_status_code);
@@ -267,9 +280,9 @@
                 
                 card.className = `order-card status-${status} ${timing.urgency}`;
                 
-                // --- FIX: NO FLASH FOR OLDER PROCESSED ORDERS ---
-                // We only add 'is-new' and 'flash-anim' if the processed flag is false.
-                if (o.processed === false) {
+                // --- FIX: NO FLASH FOR PROCESSED ---
+                // We check strictly for o.processed being false.
+                if (o.processed === false || o.processed === 0 || o.processed === "False") {
                     card.classList.add('is-new', 'flash-anim');
                 }
 
