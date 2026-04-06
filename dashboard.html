@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PizzaApp Dashboard Pro v3.0</title>
+    <title>PizzaApp Dashboard Pro v3.1</title>
     <style>
         :root {
             --pizza-red: #973030;
@@ -52,27 +52,28 @@
 
         .main-tabs { display: flex; background-color: #bcbcbc; border-bottom: 2px solid var(--pizza-red); }
         .main-btn { 
-            flex: 1; padding: 16px; border: none; font-size: 1.1rem; font-weight: bold; 
+            flex: 1; padding: 18px; border: none; font-size: 1.15rem; font-weight: bold; 
             cursor: pointer; background: #bcbcbc; color: #444; text-transform: uppercase; 
         }
         .main-btn.active { background-color: var(--pizza-red); color: white; }
 
         .search-area { padding: 10px 12px; background: #f9f9f9; border-bottom: 1px solid #ddd; }
         #searchInput { 
-            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; 
+            width: 100%; padding: 14px; border-radius: 8px; border: 1px solid #ccc; 
             font-size: 1.1rem; outline: none; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        .sub-tabs { display: flex; background-color: #fff; padding: 8px; gap: 6px; overflow-x: auto; min-height: 52px; }
+        /* --- SUB-BUTTONS (MADE BIGGER) --- */
+        .sub-tabs { display: flex; background-color: #fff; padding: 10px; gap: 8px; overflow-x: auto; min-height: 64px; }
         .sub-btn { 
-            display: none; padding: 8px 16px; border: 1px solid #ccc; border-radius: 6px; 
-            cursor: pointer; font-size: 0.9rem; font-weight: 600; background: white; color: #555;
+            display: none; padding: 12px 24px; border: 1px solid #ccc; border-radius: 8px; 
+            cursor: pointer; font-size: 1rem; font-weight: 700; background: white; color: #444;
             white-space: nowrap; transition: all 0.2s;
         }
         .sub-btn[data-code="all"] { display: block; }
         .sub-btn.active { background-color: #444; color: white; border-color: #444; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
-        .content { height: calc(100vh - 175px); overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .content { height: calc(100vh - 195px); overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
 
         /* Empty State */
         #emptyState {
@@ -90,27 +91,21 @@
         }
         .order-card:active { transform: scale(0.98); background-color: #f8f8f8; }
 
-        .address-title { font-weight: 800; font-size: 1.2rem; color: #000; }
-        .order-details { font-size: 0.95rem; color: #555; margin-top: 4px; line-height: 1.4; }
+        .address-title { font-weight: 800; font-size: 1.25rem; color: #000; }
+        .order-details { font-size: 1rem; color: #555; margin-top: 4px; line-height: 1.4; }
         .time-tag { font-weight: bold; color: #d32f2f; }
         .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.5rem; padding-right: 15px; }
 
         .btn-checkin {
             padding: 12px 15px; border: none; border-radius: 6px; color: white;
-            font-weight: bold; font-size: 0.9rem; cursor: pointer; text-transform: uppercase;
+            font-weight: bold; font-size: 0.95rem; cursor: pointer; text-transform: uppercase;
             background-color: var(--checkin-blue); min-width: 110px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        /* Urgency Pulse for old orders */
+        /* Urgency (Removed Pulse Animation) */
         .urgency-high { 
-            border-right: 8px solid #d32f2f; 
+            border-right: 10px solid #d32f2f; 
             background-color: var(--danger-red); 
-     
-        }
-        @keyframes pulse-red {
-            0% { background-color: #ffebee; }
-            50% { background-color: #ffcdd2; }
-            100% { background-color: #ffebee; }
         }
 
         .status-6 { border-left-color: var(--table-inactive-side); } 
@@ -118,17 +113,17 @@
         .status-3 { background-color: var(--pizza-blue) !important; }
         .status-4 { opacity: 0.4; filter: grayscale(1); text-decoration: line-through; }
         
-        /* New Order Visuals - Solid Green */
+        /* New Order Visuals */
         .is-new { background-color: var(--new-order-bg) !important; border-color: var(--new-order-bg); }
         .is-new * { color: white !important; }
 
-        /* Flashing Animation Logic (Only for unprocessed) */
+        /* Flashing Animation Logic */
         .flash-anim { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.4; } }
 
         .badge { 
-            display: inline-block; font-weight: 800; font-size: 0.75rem; 
-            padding: 3px 10px; border-radius: 14px; margin-top: 6px; border: 1px solid currentColor; text-transform: uppercase;
+            display: inline-block; font-weight: 800; font-size: 0.8rem; 
+            padding: 4px 12px; border-radius: 14px; margin-top: 6px; border: 1px solid currentColor; text-transform: uppercase;
         }
         .online-pay { background-color: #e8f5e9; color: #2e7d32; }
         .cash-pay { background-color: #fafafa; color: #666; }
@@ -171,7 +166,10 @@
         let activeMain = 'online';
         let activeStatus = 'all';
 
-        // Security / Zoom / Drag Lockdown
+        // Auto-refresh UI every 30s
+        setInterval(() => render(), 30000);
+
+        // Lockdown functionality
         window.addEventListener('dragstart', (e) => e.preventDefault());
         window.addEventListener('drop', (e) => e.preventDefault());
         window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
@@ -179,25 +177,19 @@
             if (e.ctrlKey && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
         });
 
-        // Communication Bridge
+        // Communication Listener
         window.chrome.webview.addEventListener('message', event => {
             const msg = event.data;
-
-            // 1. One-time Config Setup
             if (msg.action === "set_config") {
                 appConfig.webEnabled = msg.webEnabled;
                 appConfig.posEnabled = msg.posEnabled;
                 applyPermissions();
                 return;
             }
-
-            // 2. Alert-based Tab Switching
             if (msg.action === "switch_to_online") {
                 if (appConfig.webEnabled) setMain('online');
                 return; 
             }
-
-            // 3. Normal Data Refresh
             latestData = msg;
             updateFilterTabs();
             render();
@@ -206,20 +198,15 @@
         function applyPermissions() {
             const tabOnline = document.getElementById('tabOnline');
             const tabPos = document.getElementById('tabPos');
-
             tabOnline.classList.toggle('hidden-config', !appConfig.webEnabled);
             tabPos.classList.toggle('hidden-config', !appConfig.posEnabled);
-
-            // If we are currently on a disabled tab, force switch
             if (!appConfig.webEnabled && activeMain === 'online') setMain('pos');
             else if (!appConfig.posEnabled && activeMain === 'pos') setMain('online');
         }
 
         function setMain(type) {
-            // Guard against clicking hidden tabs
             if (type === 'online' && !appConfig.webEnabled) return;
             if (type === 'pos' && !appConfig.posEnabled) return;
-
             activeMain = type;
             document.getElementById('tabOnline').classList.toggle('active', type === 'online');
             document.getElementById('tabPos').classList.toggle('active', type === 'pos');
@@ -238,7 +225,6 @@
         function updateFilterTabs() {
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
             const counts = { "2":0, "7":0, "6":0, "3":0, "4":0, "all": list.length };
-            
             list.forEach(o => { 
                 const s = String(o.order_status_code);
                 if(counts[s] !== undefined) counts[s]++; 
@@ -248,11 +234,9 @@
                 const code = btn.getAttribute('data-code');
                 const count = counts[code];
                 const baseNames = { "all":"Alles", "2":"🚚 Levering", "7":"🛍️ Afhaal", "6":"🍽️ Tafels", "3":"📝 Concept", "4":"❌ Geannuleerd" };
-                
                 btn.innerText = `${baseNames[code]} (${count})`;
                 if (code === 'all') return;
                 btn.style.display = count > 0 ? 'block' : 'none';
-                if (activeStatus === code && count === 0) setFilter('all');
             });
         }
 
@@ -278,7 +262,6 @@
             
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
 
-            // 1. Filter
             const filtered = list.filter(o => {
                 const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
                 const matchSearch = (o.address || "").toLowerCase().includes(query) || 
@@ -287,7 +270,6 @@
                 return matchStatus && matchSearch;
             });
 
-            // 2. Sorting (Strict Newest First)
             const sorted = filtered.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
 
             if (sorted.length === 0) {
@@ -297,18 +279,13 @@
                 empty.style.display = 'none';
             }
 
-            // 3. Render Cards
             sorted.forEach(o => {
                 const card = document.createElement('div');
                 const status = String(o.order_status_code);
                 const timing = getTimeData(o.order_date);
                 
                 card.className = `order-card status-${status} ${timing.urgency}`;
-                
-                // --- STRICT FLASH LOGIC ---
-                // Data scrubbing: handle 1/0, True/False, or bool
                 const isProcessed = (o.processed === true || o.processed === 1 || String(o.processed).toLowerCase() === "true");
-                
                 if (!isProcessed) {
                     card.classList.add('is-new', 'flash-anim');
                 }
