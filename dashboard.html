@@ -257,17 +257,17 @@
         }
 
         // --- UPDATED PAYMENT LOGIC ---
-        function getPaymentBadge(method) {
+        function getPaymentBadge(method, id) {
             const m = String(method).toLowerCase();
             
             // Priority 1: Online Paid
             if (m === "payonline") return `<span class="badge pay-online">Reeds Betaald</span>`;
             
             // Priority 2: Specific IDs for Offline Payment (1-4)
-            if (m === "1" || m === "paylocal" || m === "contant") return `<span class="badge pay-1">Contant</span>`;
-            if (m === "2" || m === "bancontact") return `<span class="badge pay-2">Bancontact</span>`;
-            if (m === "3" || m === "payconiq") return `<span class="badge pay-3">Payconiq</span>`;
-            if (m === "4" || m === "combinatie") return `<span class="badge pay-4">Combinatie</span>`;
+            if (id === "1" || m === "paylocal" || m === "contant") return `<span class="badge pay-1">Contant</span>`;
+            if (id === "2" || m === "paylocal") return `<span class="badge pay-2">Bancontact</span>`;
+            if (id === "3" || m === "paylocal") return `<span class="badge pay-3">Payconiq</span>`;
+            if (id === "4" || m === "paylocal") return `<span class="badge pay-4">Combinatie</span>`;
             
             // Fallback
             return `<span class="badge pay-1">Contant</span>`;
@@ -337,7 +337,7 @@
                         <div class="order-details">
                             <span class="time-tag">Besteld om ${timing.time}</span> (${timing.mins} min)<br>
                             ${status === "6" ? "Tafelverbruik" : getStatusName(status)} | Planning: ${o.desired_del_time || 'ZSM'}<br>
-                            ${getPaymentBadge(o.payment_method_id)}
+                            ${getPaymentBadge(o.payment_method,o.payment_method_id)}
                         </div>
                     </div>
                     <div class="price-tag">€${parseFloat(o.value || 0).toFixed(2)}</div>
