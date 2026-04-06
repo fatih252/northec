@@ -115,9 +115,11 @@
         .status-3 { background-color: var(--pizza-blue) !important; }
         .status-4 { opacity: 0.4; filter: grayscale(1); text-decoration: line-through; }
         
-        /* New Order Visuals (Strictly controlled by o.processed) */
+        /* New Order Visuals */
         .is-new { background-color: var(--new-order-bg) !important; border-color: var(--new-order-bg); }
         .is-new * { color: white !important; }
+
+        /* Continuous Flashing for Unprocessed */
         .flash-anim { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.4; } }
 
@@ -165,9 +167,10 @@
         let activeMain = 'online';
         let activeStatus = 'all';
 
+        // Auto-refresh UI every 30s
         setInterval(() => render(), 30000);
 
-        // Lockdown functionality
+        // Security Lockdown
         window.addEventListener('dragstart', (e) => e.preventDefault());
         window.addEventListener('drop', (e) => e.preventDefault());
         window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
@@ -175,15 +178,13 @@
             if (e.ctrlKey && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
         });
 
-        // Communication Listener
+        // Combined Message Listener
         window.chrome.webview.addEventListener('message', event => {
             const msg = event.data;
-            
             if (msg.action === "switch_to_online") {
                 setMain('online');
                 return; 
             }
-
             latestData = msg;
             updateFilterTabs();
             render();
@@ -208,7 +209,6 @@
         function updateFilterTabs() {
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
             const counts = { "2":0, "7":0, "6":0, "3":0, "4":0, "all": list.length };
-            
             list.forEach(o => { 
                 const s = String(o.order_status_code);
                 if(counts[s] !== undefined) counts[s]++; 
@@ -219,7 +219,6 @@
                 const count = counts[code];
                 const baseNames = { "all":"Alles", "2":"🚚 Levering", "7":"🛍️ Afhaal", "6":"🍽️ Tafels", "3":"📝 Concept", "4":"❌ Geannuleerd" };
                 btn.innerText = `${baseNames[code]} (${count})`;
-
                 if (code === 'all') return;
                 btn.style.display = count > 0 ? 'block' : 'none';
             });
@@ -228,8 +227,7 @@
         function getTimeData(dateStr) {
             if (!dateStr) return { time: "--:--", mins: 0, urgency: "" };
             const start = new Date(dateStr);
-            const now = new Date();
-            const mins = Math.floor((now - start) / 60000);
+            const mins = Math.floor((new Date() - start) / 60000);
             let urgency = mins > 30 ? "urgency-high" : (mins > 15 ? "urgency-med" : "");
             const hhmm = start.getHours().toString().padStart(2, '0') + ":" + start.getMinutes().toString().padStart(2, '0');
             return { time: hhmm, mins: mins, urgency: urgency };
@@ -251,7 +249,6 @@
             
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
 
-            // 1. Filter
             const filtered = list.filter(o => {
                 const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
                 const matchSearch = (o.address || "").toLowerCase().includes(query) || 
@@ -260,10 +257,7 @@
                 return matchStatus && matchSearch;
             });
 
-            // 2. Sort Descending (Newest at Top)
-            const sorted = filtered.sort((a, b) => {
-                return new Date(b.order_date).getTime() - new Date(a.order_date).getTime();
-            });
+            const sorted = filtered.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
 
             if (sorted.length === 0) {
                 empty.style.display = 'flex';
@@ -272,7 +266,6 @@
                 empty.style.display = 'none';
             }
 
-            // 3. Render Loop
             sorted.forEach(o => {
                 const card = document.createElement('div');
                 const status = String(o.order_status_code);
@@ -280,9 +273,11 @@
                 
                 card.className = `order-card status-${status} ${timing.urgency}`;
                 
-                // --- FIX: NO FLASH FOR PROCESSED ---
-                // We check strictly for o.processed being false.
-                if (o.processed === false || o.processed === 0 || o.processed === "False") {
+                // --- STATE-BASED FLASHING ---
+                // No timer logic. It flashes if processed is false, forever, until clicked.
+                const isProcessed = (o.processed === true || o.processed === 1 || String(o.processed).toLowerCase() === "true");
+                
+                if (!isProcessed) {
                     card.classList.add('is-new', 'flash-anim');
                 }
 
@@ -321,6 +316,7 @@
                     ${actionHtml}
                 `;
 
+                // C# Click Handler
                 card.onclick = () => window.chrome.webview.postMessage({ action: "open_order", orderId: o.order_id });
                 feed.appendChild(card);
             });
