@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PizzaApp Dashboard Pro v3.2</title>
+    <title>PizzaApp Dashboard Pro v3.4</title>
     <style>
         :root {
             --pizza-red: #973030;
@@ -16,7 +16,7 @@
             --danger-red: #ffebee;
             --checkin-blue: #0288d1;
             --table-inactive-side: #ff9800;
-            --table-active-side: #2fd32f;
+            --table-active-side: #d32f2f;
         }
 
         /* --- NATIVE APP LOCKDOWN --- */
@@ -35,7 +35,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Scrollbar Styling */
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; border: 2px solid #f1f1f1; }
@@ -82,7 +81,7 @@
         /* Order Card Layout */
         .order-card {
             background: var(--card-white); border-radius: 8px; padding: 12px 18px;
-            display: grid; grid-template-columns: 1fr 100px 160px; /* Increased action column to 160px */
+            display: grid; grid-template-columns: 1fr 100px 160px;
             align-items: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.08); border: 1px solid #ddd;
             border-left: 12px solid transparent; cursor: pointer;
@@ -95,9 +94,9 @@
         .time-tag { font-weight: bold; color: #d32f2f; }
         .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.5rem; padding-right: 15px; }
 
-        /* --- BIG TOUCH-READY CHECKIN BUTTON --- */
+        /* BIG TOUCH-READY CHECKIN BUTTON */
         .btn-checkin {
-            padding: 22px 15px; /* Significant vertical height */
+            padding: 22px 15px;
             border: none;
             border-radius: 10px;
             color: white;
@@ -110,11 +109,7 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.25);
             transition: background 0.2s, transform 0.1s;
         }
-        .btn-checkin:active {
-            background-color: #0277bd;
-            transform: translateY(2px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
+        .btn-checkin:active { background-color: #0277bd; transform: translateY(2px); }
 
         .urgency-high { border-right: 10px solid #d32f2f; background-color: var(--danger-red); }
 
@@ -129,12 +124,16 @@
         .flash-anim { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.4; } }
 
+        /* --- PAYMENT BADGES --- */
         .badge { 
             display: inline-block; font-weight: 800; font-size: 0.8rem; 
             padding: 4px 12px; border-radius: 14px; margin-top: 6px; border: 1px solid currentColor; text-transform: uppercase;
         }
-        .online-pay { background-color: #e8f5e9; color: #2e7d32; }
-        .cash-pay { background-color: #fafafa; color: #666; }
+        .pay-online { background-color: #e8f5e9; color: #2e7d32; } /* Reeds Betaald - Green */
+        .pay-1 { background-color: #fafafa; color: #666; } /* Contant - Grey */
+        .pay-2 { background-color: #e3f2fd; color: #0277bd; } /* Bancontact - Blue */
+        .pay-3 { background-color: #fce4ec; color: #c2185b; } /* Payconiq - Fuchsia */
+        .pay-4 { background-color: #fff3e0; color: #e65100; } /* Combinatie - Orange */
 
     </style>
 </head>
@@ -250,7 +249,28 @@
             if (!dateStr) return { time: "--:--", mins: 0, urgency: "" };
             const start = new Date(dateStr);
             const mins = Math.floor((new Date() - start) / 60000);
-            return { time: start.getHours().toString().padStart(2, '0') + ":" + start.getMinutes().toString().padStart(2, '0'), mins: mins, urgency: mins > 30 ? "urgency-high" : "" };
+            return { 
+                time: start.getHours().toString().padStart(2, '0') + ":" + start.getMinutes().toString().padStart(2, '0'), 
+                mins: mins, 
+                urgency: mins > 30 ? "urgency-high" : "" 
+            };
+        }
+
+        // --- UPDATED PAYMENT LOGIC ---
+        function getPaymentBadge(method) {
+            const m = String(method).toLowerCase();
+            
+            // Priority 1: Online Paid
+            if (m === "payonline") return `<span class="badge pay-online">Reeds Betaald</span>`;
+            
+            // Priority 2: Specific IDs for Offline Payment (1-4)
+            if (m === "1" || m === "paylocal" || m === "contant") return `<span class="badge pay-1">Contant</span>`;
+            if (m === "2" || m === "bancontact") return `<span class="badge pay-2">Bancontact</span>`;
+            if (m === "3" || m === "payconiq") return `<span class="badge pay-3">Payconiq</span>`;
+            if (m === "4" || m === "combinatie") return `<span class="badge pay-4">Combinatie</span>`;
+            
+            // Fallback
+            return `<span class="badge pay-1">Contant</span>`;
         }
 
         function handleAction(event, action, orderId) {
@@ -311,16 +331,13 @@
                     title = `🚚 ${title}`;
                 }
 
-                const isOnline = o.payment_method === "payonline";
-                const payHtml = `<span class="badge ${isOnline ? 'online-pay' : 'cash-pay'}">${isOnline ? 'Online Betaald' : 'Contant'}</span>`;
-
                 card.innerHTML = `
                     <div class="address-info">
                         <div class="address-title">${title}</div>
                         <div class="order-details">
                             <span class="time-tag">Besteld om ${timing.time}</span> (${timing.mins} min)<br>
                             ${status === "6" ? "Tafelverbruik" : getStatusName(status)} | Planning: ${o.desired_del_time || 'ZSM'}<br>
-                            ${payHtml}
+                            ${getPaymentBadge(o.payment_method)}
                         </div>
                     </div>
                     <div class="price-tag">€${parseFloat(o.value || 0).toFixed(2)}</div>
