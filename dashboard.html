@@ -176,6 +176,20 @@
             updateFilterTabs();
             render();
         });
+        window.chrome.webview.addEventListener('message', event => {
+    const msg = event.data;
+    
+    // --- ADD THIS LOGIC ---
+    if (msg.action === "switch_to_online") {
+        setMain('online'); // This calls your existing function to switch tabs
+        return; 
+    }
+    // --- END NEW LOGIC ---
+
+    latestData = msg;
+    updateFilterTabs();
+    render();
+});
 
         function setMain(type) {
             activeMain = type;
