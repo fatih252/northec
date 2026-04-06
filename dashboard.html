@@ -111,6 +111,7 @@
         .status-3 { background-color: var(--pizza-blue) !important; }
         .status-4 { opacity: 0.4; filter: grayscale(1); text-decoration: line-through; }
         
+        /* Flashing Animation Logic */
         .is-new { background-color: var(--new-order-bg) !important; border-color: var(--new-order-bg); }
         .is-new * { color: white !important; }
         .flash-anim { animation: blinker 1.5s linear infinite; }
@@ -162,7 +163,6 @@
 
         setInterval(() => render(), 30000);
 
-        // Security / Drag & Drop
         window.addEventListener('dragstart', (e) => e.preventDefault());
         window.addEventListener('drop', (e) => e.preventDefault());
         window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
@@ -170,15 +170,12 @@
             if (e.ctrlKey && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
         });
 
-        // Combined Message Listener
         window.chrome.webview.addEventListener('message', event => {
             const msg = event.data;
-            
             if (msg.action === "switch_to_online") {
                 setMain('online');
                 return; 
             }
-
             latestData = msg;
             updateFilterTabs();
             render();
@@ -242,7 +239,6 @@
             
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
 
-            // 1. FILTERING
             const filtered = list.filter(o => {
                 const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
                 const matchSearch = (o.address || "").toLowerCase().includes(query) || 
@@ -251,8 +247,6 @@
                 return matchStatus && matchSearch;
             });
 
-            // 2. SORTING: Guaranteed Newest First (Desc)
-            // We use getTime() to ensure numeric comparison of timestamps
             const sorted = filtered.sort((a, b) => {
                 const dateA = new Date(a.order_date).getTime();
                 const dateB = new Date(b.order_date).getTime();
@@ -266,14 +260,18 @@
                 empty.style.display = 'none';
             }
 
-            // 3. GENERATE HTML
             sorted.forEach(o => {
                 const card = document.createElement('div');
                 const status = String(o.order_status_code);
                 const timing = getTimeData(o.order_date);
                 
                 card.className = `order-card status-${status} ${timing.urgency}`;
-                if (o.processed === false || status === "1") card.classList.add('is-new', 'flash-anim');
+                
+                // --- FIX: NO FLASH FOR OLDER PROCESSED ORDERS ---
+                // We only add 'is-new' and 'flash-anim' if the processed flag is false.
+                if (o.processed === false) {
+                    card.classList.add('is-new', 'flash-anim');
+                }
 
                 let title = o.address || "Adres onbekend";
                 let actionHtml = '';
