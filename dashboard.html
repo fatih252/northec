@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PizzaApp Dashboard Pro v3.1</title>
+    <title>PizzaApp Dashboard Pro v3.2</title>
     <style>
         :root {
             --pizza-red: #973030;
@@ -41,7 +41,6 @@
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; border: 2px solid #f1f1f1; }
         ::-webkit-scrollbar-thumb:hover { background: var(--pizza-red); }
 
-        /* Configuration Visibility */
         .hidden-config { display: none !important; }
 
         /* Header Section */
@@ -63,7 +62,7 @@
             font-size: 1.1rem; outline: none; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        /* --- SUB-BUTTONS (MADE BIGGER) --- */
+        /* Sub-buttons (Big for touchscreen) */
         .sub-tabs { display: flex; background-color: #fff; padding: 10px; gap: 8px; overflow-x: auto; min-height: 64px; }
         .sub-btn { 
             display: none; padding: 12px 24px; border: 1px solid #ccc; border-radius: 8px; 
@@ -75,16 +74,16 @@
 
         .content { height: calc(100vh - 195px); overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
 
-        /* Empty State */
         #emptyState {
             display: none; flex-direction: column; align-items: center; justify-content: center;
             height: 100%; color: #888; text-align: center; padding-top: 50px;
         }
 
-        /* Order Card */
+        /* Order Card Layout */
         .order-card {
             background: var(--card-white); border-radius: 8px; padding: 12px 18px;
-            display: grid; grid-template-columns: 1fr 100px 140px; align-items: center;
+            display: grid; grid-template-columns: 1fr 100px 160px; /* Increased action column to 160px */
+            align-items: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.08); border: 1px solid #ddd;
             border-left: 12px solid transparent; cursor: pointer;
             position: relative; transition: transform 0.1s;
@@ -96,29 +95,37 @@
         .time-tag { font-weight: bold; color: #d32f2f; }
         .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.5rem; padding-right: 15px; }
 
+        /* --- BIG TOUCH-READY CHECKIN BUTTON --- */
         .btn-checkin {
-            padding: 12px 15px; border: none; border-radius: 6px; color: white;
-            font-weight: bold; font-size: 1rem; cursor: pointer; text-transform: uppercase;
-            height: 40px;
-            background-color: var(--checkin-blue); min-width: 110px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            padding: 22px 15px; /* Significant vertical height */
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 900;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            background-color: var(--checkin-blue);
+            min-width: 130px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .btn-checkin:active {
+            background-color: #0277bd;
+            transform: translateY(2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        /* Urgency (Removed Pulse Animation) */
-        .urgency-high { 
-            border-right: 10px solid #d32f2f; 
-            background-color: var(--danger-red); 
-        }
+        .urgency-high { border-right: 10px solid #d32f2f; background-color: var(--danger-red); }
 
         .status-6 { border-left-color: var(--table-inactive-side); } 
         .is-table-active { border-left-color: var(--table-active-side) !important; }
         .status-3 { background-color: var(--pizza-blue) !important; }
         .status-4 { opacity: 0.4; filter: grayscale(1); text-decoration: line-through; }
         
-        /* New Order Visuals */
         .is-new { background-color: var(--new-order-bg) !important; border-color: var(--new-order-bg); }
         .is-new * { color: white !important; }
 
-        /* Flashing Animation Logic */
         .flash-anim { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.4; } }
 
@@ -167,10 +174,8 @@
         let activeMain = 'online';
         let activeStatus = 'all';
 
-        // Auto-refresh UI every 30s
         setInterval(() => render(), 30000);
 
-        // Lockdown functionality
         window.addEventListener('dragstart', (e) => e.preventDefault());
         window.addEventListener('drop', (e) => e.preventDefault());
         window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
@@ -178,7 +183,6 @@
             if (e.ctrlKey && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
         });
 
-        // Communication Listener
         window.chrome.webview.addEventListener('message', event => {
             const msg = event.data;
             if (msg.action === "set_config") {
@@ -238,6 +242,7 @@
                 btn.innerText = `${baseNames[code]} (${count})`;
                 if (code === 'all') return;
                 btn.style.display = count > 0 ? 'block' : 'none';
+                if (activeStatus === code && count === 0) setFilter('all');
             });
         }
 
@@ -245,9 +250,7 @@
             if (!dateStr) return { time: "--:--", mins: 0, urgency: "" };
             const start = new Date(dateStr);
             const mins = Math.floor((new Date() - start) / 60000);
-            let urgency = mins > 30 ? "urgency-high" : "";
-            const hhmm = start.getHours().toString().padStart(2, '0') + ":" + start.getMinutes().toString().padStart(2, '0');
-            return { time: hhmm, mins: mins, urgency: urgency };
+            return { time: start.getHours().toString().padStart(2, '0') + ":" + start.getMinutes().toString().padStart(2, '0'), mins: mins, urgency: mins > 30 ? "urgency-high" : "" };
         }
 
         function handleAction(event, action, orderId) {
@@ -287,9 +290,7 @@
                 
                 card.className = `order-card status-${status} ${timing.urgency}`;
                 const isProcessed = (o.processed === true || o.processed === 1 || String(o.processed).toLowerCase() === "true");
-                if (!isProcessed) {
-                    card.classList.add('is-new', 'flash-anim');
-                }
+                if (!isProcessed) card.classList.add('is-new', 'flash-anim');
 
                 let title = o.address || "Adres onbekend";
                 let actionHtml = '';
