@@ -259,15 +259,15 @@
         // --- UPDATED PAYMENT LOGIC ---
         function getPaymentBadge(method, id) {
             const m = String(method).toLowerCase();
-            
+               const         mid = String(id);
             // Priority 1: Online Paid
             if (m === "payonline") return `<span class="badge pay-online">Reeds Betaald</span>`;
             
             // Priority 2: Specific IDs for Offline Payment (1-4)
-            if (id === "1" ) return `<span class="badge pay-1">Contant</span>`;
-            if (id === "2"    ) return `<span class="badge pay-2">Bancontact</span>`;
-            if (id === "3"   return `<span class="badge pay-3">Payconiq</span>`;
-            if (id === "4" ) return `<span class="badge pay-4">Combinatie</span>`;
+            if (mid === "1" ) return `<span class="badge pay-1">Contant</span>`;
+            if (mid === "2"    ) return `<span class="badge pay-2">Bancontact</span>`;
+            if (mid === "3"   return `<span class="badge pay-3">Payconiq</span>`;
+            if (mid === "4" ) return `<span class="badge pay-4">Combinatie</span>`;
             
             // Fallback
             return `<span class="badge pay-1">Contant</span>`;
