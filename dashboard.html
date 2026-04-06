@@ -337,7 +337,7 @@
                         <div class="order-details">
                             <span class="time-tag">Besteld om ${timing.time}</span> (${timing.mins} min)<br>
                             ${status === "6" ? "Tafelverbruik" : getStatusName(status)} | Planning: ${o.desired_del_time || 'ZSM'}<br>
-                            ${getPaymentBadge(o.payment_method)}
+                            ${getPaymentBadge(o.payment_method_id)}
                         </div>
                     </div>
                     <div class="price-tag">€${parseFloat(o.value || 0).toFixed(2)}</div>
