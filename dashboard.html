@@ -162,6 +162,7 @@
 
         setInterval(() => render(), 30000);
 
+        // Security / Drag & Drop
         window.addEventListener('dragstart', (e) => e.preventDefault());
         window.addEventListener('drop', (e) => e.preventDefault());
         window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
@@ -169,7 +170,7 @@
             if (e.ctrlKey && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
         });
 
-        // SINGLE COMBINED WEBVIEW LISTENER
+        // Combined Message Listener
         window.chrome.webview.addEventListener('message', event => {
             const msg = event.data;
             
@@ -241,7 +242,7 @@
             
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
 
-            // 1. Filter
+            // 1. FILTERING
             const filtered = list.filter(o => {
                 const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
                 const matchSearch = (o.address || "").toLowerCase().includes(query) || 
@@ -250,8 +251,13 @@
                 return matchStatus && matchSearch;
             });
 
-            // 2. SORT BY NEWEST FIRST
-            const sorted = filtered.sort((a, b) => new Date(b.order_date) - new Date(a.order_date));
+            // 2. SORTING: Guaranteed Newest First (Desc)
+            // We use getTime() to ensure numeric comparison of timestamps
+            const sorted = filtered.sort((a, b) => {
+                const dateA = new Date(a.order_date).getTime();
+                const dateB = new Date(b.order_date).getTime();
+                return dateB - dateA; 
+            });
 
             if (sorted.length === 0) {
                 empty.style.display = 'flex';
@@ -260,6 +266,7 @@
                 empty.style.display = 'none';
             }
 
+            // 3. GENERATE HTML
             sorted.forEach(o => {
                 const card = document.createElement('div');
                 const status = String(o.order_status_code);
@@ -272,7 +279,7 @@
                 let actionHtml = '';
 
                 if (status === "6") {
-                    title = `Tafel: ${o.table?.name || '?'}`;
+                    title = `🍽️ Tafel: ${o.table?.name || '?'}`;
                     if (o.table_active === true && o.table?.name) {
                         card.classList.add('is-table-active'); 
                         actionHtml = `<div class="table-actions">
@@ -282,7 +289,9 @@
                 } 
                 else if (o.take_away || status === "7") {
                     const person = (o.clientName && o.clientName.trim() !== "") ? o.clientName : (o.phone_no || "Onbekend");
-                    title = `Afhaal: ${person}`;
+                    title = `🛍️ Afhaal: ${person}`;
+                } else {
+                    title = `🚚 ${title}`;
                 }
 
                 const isOnline = o.payment_method === "payonline";
