@@ -325,7 +325,7 @@
                     }
                 } 
                 else if (o.take_away || status === "7") {
-                    const person = (o.clientName && o.clientName.trim() !== "") ? o.clientName : (o.phone_no ||  "" );
+                    const person = (o.clientName && o.clientName.trim() !== "") ? o.clientName : (o.phone_no ||  "${timing.time}" );
                     title = `🛍️ Afhaal: ${person}`;
                 } else {
                     title = `🚚 ${title}`;
