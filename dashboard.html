@@ -55,11 +55,7 @@
         }
         .main-btn.active { background-color: var(--pizza-red); color: white; }
 
-        .search-area { padding: 10px 12px; background: #f9f9f9; border-bottom: 1px solid #ddd; display: hidden}
-        #searchInput { 
-            width: 100%; padding: 14px; border-radius: 8px; border: 1px solid #ccc; 
-            font-size: 1.1rem; outline: none; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-        }
+      
 
         /* Sub-buttons (Big for touchscreen) */
         .sub-tabs { display: flex; background-color: #fff; padding: 10px; gap: 8px; overflow-x: auto; min-height: 64px; }
@@ -145,9 +141,7 @@
             <button id="tabPos" class="main-btn" onclick="setMain('pos')">Kassa Bestellingen</button>
         </div>
 
-        <div class="search-area">
-            <input type="text" id="searchInput" placeholder="Zoek op naam, adres of tafel...." oninput="render()">
-        </div>
+     
 
         <div class="sub-tabs" id="subTabs">
             <button class="sub-btn active" data-code="all" onclick="setFilter('all')">Alles</button>
@@ -281,20 +275,14 @@
         function render() {
             const feed = document.getElementById('orderFeed');
             const empty = document.getElementById('emptyState');
-            const query = document.getElementById('searchInput').value.toLowerCase();
+            
             feed.innerHTML = '';
             
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
 
-            const filtered = list.filter(o => {
-                const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
-                const matchSearch = (o.address || "").toLowerCase().includes(query) || 
-                                    (o.clientName || "").toLowerCase().includes(query) ||
-                                    (o.table?.name || "").toLowerCase().includes(query);
-                return matchStatus && matchSearch;
-            });
+    
 
-            const sorted = filtered.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
+            const sorted = list.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
 
             if (sorted.length === 0) {
                 empty.style.display = 'flex';
