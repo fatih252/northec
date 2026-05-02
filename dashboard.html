@@ -279,10 +279,14 @@
             feed.innerHTML = '';
             
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
-
+            const filtered = list.filter(o => {
+                const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
+               
+                return matchStatus ;
+            });
     
 
-            const sorted = list.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
+            const sorted = filtered.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
 
             if (sorted.length === 0) {
                 empty.style.display = 'flex';
