@@ -20,6 +20,8 @@
             font-family: 'Segoe UI', Tahoma, sans-serif; 
             display: flex; margin: 0; background: var(--bg-page); 
             height: 100vh; overflow: hidden; 
+            /* Voorkom dat de hele pagina ongewenst scrollt of inzoomt bij touch-slepen */
+            touch-action: pan-x pan-y;
         }
 
         #sidebar { 
@@ -35,7 +37,7 @@
         label { display: block; font-weight: 600; margin-bottom: 5px; color: #495057; font-size: 0.85em; }
         
         input[type="date"], input[type="text"] { 
-            width: 100%; padding: 10px; border: 1px solid #ced4da; 
+            width: 100%; padding: 12px; border: 1px solid #ced4da; 
             border-radius: 4px; box-sizing: border-box; font-size: 1em;
         }
 
@@ -47,9 +49,11 @@
         }
 
         .btn { 
-            width: 100%; padding: 12px; border: none; border-radius: 4px; 
+            width: 100%; padding: 14px; border: none; border-radius: 4px; 
             cursor: pointer; font-weight: bold; margin-bottom: 10px; font-size: 14px;
             transition: all 0.2s;
+            /* Groter touchoppervlak voor vingers */
+            min-height: 48px;
         }
         #btnConfirm { background: var(--success); color: white; display: none; }
         #btnCancel { background: #6c757d; color: white; display: none; }
@@ -59,13 +63,24 @@
 
         .planning-card { 
             background: #fff; border: 1px solid #e9ecef; border-left: 5px solid var(--primary); 
-            padding: 12px; margin-bottom: 10px; border-radius: 4px; 
+            padding: 14px; margin-bottom: 10px; border-radius: 4px; 
             display: flex; justify-content: space-between; align-items: center;
         }
         .planning-card.active { border-left-color: var(--warning); background-color: #fffaf0; }
 
-        .btn-del { background: none; color: #adb5bd; border: none; cursor: pointer; font-size: 1.2em; }
+        /* Grotere sluitknop voor touchscreens */
+        .btn-del { 
+            background: none; color: #adb5bd; border: none; cursor: pointer; 
+            font-size: 1.5em; padding: 10px; min-width: 44px; min-height: 44px;
+        }
+        .btn-del:hover { color: var(--danger); }
         #calendar-container { flex-grow: 1; padding: 20px; background: white; }
+
+        /* Zorg dat datums op touchscreens makkelijker aan te tikken zijn */
+        .fc .fc-daygrid-day-number {
+            padding: 8px !important;
+            font-size: 1.1em;
+        }
     </style>
 </head>
 <body>
@@ -123,6 +138,12 @@
             selectable: true,
             unselectAuto: false,
             validRange: { start: todayStr },
+            
+            // --- TOUCHSCREEN OPTIMALISATIES ---
+            longPressDelay: 0,        // Reageert direct op aanraking in plaats van 1 sec te moeten wachten
+            selectLongPressDelay: 0,  // Verwijdert de vertraging specifiek voor datums selecteren
+            selectMirror: true,       // Toont direct een visuele selectie-balk tijdens het slepen op touch
+
             select: function(info) {
                 startInput.value = info.startStr;
                 let d = new Date(info.end); d.setDate(d.getDate() - 1);
@@ -139,7 +160,6 @@
     });
 
     function generateBannerSuggestion(start, end) {
-        // Maak een nette tekst suggestie
         const msg = `Let op: Winkel gesloten van ${start} t/m ${end}.`;
         bannerInput.value = msg;
         bannerGroup.style.display = 'block';
@@ -166,7 +186,7 @@
         window.chrome.webview.postMessage({ 
             startDate: startInput.value, 
             endDate: endInput.value,
-            bannerText: bannerInput.value, // Stuur de banner tekst mee
+            bannerText: bannerInput.value, 
             shopId: 101 
         });
         btnCancel.onclick();
@@ -191,11 +211,15 @@
             `;
             listDiv.appendChild(card);
 
+            // Zorg voor een correct exclusief einde op de kalender
+            let endCal = new Date(group.TillDate);
+            endCal.setDate(endCal.getDate() + 1);
+
             calendar.addEvent({
                 id: group.JobId,
                 title: isClosed ? 'DICHT' : 'GEPLAND',
                 start: group.FromDate,
-                end: group.TillDate, // Vereenvoudigd voor voorbeeld
+                end: endCal.toISOString().split('T')[0],
                 allDay: true,
                 backgroundColor: isClosed ? '#fd7e14' : '#dc3545'
             });
