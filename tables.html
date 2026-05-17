@@ -3,17 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POS Touchscreen Floorplan Layout</title>
+    <title>POS Touchscreen Floorplan & Orders Dashboard</title>
     <style>
         :root {
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --border-color: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --bg-main: #0b0f19;
+            --bg-canvas: #111827;
+            --bg-card: #1f2937;
+            --bg-sidebar: #111827;
+            --border-color: #374151;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            
+            /* POS Context States */
             --color-vacant: #10b981;
             --color-active: #ef4444;
             --color-edit: #3b82f6;
+            --color-pending: #f59e0b;
         }
 
         * { 
@@ -22,7 +27,7 @@
             -webkit-user-select: none;
             margin: 0; 
             padding: 0; 
-            touch-action: none; /* Block browser swipe-to-scroll behaviours entirely */
+            touch-action: none; /* Block browser pinching/scrolling entirely */
         }
 
         body, html { 
@@ -34,12 +39,17 @@
             color: var(--text-main); 
         }
         
-        #app-container { display: flex; flex-direction: column; width: 100%; height: 100%; }
+        #app-container { 
+            display: flex; 
+            flex-direction: column; 
+            width: 100%; 
+            height: 100%; 
+        }
 
         /* --- Touch Controls Top Panel Bar --- */
         #control-bar {
             height: 75px;
-            background-color: #0b0f19;
+            background-color: var(--bg-main);
             border-bottom: 2px solid var(--border-color);
             display: flex;
             align-items: center;
@@ -65,23 +75,112 @@
             gap: 8px;
             transition: background-color 0.12s ease, transform 0.1s ease;
         }
-        .pos-btn:active { transform: scale(0.96); background-color: #334155; }
+        .pos-btn:active { transform: scale(0.96); background-color: #374151; }
         .pos-btn.primary { background-color: #2563eb; border-color: #3b82f6; }
         .pos-btn.success { background-color: #059669; border-color: #10b981; }
         .pos-btn.danger { background-color: #b91c1c; border-color: #ef4444; }
         .pos-btn.scale-btn { width: 52px; padding: 0; justify-content: center; font-size: 22px; }
 
-        /* --- Viewport Canvas --- */
-        #canvas-wrapper { flex: 1; position: relative; overflow: auto; background-color: #131b2e; }
-        #canvas { position: absolute; width: 3000px; height: 3000px; background-size: cover; background-position: center; }
+        /* --- Split Workspace Area --- */
+        #workspace {
+            display: flex;
+            flex: 1;
+            width: 100%;
+            height: calc(100% - 75px);
+            overflow: hidden;
+            position: relative;
+        }
 
-        /* Render alignment dot grids during active edit status loops */
+        /* --- Viewport-Locked Canvas (NO SCROLLBARS) --- */
+        #canvas-wrapper { 
+            flex: 1; 
+            position: relative; 
+            height: 100%;
+            background-color: var(--bg-canvas);
+            overflow: hidden; /* Guaranteed no scrollbars */
+        }
+        
+        #canvas { 
+            position: absolute; 
+            width: 100%; 
+            height: 100%; 
+            background-size: cover; 
+            background-position: center; 
+            overflow: hidden;
+        }
+
+        /* Architectural blueprint grid visible only when updating positions */
         .edit-mode #canvas {
-            background-image: radial-gradient(circle, #334155 2px, transparent 2px);
+            background-image: radial-gradient(circle, #374151 2px, transparent 2px);
             background-size: 20px 20px;
         }
 
-        /* --- Illustrative Touch Elements --- */
+        /* --- Disposable Split Window Sidebar --- */
+        #order-sidebar {
+            width: 400px;
+            height: 100%;
+            background-color: var(--bg-sidebar);
+            border-left: 2px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s ease;
+            z-index: 50;
+            overflow: hidden;
+        }
+
+        #order-sidebar.collapsed {
+            width: 0px;
+            border-left: none;
+            transform: translateX(100%);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-main);
+        }
+
+        .sidebar-header h2 { font-size: 18px; font-weight: 700; }
+
+        .order-list-container {
+            flex: 1;
+            overflow-y: auto; /* Allow scrolling inside the sidebar list only */
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* --- Premium Sidebar Order Cards --- */
+        .order-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: border-color 0.15s ease, transform 0.1s ease;
+        }
+        .order-card:active { transform: scale(0.98); }
+        .order-card.unprocessed { border-left: 5px solid var(--color-pending); }
+        .order-card.table-order { border-left: 5px solid var(--color-edit); }
+
+        .order-card-row { display: flex; justify-content: space-between; align-items: center; }
+        .order-id-label { font-weight: 700; font-size: 15px; color: var(--text-main); }
+        .order-time-label { font-size: 13px; color: var(--text-muted); }
+        .order-detail-label { font-size: 14px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .order-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .order-badge.pending { background-color: rgba(245, 158, 11, 0.2); color: var(--color-pending); }
+        .order-badge.active { background-color: rgba(59, 130, 246, 0.2); color: var(--color-edit); }
+        .order-price-tag { font-weight: 700; color: var(--color-vacant); font-size: 15px; }
+
+        /* --- Graphical Table Components --- */
         .table-item {
             position: absolute;
             display: flex;
@@ -92,7 +191,6 @@
             padding: 12px;
             cursor: pointer;
         }
-        .table-item:active { transform: scale(0.96); }
         
         .edit-mode .table-item { 
             cursor: move; 
@@ -144,21 +242,35 @@
             </div>
 
             <div class="btn-group">
+                <button class="pos-btn" onclick="toggleSidebar()">Bestellingen Lijst</button>
                 <button class="pos-btn" onclick="sendToWinForms({action: 'triggerBackgroundPicker'})">Achtergrond Laden</button>
                 <button class="pos-btn" onclick="sendToWinForms({action: 'removeBackground'})" style="color: var(--text-muted)">Wissen</button>
                 <button class="pos-btn danger" onclick="sendToWinForms({action: 'resetLayout'})">Reset Layout</button>
                 <button id="btn-fullscreen" class="pos-btn" onclick="sendToWinForms({action: 'toggleFullscreen'})">Volledig Scherm</button>
-                <button class="pos-btn" style="background-color: #374151;" onclick="sendToWinForms({action: 'closeForm'})">Sluiten</button>
+                <button class="pos-btn" style="background-color: #4b5563;" onclick="sendToWinForms({action: 'closeForm'})">Sluiten</button>
             </div>
         </div>
 
-        <div id="canvas-wrapper">
-            <div id="canvas"></div>
+        <div id="workspace">
+            <div id="canvas-wrapper">
+                <div id="canvas"></div>
+            </div>
+
+            <div id="order-sidebar" class="collapsed">
+                <div class="sidebar-header">
+                    <h2>Actieve Bestellingen</h2>
+                    <button class="pos-btn scale-btn" style="height: 36px; width: 36px; font-size: 14px;" onclick="toggleSidebar()">✕</button>
+                </div>
+                <div class="order-list-container" id="order-list-target">
+                    </div>
+            </div>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('canvas');
+        const orderListTarget = document.getElementById('order-list-target');
+        const sidebar = document.getElementById('order-sidebar');
         let appState = { editMode: false, gridSize: 20, tableWidth: 120, tableHeight: 120 };
 
         function initLayout(payload) {
@@ -189,6 +301,7 @@
             canvas.style.backgroundImage = payload.backgroundImage ? `url('${payload.backgroundImage}')` : 'none';
             canvas.innerHTML = '';
 
+            // 1. Render Interactive Floorplan Canvas Tables
             payload.tables.forEach(table => {
                 const el = document.createElement('div');
                 el.className = `table-item ${table.isActive ? 'active' : 'vacant'}`;
@@ -220,9 +333,47 @@
                     el.style.top = "100px";
                 }
 
+                // Force layout containment parameters inside the viewport bounds right now
+                clampElementToCanvas(el);
+
                 attachInteractions(el);
                 canvas.appendChild(el);
             });
+
+            // 2. Render Sidebar Order Feed List
+            orderListTarget.innerHTML = '';
+            if (payload.orders && payload.orders.length > 0) {
+                payload.orders.forEach(order => {
+                    const card = document.createElement('div');
+                    card.className = `order-card ${order.processed ? 'table-order' : 'unprocessed'}`;
+                    card.onclick = () => sendToWinForms({ action: 'orderClicked', orderId: order.orderId });
+
+                    card.innerHTML = `
+                        <div class="order-card-row">
+                            <span class="order-id-label">Bestelling #${order.idDisplay}</span>
+                            <span class="order-time-label">${order.timeDisplay}</span>
+                        </div>
+                        <div class="order-detail-label">${order.destination}</div>
+                        <div class="order-card-row" style="margin-top: 4px;">
+                            <span class="order-badge ${order.processed ? 'active' : 'pending'}">
+                                ${order.processed ? 'Actief' : 'Nieuw'}
+                            </span>
+                            <span class="order-price-tag">${order.totalPrice}</span>
+                        </div>
+                    `;
+                    orderListTarget.appendChild(card);
+                });
+            } else {
+                orderListTarget.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin-top:40px; font-size:14px;">Geen actieve bestellingen gevonden</div>`;
+            }
+        }
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('collapsed');
+            // Re-enforce bounding constraints across all elements since the layout width shifted
+            setTimeout(() => {
+                document.querySelectorAll('.table-item').forEach(el => clampElementToCanvas(el));
+            }, 300);
         }
 
         function toggleEditMode() {
@@ -247,7 +398,30 @@
             document.querySelectorAll('.table-item').forEach(el => {
                 el.style.width = `${appState.tableWidth}px`;
                 el.style.height = `${appState.tableHeight}px`;
+                clampElementToCanvas(el);
             });
+        }
+
+        function clampElementToCanvas(element) {
+            let currentX = parseInt(element.style.left) || 0;
+            let currentY = parseInt(element.style.top) || 0;
+
+            let maxAllowedX = canvas.clientWidth - element.clientWidth;
+            let maxAllowedY = canvas.clientHeight - element.clientHeight;
+
+            // Prevent layout crash if wrapper has not parsed explicit width yet
+            if (maxAllowedX < 0) maxAllowedX = 0;
+            if (maxAllowedY < 0) maxAllowedY = 0;
+
+            let clampedX = Math.max(0, Math.min(currentX, maxAllowedX));
+            let clampedY = Math.max(0, Math.min(currentY, maxAllowedY));
+
+            // Force alignment to grid spacing rules directly during sizing corrections
+            clampedX = Math.round(clampedX / appState.gridSize) * appState.gridSize;
+            clampedY = Math.round(clampedY / appState.gridSize) * appState.gridSize;
+
+            element.style.left = `${clampedX}px`;
+            element.style.top = `${clampedY}px`;
         }
 
         function attachInteractions(element) {
@@ -278,10 +452,10 @@
                 let unalignedX = initialLeft + deltaX;
                 let unalignedY = initialTop + deltaY;
 
-                // Live Active Snapping alignment calculation
                 let alignedX = Math.round(unalignedX / appState.gridSize) * appState.gridSize;
                 let alignedY = Math.round(unalignedY / appState.gridSize) * appState.gridSize;
 
+                // Viewport boundary containment constraints checks
                 alignedX = Math.max(0, Math.min(alignedX, canvas.clientWidth - element.clientWidth));
                 alignedY = Math.max(0, Math.min(alignedY, canvas.clientHeight - element.clientHeight));
 
