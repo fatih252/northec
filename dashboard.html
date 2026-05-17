@@ -39,9 +39,9 @@
             overscroll-behavior-y: none;
             -webkit-font-smoothing: antialiased;
             
-            /* Modern Flexbox Layout to prevent empty space at the bottom */
+            /* Changed to Row: Places Sidebar and Content side-by-side */
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
         }
 
         ::-webkit-scrollbar { width: 10px; }
@@ -51,62 +51,130 @@
 
         .hidden-config { display: none !important; }
 
-        /* Header Section */
-        .header-container {
-            flex-shrink: 0; /* Prevents the header from squeezing */
+        /* --- SIDEBAR CONTAINER (LEFT SIDE) --- */
+        .sidebar-container {
+            width: 260px; /* Fixed standard width for easy touch-accuracy */
+            flex-shrink: 0;
             background: white; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            border-right: 2px solid #ddd;
         }
 
-        .main-tabs { display: flex; background-color: #bcbcbc; border-bottom: 2px solid var(--pizza-red); }
+        /* Stack Main Buttons Vertically */
+        .main-tabs { 
+            display: flex; 
+            flex-direction: column; 
+            background-color: #bcbcbc; 
+        }
         .main-btn { 
-            flex: 1; padding: 18px; border: none; font-size: 1.15rem; font-weight: bold; 
-            cursor: pointer; background: #bcbcbc; color: #444; text-transform: uppercase; 
+            width: 100%; 
+            padding: 16px; 
+            border: none; 
+            border-bottom: 1px solid #a3a3a3;
+            font-size: 1.1rem; 
+            font-weight: bold; 
+            cursor: pointer; 
+            background: #bcbcbc; 
+            color: #444; 
+            text-transform: uppercase; 
+            text-align: left;
         }
-        .main-btn.active { background-color: var(--pizza-red); color: white; }
+        .main-btn.active { 
+            background-color: var(--pizza-red); 
+            color: white; 
+            border-bottom-color: var(--pizza-red);
+        }
 
-        /* Sub-buttons (Big for touchscreen) */
-        .sub-tabs { display: flex; background-color: #fff; padding: 10px; gap: 8px; overflow-x: auto; min-height: 64px; }
+        /* Stack Sub-Buttons Vertically */
+        .sub-tabs { 
+            display: flex; 
+            flex-direction: column; 
+            background-color: #fff; 
+            padding: 12px; 
+            gap: 10px; 
+            overflow-y: auto; /* Allow vertical scrolling inside sidebar if buttons overflow */
+            flex-grow: 1;
+        }
         .sub-btn { 
-            display: none; padding: 12px 24px; border: 1px solid #ccc; border-radius: 8px; 
-            cursor: pointer; font-size: 1rem; font-weight: 700; background: white; color: #444;
-            white-space: nowrap; transition: all 0.2s;
+            display: none; 
+            width: 100%;
+            padding: 14px 16px; 
+            border: 1px solid #ccc; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            font-weight: 700; 
+            background: white; 
+            color: #444;
+            text-align: left;
+            white-space: nowrap; 
+            transition: all 0.2s;
         }
         .sub-btn[data-code="all"] { display: block; }
-        .sub-btn.active { background-color: #444; color: white; border-color: #444; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .sub-btn.active { 
+            background-color: #444; 
+            color: white; 
+            border-color: #444; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+        }
 
-        /* Content feed stretches exactly to fill the rest of the webview viewport */
+        /* Live Search Bar inside Sidebar */
+        .search-box {
+            padding: 12px;
+            background: #fff;
+            border-top: 1px solid #eee;
+            flex-shrink: 0;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+        }
+
+        /* --- CONTENT AREA (RIGHT SIDE) --- */
         .content { 
             flex-grow: 1; 
             overflow-y: auto; 
-            padding: 10px; 
+            padding: 15px; 
             display: flex; 
             flex-direction: column; 
-            gap: 10px; 
+            gap: 12px; 
+            height: 100%; /* Spans full height of screen layout */
         }
 
         #emptyState {
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            height: 100%; color: #888; text-align: center; padding-top: 50px;
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            height: 100%; 
+            color: #888; 
+            text-align: center;
+            flex-grow: 1;
         }
 
         /* Order Card Layout */
         .order-card {
-            background: var(--card-white); border-radius: 8px; padding: 12px 18px;
+            background: var(--card-white); border-radius: 8px; padding: 14px 18px;
             display: grid; grid-template-columns: 1fr 100px 160px;
             align-items: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.08); border: 1px solid #ddd;
             border-left: 12px solid transparent; cursor: pointer;
             position: relative; transition: transform 0.1s;
         }
-        .order-card:active { transform: scale(0.98); background-color: #f8f8f8; }
+        .order-card:active { transform: scale(0.99); background-color: #f8f8f8; }
 
         .address-title { font-weight: 800; font-size: 1.25rem; color: #000; }
         .order-details { font-size: 1rem; color: #555; margin-top: 4px; line-height: 1.4; }
         .time-tag { font-weight: bold; color: #d32f2f; }
         .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.5rem; padding-right: 15px; }
 
-        /* BIG TOUCH-READY CHECKIN BUTTON */
+        /* Touch-Ready Action Button */
         .btn-checkin {
             padding: 22px 15px;
             border: none;
@@ -141,20 +209,20 @@
             display: inline-block; font-weight: 800; font-size: 0.8rem; 
             padding: 4px 12px; border-radius: 14px; margin-top: 6px; border: 1px solid currentColor; text-transform: uppercase;
         }
-        .pay-online { background-color: #e8f5e9; color: #2e7d32; } /* Reeds Betaald - Green */
-        .pay-1 { background-color: #fafafa; color: #666; } /* Contant - Grey */
-        .pay-2 { background-color: #e3f2fd; color: #0277bd; } /* Bancontact - Blue */
-        .pay-3 { background-color: #fce4ec; color: #c2185b; } /* Payconiq - Fuchsia */
-        .pay-4 { background-color: #fff3e0; color: #e65100; } /* Combinatie - Orange */
+        .pay-online { background-color: #e8f5e9; color: #2e7d32; } 
+        .pay-1 { background-color: #fafafa; color: #666; } 
+        .pay-2 { background-color: #e3f2fd; color: #0277bd; } 
+        .pay-3 { background-color: #fce4ec; color: #c2185b; } 
+        .pay-4 { background-color: #fff3e0; color: #e65100; } 
 
     </style>
 </head>
 <body>
 
-    <div class="header-container">
+    <div class="sidebar-container">
         <div class="main-tabs">
-            <button id="tabOnline" class="main-btn active" onclick="setMain('online')">Online Bestellingen</button>
-            <button id="tabPos" class="main-btn" onclick="setMain('pos')">Kassa Bestellingen</button>
+            <button id="tabOnline" class="main-btn active" onclick="setMain('online')">Online Orders</button>
+            <button id="tabPos" class="main-btn" onclick="setMain('pos')">Kassa Orders</button>
         </div>
 
         <div class="sub-tabs" id="subTabs">
@@ -164,6 +232,10 @@
             <button class="sub-btn" data-code="6" onclick="setFilter('6')">🍽️ Tafels</button>
             <button class="sub-btn" data-code="3" onclick="setFilter('3')">📝 Concept</button>
             <button class="sub-btn" data-code="4" onclick="setFilter('4')">❌ Geannuleerd</button>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="orderSearch" placeholder="🔍 Zoek bestelling..." oninput="render()">
         </div>
     </div>
 
@@ -285,20 +357,36 @@
         function render() {
             const feed = document.getElementById('orderFeed');
             const empty = document.getElementById('emptyState');
+            const searchQuery = document.getElementById('orderSearch').value.toLowerCase();
             
             feed.innerHTML = '';
             
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
+            
+            // Filters based on both Sidebar Tab select state and Search box string input
             const filtered = list.filter(o => {
-                return (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
+                const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
+                
+                const clientInfo = (o.clientName || '').toLowerCase();
+                const addressInfo = (o.address || '').toLowerCase();
+                const phoneInfo = (o.phone_no || '').toLowerCase();
+                const orderIdInfo = String(o.order_id || '').toLowerCase();
+                const matchSearch = clientInfo.includes(searchQuery) || 
+                                      addressInfo.includes(searchQuery) || 
+                                      phoneInfo.includes(searchQuery) || 
+                                      orderIdInfo.includes(searchQuery);
+
+                return matchStatus && matchSearch;
             });
     
             const sorted = filtered.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
 
             if (sorted.length === 0) {
+                feed.style.display = 'none';
                 empty.style.display = 'flex';
                 return;
             } else {
+                feed.style.display = 'flex';
                 empty.style.display = 'none';
             }
 
