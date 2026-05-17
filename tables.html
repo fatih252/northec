@@ -26,7 +26,7 @@
             --color-edit: #3b82f6;
         }
 
-        /* --- NATIVE APP LOCKDOWN FROM MAIN DASHBOARD --- */
+        /* --- DASHBOARD SYSTEM BASE --- */
         * { 
             -webkit-tap-highlight-color: transparent; 
             box-sizing: border-box; 
@@ -34,7 +34,7 @@
             -webkit-user-select: none;
             margin: 0; 
             padding: 0; 
-            touch-action: none; /* Critical lockdown against touchscreen pinch-to-zoom */
+            touch-action: none; /* Block browser pinching/scrolling controls */
         }
 
         body, html { 
@@ -44,12 +44,12 @@
             font-family: 'Segoe UI', -apple-system, Tahoma, sans-serif;
             background-color: var(--bg-main); 
             color: var(--text-main); 
-            overscroll-behavior: none; /* Blocks bounce scrolling */
+            overscroll-behavior: none;
         }
         
         #app-container { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
-        /* --- Low-Res Adaptive Touch Control Bar --- */
+        /* --- Compact Control Bar (Low-Res Friendly) --- */
         #control-bar {
             min-height: 65px;
             background-color: var(--bg-main);
@@ -65,6 +65,7 @@
 
         .btn-group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 
+        /* Massive touch elements optimized dynamically for compact heights */
         .pos-btn {
             background-color: var(--bg-card);
             color: var(--text-main);
@@ -113,6 +114,7 @@
             overflow: hidden;
         }
 
+        /* High-contrast explicit matrix gridlines back in edit mode */
         .edit-mode #canvas {
             background-image: 
                 linear-gradient(to right, rgba(55, 65, 81, 0.6) 1px, transparent 1px),
@@ -120,12 +122,12 @@
             background-size: 20px 20px;
         }
 
-        /* --- Overlay Sidebar Slider --- */
+        /* --- Overlay Sidebar Drawer Slider --- */
         #order-sidebar {
             position: absolute;
             right: 0;
             top: 0;
-            width: 340px; 
+            width: 320px; /* Slim template layer footprint to protect viewport real estate */
             height: 100%;
             background-color: #f1f5f9;
             border-left: 3px solid #cbd5e1;
@@ -136,9 +138,7 @@
             box-shadow: -5px 0 20px rgba(0,0,0,0.3);
         }
 
-        #order-sidebar.collapsed {
-            transform: translateX(100%);
-        }
+        #order-sidebar.collapsed { transform: translateX(100%); }
 
         .sidebar-header {
             padding: 12px;
@@ -175,31 +175,12 @@
             background: #e2e8f0;
             border-radius: 4px;
         }
-        .sidebar-section-title.collapsable {
-            cursor: pointer;
-        }
-        .sidebar-section-title.collapsable:active {
-            background-color: #cbd5e1;
-        }
+        .sidebar-section-title.collapsable { cursor: pointer; }
+        .sidebar-section-title.collapsable:active { background-color: #cbd5e1; }
 
-        .toggle-icon {
-            font-size: 10px;
-            transition: transform 0.15s ease;
-            display: inline-block;
-        }
-        .collapsed-section .toggle-icon {
-            transform: rotate(-90deg);
-        }
-
-        .sidebar-section-badge {
-            background: #334155;
-            color: #ffffff;
-            padding: 2px 6px;
-            border-radius: 8px;
-            font-size: 10px;
-            font-weight: 900;
-            margin-right: 6px;
-        }
+        .toggle-icon { font-size: 10px; transition: transform 0.15s ease; display: inline-block; }
+        .collapsed-section .toggle-icon { transform: rotate(-90deg); }
+        .sidebar-section-badge { background: #334155; color: #ffffff; padding: 2px 6px; border-radius: 8px; font-size: 10px; font-weight: 900; margin-right: 6px; }
 
         .vertical-stack-bucket {
             display: flex;
@@ -210,12 +191,7 @@
             max-height: 2000px; 
             opacity: 1;
         }
-        .collapsed-section .vertical-stack-bucket {
-            max-height: 0px !important;
-            opacity: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
+        .collapsed-section .vertical-stack-bucket { max-height: 0px !important; opacity: 0 !important; margin: 0 !important; padding: 0 !important; }
 
         /* --- Dashboard Styled Order Cards --- */
         .order-card {
@@ -242,7 +218,7 @@
         .time-tag { font-weight: bold; color: #b91c1c; }
         .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.2rem; min-width: 70px; }
 
-        /* --- Touch Illustrative Tables --- */
+        /* --- Touch Responsive Tables Map Vectors --- */
         .table-item {
             position: absolute;
             display: flex;
@@ -328,9 +304,7 @@
                 <div class="order-list-container">
                     <div class="sidebar-section-title">
                         <span>Actieve Tafels</span>
-                        <div>
-                            <span id="badgeActiveCount" class="sidebar-section-badge">0</span>
-                        </div>
+                        <div><span id="badgeActiveCount" class="sidebar-section-badge">0</span></div>
                     </div>
                     <div id="active-bucket" class="vertical-stack-bucket"></div>
 
@@ -350,7 +324,7 @@
     </div>
 
     <script>
-        // --- ZOOM INTERCEPT LOGIC MATCHED FROM MAIN DASHBOARD ---
+        // --- ZOOM OVERRIDE CAPTURES MATCHING THE SYSTEM MAIN DASHBOARD ---
         window.addEventListener('dragstart', (e) => e.preventDefault());
         window.addEventListener('drop', (e) => e.preventDefault());
         window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
@@ -426,11 +400,82 @@
                 }
 
                 canvas.appendChild(el);
-                clampElementToCanvas(el);
             });
+
+            // Run alignment checks and force anti-stacking collision matrix parameters immediately
+            resolveAllCollisions();
 
             renderBucketList(activeBucket, payload.activeOrders, 'indicator-table-open', 'Geopend', 'badgeActiveCount');
             renderBucketList(inactiveBucket, payload.inactiveOrders, 'indicator-table-closed', 'Afgesloten', 'badgeInactiveCount');
+        }
+
+        // --- SEQUENTIAL ANTI-STACKING ALGORITHM ---
+        function resolveAllCollisions() {
+            const items = Array.from(document.querySelectorAll('.table-item'));
+            if (items.length === 0) return;
+
+            // Sort left-to-right, top-to-bottom so pushing maintains logical flow
+            items.sort((a, b) => {
+                let topA = parseInt(a.style.top) || 0;
+                let topB = parseInt(b.style.top) || 0;
+                if (topA === topB) {
+                    return (parseInt(a.style.left) || 0) - (parseInt(b.style.left) || 0);
+                }
+                return topA - topB;
+            });
+
+            let changed = true;
+            let safetyCounter = 0;
+            const maxCycles = 50; 
+
+            while (changed && safetyCounter < maxCycles) {
+                changed = false;
+                safetyCounter++;
+
+                for (let i = 0; i < items.length; i++) {
+                    let el1 = items[i];
+                    let x1 = parseInt(el1.style.left) || 0;
+                    let y1 = parseInt(el1.style.top) || 0;
+
+                    // Enforce basic viewport bounding constraints first
+                    let maxW = canvas.clientWidth - appState.tableWidth;
+                    let maxH = canvas.clientHeight - appState.tableHeight;
+                    if (x1 > maxW) { x1 = Math.floor(maxW / appState.gridSize) * appState.gridSize; changed = true; }
+                    if (y1 > maxH) { y1 = Math.floor(maxH / appState.gridSize) * appState.gridSize; changed = true; }
+                    if (x1 < 0) { x1 = 0; changed = true; }
+                    if (y1 < 0) { y1 = 0; changed = true; }
+
+                    for (let j = 0; j < items.length; j++) {
+                        if (i === j) continue;
+                        let el2 = items[j];
+                        let x2 = parseInt(el2.style.left) || 0;
+                        let y2 = parseInt(el2.style.top) || 0;
+
+                        // Check overlapping thresholds (include small padding buffer area)
+                        if (Math.abs(x1 - x2) < (appState.tableWidth - 5) && Math.abs(y1 - y2) < (appState.tableHeight - 5)) {
+                            // Magnetically step el1 to the right on the grid line
+                            x1 += appState.gridSize;
+
+                            // Wrap lines down to next row block if pushed beyond right threshold
+                            if (x1 + appState.tableWidth > canvas.clientWidth) {
+                                x1 = 0;
+                                y1 += appState.gridSize;
+                            }
+
+                            // Block vertical bleed past bottom canvas safety boundary
+                            if (y1 + appState.tableHeight > canvas.clientHeight) {
+                                y1 = Math.floor((canvas.clientHeight - appState.tableHeight) / appState.gridSize) * appState.gridSize;
+                                if (y1 < 0) y1 = 0;
+                            }
+
+                            changed = true;
+                        }
+                    }
+
+                    el1.style.left = `${x1}px`;
+                    el1.style.top = `${y1}px`;
+                }
+            }
         }
 
         function renderBucketList(targetElement, list, indicatorClass, statusText, badgeId) {
@@ -468,9 +513,7 @@
             icon.innerText = historyWrapper.classList.contains('collapsed-section') ? '▼' : '▲';
         }
 
-        function toggleSidebar() {
-            sidebar.classList.toggle('collapsed');
-        }
+        function toggleSidebar() { sidebar.classList.toggle('collapsed'); }
 
         function toggleEditMode() {
             if (!appState.editMode) {
@@ -494,34 +537,13 @@
             document.querySelectorAll('.table-item').forEach(el => {
                 el.style.width = `${appState.tableWidth}px`;
                 el.style.height = `${appState.tableHeight}px`;
-                clampElementToCanvas(el);
             });
+            resolveAllCollisions();
         }
 
-        function clampElementToCanvas(element) {
-            let currentX = parseInt(element.style.left) || 0;
-            let currentY = parseInt(element.style.top) || 0;
+        window.addEventListener('resize', () => { resolveAllCollisions(); });
 
-            let maxAllowedX = canvas.clientWidth - element.clientWidth;
-            let maxAllowedY = canvas.clientHeight - element.clientHeight;
-
-            if (maxAllowedX < 0) maxAllowedX = 0;
-            if (maxAllowedY < 0) maxAllowedY = 0;
-
-            let clampedX = Math.max(0, Math.min(currentX, maxAllowedX));
-            let clampedY = Math.max(0, Math.min(currentY, maxAllowedY));
-
-            clampedX = Math.round(clampedX / appState.gridSize) * appState.gridSize;
-            clampedY = Math.round(clampedY / appState.gridSize) * appState.gridSize;
-
-            element.style.left = `${clampedX}px`;
-            element.style.top = `${clampedY}px`;
-        }
-
-        window.addEventListener('resize', () => {
-            document.querySelectorAll('.table-item').forEach(el => clampElementToCanvas(el));
-        });
-
+        // Touch drag events listener subsystem
         document.addEventListener('pointerdown', (e) => {
             const el = e.target.closest('.table-item');
             if (!el) return;
@@ -559,6 +581,9 @@
                 el.style.zIndex = "";
                 el.removeEventListener('pointermove', onPointerMove);
                 el.removeEventListener('pointerup', onPointerUp);
+                
+                // Fire complete resolution loop to clear any collisions created on final release
+                resolveAllCollisions();
             };
 
             el.addEventListener('pointermove', onPointerMove);
