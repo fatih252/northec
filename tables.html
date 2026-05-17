@@ -26,13 +26,15 @@
             --color-edit: #3b82f6;
         }
 
+        /* --- NATIVE APP LOCKDOWN FROM MAIN DASHBOARD --- */
         * { 
+            -webkit-tap-highlight-color: transparent; 
             box-sizing: border-box; 
             user-select: none; 
             -webkit-user-select: none;
             margin: 0; 
             padding: 0; 
-            touch-action: none; /* Complete lockdown against default gestures/pinching */
+            touch-action: none; /* Critical lockdown against touchscreen pinch-to-zoom */
         }
 
         body, html { 
@@ -42,59 +44,58 @@
             font-family: 'Segoe UI', -apple-system, Tahoma, sans-serif;
             background-color: var(--bg-main); 
             color: var(--text-main); 
+            overscroll-behavior: none; /* Blocks bounce scrolling */
         }
         
         #app-container { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
-        /* --- Touch Control Bar (Optimized for Low-Res) --- */
+        /* --- Low-Res Adaptive Touch Control Bar --- */
         #control-bar {
-            min-height: 85px;
+            min-height: 65px;
             background-color: var(--bg-main);
             border-bottom: 2px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 16px;
+            padding: 8px 12px;
             z-index: 9999;
             flex-wrap: wrap; 
-            gap: 8px;
+            gap: 6px;
         }
 
-        .btn-group { display: flex; gap: 10px; align-items: center; }
+        .btn-group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 
-        /* Large Touch Targets (Minimum 58px-60px for touchscreen terminals) */
         .pos-btn {
             background-color: var(--bg-card);
             color: var(--text-main);
             border: 2px solid var(--border-color);
-            height: 58px;
-            padding: 0 20px;
-            font-size: 16px;
+            height: 48px; 
+            padding: 0 14px;
+            font-size: 14px;
             font-weight: 800;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             transition: background-color 0.1s ease, transform 0.05s ease;
         }
-        .pos-btn:active { transform: scale(0.95); background-color: #374151; }
+        .pos-btn:active { transform: scale(0.96); background-color: #374151; }
         .pos-btn.primary { background-color: var(--pizza-red); border-color: var(--pizza-red); }
         .pos-btn.success { background-color: var(--pizza-green); border-color: var(--pizza-green); }
         .pos-btn.danger { background-color: #b91c1c; border-color: #ef4444; }
-        .pos-btn.scale-btn { width: 58px; padding: 0; justify-content: center; font-size: 26px; }
+        .pos-btn.scale-btn { width: 48px; padding: 0; justify-content: center; font-size: 22px; }
 
         /* --- Master Workspace Shell --- */
         #workspace {
             display: flex;
             flex: 1;
             width: 100%;
-            height: calc(100% - 85px);
+            height: calc(100% - 65px);
             overflow: hidden;
             position: relative;
         }
 
-        /* --- Viewport-Locked Canvas (NO SCROLLBARS AT ALL) --- */
         #canvas-wrapper { 
             width: 100%;
             height: 100%;
@@ -112,20 +113,19 @@
             overflow: hidden;
         }
 
-        /* CRISP EMBEDDED RETICLE GRIDLINES (Visible during location updates) */
         .edit-mode #canvas {
             background-image: 
-                linear-gradient(to right, rgba(55, 65, 81, 0.7) 1.5px, transparent 1.5px),
-                linear-gradient(to bottom, rgba(55, 65, 81, 0.7) 1.5px, transparent 1.5px);
+                linear-gradient(to right, rgba(55, 65, 81, 0.6) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(55, 65, 81, 0.6) 1px, transparent 1px);
             background-size: 20px 20px;
         }
 
-        /* --- Overlay Sidebar Slider (Prevents Table Shifts) --- */
+        /* --- Overlay Sidebar Slider --- */
         #order-sidebar {
             position: absolute;
             right: 0;
             top: 0;
-            width: 380px;
+            width: 340px; 
             height: 100%;
             background-color: #f1f5f9;
             border-left: 3px solid #cbd5e1;
@@ -133,7 +133,7 @@
             flex-direction: column;
             transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 9500; 
-            box-shadow: -5px 0 25px rgba(0,0,0,0.4);
+            box-shadow: -5px 0 20px rgba(0,0,0,0.3);
         }
 
         #order-sidebar.collapsed {
@@ -141,7 +141,7 @@
         }
 
         .sidebar-header {
-            padding: 16px;
+            padding: 12px;
             background-color: #ffffff;
             border-bottom: 2px solid #e2e8f0;
             display: flex;
@@ -150,61 +150,85 @@
             color: #0f172a;
             flex-shrink: 0;
         }
-        .sidebar-header h2 { font-size: 18px; font-weight: 800; }
+        .sidebar-header h2 { font-size: 16px; font-weight: 800; }
 
-        /* Single Unified Scrolling Column with Vertical Sections */
         .order-list-container {
             flex: 1;
             overflow-y: auto;
-            padding: 14px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 10px;
         }
 
-        /* Vertically Stacked Sub-headers matching Dashboard styles */
         .sidebar-section-title {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 800;
             color: #475569;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-top: 6px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 2px solid #cbd5e1;
-            padding-bottom: 6px;
+            padding: 6px 4px;
+            background: #e2e8f0;
+            border-radius: 4px;
+        }
+        .sidebar-section-title.collapsable {
+            cursor: pointer;
+        }
+        .sidebar-section-title.collapsable:active {
+            background-color: #cbd5e1;
+        }
+
+        .toggle-icon {
+            font-size: 10px;
+            transition: transform 0.15s ease;
+            display: inline-block;
+        }
+        .collapsed-section .toggle-icon {
+            transform: rotate(-90deg);
         }
 
         .sidebar-section-badge {
-            background: #cbd5e1;
-            color: #0f172a;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 11px;
+            background: #334155;
+            color: #ffffff;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
             font-weight: 900;
+            margin-right: 6px;
         }
 
         .vertical-stack-bucket {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 8px;
+            transition: max-height 0.2s ease-out, opacity 0.15s ease;
+            overflow: hidden;
+            max-height: 2000px; 
+            opacity: 1;
+        }
+        .collapsed-section .vertical-stack-bucket {
+            max-height: 0px !important;
+            opacity: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
         /* --- Dashboard Styled Order Cards --- */
         .order-card {
             background: var(--card-white);
             border-radius: 6px;
-            padding: 14px;
+            padding: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            gap: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             border: 1px solid #cbd5e1;
-            border-left: 12px solid transparent;
+            border-left: 10px solid transparent;
             cursor: pointer;
             width: 100%;
         }
@@ -213,20 +237,20 @@
         .indicator-table-closed { border-left-color: #ff9800 !important; }
 
         .address-info { flex-grow: 1; min-width: 0; }
-        .address-title { font-weight: 800; font-size: 1.15rem; color: #000000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .order-details { font-size: 0.85rem; color: #334155; margin-top: 4px; line-height: 1.4; text-align: left; }
+        .address-title { font-weight: 800; font-size: 1.05rem; color: #000000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .order-details { font-size: 0.80rem; color: #334155; margin-top: 2px; line-height: 1.3; text-align: left; }
         .time-tag { font-weight: bold; color: #b91c1c; }
-        .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.35rem; min-width: 75px; }
+        .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.2rem; min-width: 70px; }
 
-        /* --- Illustrative SVG Tables Configuration --- */
+        /* --- Touch Illustrative Tables --- */
         .table-item {
             position: absolute;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 16px;
-            padding: 12px;
+            border-radius: 14px;
+            padding: 8px;
             cursor: pointer;
         }
         
@@ -240,10 +264,8 @@
             pointer-events: none;
         }
 
-        /* Swapped Graphic Color Rule Maps */
         .table-item.vacant .table-illustration .table-top { fill: #450a0a; stroke: var(--color-vacant); stroke-width: 3; }
         .table-item.vacant .table-illustration .chair { fill: #7f1d1d; stroke: var(--color-vacant); stroke-width: 1.5; }
-        
         .table-item.active .table-illustration .table-top { fill: #064e3b; stroke: var(--color-active); stroke-width: 3; }
         .table-item.active .table-illustration .chair { fill: #134e4a; stroke: var(--color-active); stroke-width: 1.5; }
 
@@ -253,20 +275,20 @@
             text-align: center;
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 1px;
             pointer-events: none;
         }
 
-        .table-name { font-size: 16px; font-weight: 700; color: var(--text-main); text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
-        .table-timer { font-size: 12px; color: #f97316; font-weight: 800; background: rgba(0, 0, 0, 0.7); padding: 2px 6px; border-radius: 6px; width: fit-content; margin: 0 auto; }
-        .table-price { font-size: 13px; font-weight: 700; color: #f8fafc; background: var(--pizza-green); padding: 2px 8px; border-radius: 20px; margin-top: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .table-name { font-size: 14px; font-weight: 700; color: var(--text-main); text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
+        .table-timer { font-size: 11px; color: #f97316; font-weight: 800; background: rgba(0, 0, 0, 0.7); padding: 1px 5px; border-radius: 5px; width: fit-content; margin: 0 auto; }
+        .table-price { font-size: 12px; font-weight: 700; color: #f8fafc; background: var(--pizza-green); padding: 1px 6px; border-radius: 20px; margin-top: 2px; box-shadow: 0 3px 5px rgba(0,0,0,0.3); }
 
-        /* --- Low Resolution Hardware Media Constraints Context --- */
         @media (max-width: 1024px) {
-            #order-sidebar { width: 330px; }
-            .pos-btn { height: 54px; padding: 0 14px; font-size: 14px; }
-            .pos-btn.scale-btn { width: 54px; }
-            #control-bar { min-height: 75px; }
+            #order-sidebar { width: 290px; }
+            .pos-btn { height: 44px; padding: 0 10px; font-size: 13px; }
+            .pos-btn.scale-btn { width: 44px; font-size: 18px; }
+            #control-bar { min-height: 60px; padding: 6px; }
+            .table-name { font-size: 13px; }
         }
     </style>
 </head>
@@ -299,34 +321,50 @@
 
             <div id="order-sidebar" class="collapsed">
                 <div class="sidebar-header">
-                    <h2>Tafelbeheer overzicht</h2>
-                    <button class="pos-btn scale-btn" style="height: 38px; width: 38px; font-size: 14px; background: #e2e8f0; color: #000; border: none;" onclick="toggleSidebar()">✕</button>
+                    <h2>Tafelbeheer Overzicht</h2>
+                    <button class="pos-btn scale-btn" style="height: 36px; width: 36px; font-size: 14px; background: #e2e8f0; color: #000; border: none;" onclick="toggleSidebar()">✕</button>
                 </div>
                 
                 <div class="order-list-container">
                     <div class="sidebar-section-title">
                         <span>Actieve Tafels</span>
-                        <span id="badgeActiveCount" class="sidebar-section-badge">0</span>
+                        <div>
+                            <span id="badgeActiveCount" class="sidebar-section-badge">0</span>
+                        </div>
                     </div>
                     <div id="active-bucket" class="vertical-stack-bucket"></div>
 
-                    <div class="sidebar-section-title" style="margin-top: 15px;">
-                        <span>Historiek (Vandaag)</span>
-                        <span id="badgeInactiveCount" class="sidebar-section-badge">0</span>
+                    <div id="history-section-wrapper" class="history-container">
+                        <div class="sidebar-section-title collapsable" onclick="toggleHistorySection()" style="margin-top: 10px;">
+                            <span>Historiek (Vandaag)</span>
+                            <div>
+                                <span id="badgeInactiveCount" class="sidebar-section-badge">0</span>
+                                <span class="toggle-icon">▲</span>
+                            </div>
+                        </div>
+                        <div id="inactive-bucket" class="vertical-stack-bucket"></div>
                     </div>
-                    <div id="inactive-bucket" class="vertical-stack-bucket"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // --- ZOOM INTERCEPT LOGIC MATCHED FROM MAIN DASHBOARD ---
+        window.addEventListener('dragstart', (e) => e.preventDefault());
+        window.addEventListener('drop', (e) => e.preventDefault());
+        window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
+        });
+
         const canvas = document.getElementById('canvas');
         const activeBucket = document.getElementById('active-bucket');
         const inactiveBucket = document.getElementById('inactive-bucket');
         const sidebar = document.getElementById('order-sidebar');
+        const historyWrapper = document.getElementById('history-section-wrapper');
         
-        let appState = { editMode: false, gridSize: 20, tableWidth: 120, tableHeight: 120 };
+        let appState = { editMode: false, gridSize: 20, tableWidth: 110, tableHeight: 110 };
 
         function initLayout(payload) {
             appState.editMode = payload.editMode;
@@ -356,7 +394,6 @@
             canvas.style.backgroundImage = payload.backgroundImage ? `url('${payload.backgroundImage}')` : 'none';
             canvas.innerHTML = '';
 
-            // Floorplan Table Rendering Layout Loops
             payload.tables.forEach(table => {
                 const el = document.createElement('div');
                 el.className = `table-item ${table.isActive ? 'active' : 'vacant'}`;
@@ -385,15 +422,13 @@
                     el.style.top = `${y}px`;
                 } else {
                     el.style.left = "40px";
-                    el.style.top = "100px";
+                    el.style.top = "60px";
                 }
 
-                clampElementToCanvas(el);
-                attachInteractions(el);
                 canvas.appendChild(el);
+                clampElementToCanvas(el);
             });
 
-            // Render both tracking modules simultaneously inside one scrolling column feed
             renderBucketList(activeBucket, payload.activeOrders, 'indicator-table-open', 'Geopend', 'badgeActiveCount');
             renderBucketList(inactiveBucket, payload.inactiveOrders, 'indicator-table-closed', 'Afgesloten', 'badgeInactiveCount');
         }
@@ -427,6 +462,12 @@
             });
         }
 
+        function toggleHistorySection() {
+            historyWrapper.classList.toggle('collapsed-section');
+            const icon = historyWrapper.querySelector('.toggle-icon');
+            icon.innerText = historyWrapper.classList.contains('collapsed-section') ? '▼' : '▲';
+        }
+
         function toggleSidebar() {
             sidebar.classList.toggle('collapsed');
         }
@@ -448,8 +489,8 @@
         }
 
         function adjustTableSizes(change) {
-            appState.tableWidth = Math.max(80, Math.min(200, appState.tableWidth + change));
-            appState.tableHeight = Math.max(80, Math.min(200, appState.tableHeight + change));
+            appState.tableWidth = Math.max(70, Math.min(180, appState.tableWidth + change));
+            appState.tableHeight = Math.max(70, Math.min(180, appState.tableHeight + change));
             document.querySelectorAll('.table-item').forEach(el => {
                 el.style.width = `${appState.tableWidth}px`;
                 el.style.height = `${appState.tableHeight}px`;
@@ -477,51 +518,52 @@
             element.style.top = `${clampedY}px`;
         }
 
-        function attachInteractions(element) {
-            let isDragging = false;
-            let startX, startY, initialLeft, initialTop;
+        window.addEventListener('resize', () => {
+            document.querySelectorAll('.table-item').forEach(el => clampElementToCanvas(el));
+        });
 
-            element.addEventListener('pointerdown', (e) => {
-                if (!appState.editMode) {
-                    const cleanId = parseInt(element.getAttribute('data-id'));
-                    sendToWinForms({ action: 'tableClicked', tableId: cleanId });
-                    return;
-                }
-                isDragging = true;
-                element.setPointerCapture(e.pointerId);
-                initialLeft = parseInt(element.style.left) || 0;
-                initialTop = parseInt(element.style.top) || 0;
-                startX = e.clientX;
-                startY = e.clientY;
-                element.style.zIndex = "1000";
-            });
+        document.addEventListener('pointerdown', (e) => {
+            const el = e.target.closest('.table-item');
+            if (!el) return;
 
-            element.addEventListener('pointermove', (e) => {
-                if (!isDragging) return;
+            if (!appState.editMode) {
+                const cleanId = parseInt(el.getAttribute('data-id'));
+                sendToWinForms({ action: 'tableClicked', tableId: cleanId });
+                return;
+            }
+
+            let initialLeft = parseInt(el.style.left) || 0;
+            let initialTop = parseInt(el.style.top) || 0;
+            let startX = e.clientX;
+            let startY = e.clientY;
+            
+            el.setPointerCapture(e.pointerId);
+            el.style.zIndex = "1000";
+
+            const onPointerMove = (moveEvent) => {
+                const deltaX = moveEvent.clientX - startX;
+                const deltaY = moveEvent.clientY - startY;
                 
-                const deltaX = e.clientX - startX;
-                const deltaY = e.clientY - startY;
-                
-                let unalignedX = initialLeft + deltaX;
-                let unalignedY = initialTop + deltaY;
+                let targetX = Math.round((initialLeft + deltaX) / appState.gridSize) * appState.gridSize;
+                let targetY = Math.round((initialTop + deltaY) / appState.gridSize) * appState.gridSize;
 
-                let alignedX = Math.round(unalignedX / appState.gridSize) * appState.gridSize;
-                let alignedY = Math.round(unalignedY / appState.gridSize) * appState.gridSize;
+                targetX = Math.max(0, Math.min(targetX, canvas.clientWidth - el.clientWidth));
+                targetY = Math.max(0, Math.min(targetY, canvas.clientHeight - el.clientHeight));
 
-                alignedX = Math.max(0, Math.min(alignedX, canvas.clientWidth - element.clientWidth));
-                alignedY = Math.max(0, Math.min(alignedY, canvas.clientHeight - element.clientHeight));
+                el.style.left = `${targetX}px`;
+                el.style.top = `${targetY}px`;
+            };
 
-                element.style.left = `${alignedX}px`;
-                element.style.top = `${alignedY}px`;
-            });
+            const onPointerUp = (upEvent) => {
+                el.releasePointerCapture(upEvent.pointerId);
+                el.style.zIndex = "";
+                el.removeEventListener('pointermove', onPointerMove);
+                el.removeEventListener('pointerup', onPointerUp);
+            };
 
-            element.addEventListener('pointerup', (e) => {
-                if (!isDragging) return;
-                isDragging = false;
-                element.releasePointerCapture(e.pointerId);
-                element.style.zIndex = "";
-            });
-        }
+            el.addEventListener('pointermove', onPointerMove);
+            el.addEventListener('pointerup', onPointerUp);
+        });
 
         function sendToWinForms(data) {
             if (window.chrome && window.chrome.webview) {
