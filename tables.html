@@ -3,22 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POS Touchscreen Floorplan & Orders Dashboard</title>
+    <title>POS Touchscreen Floorplan & Table Tabs</title>
     <style>
         :root {
+            --pizza-red: #973030;
+            --pizza-green: #2e7d32;
+            --new-order-bg: #4d805e; 
+            --pizza-blue: #b3daff;
+            --bg-gray: #e2e8f0; 
+            --card-white: #ffffff;
+            --warning-orange: #fff3e0;
+            --danger-red: #ffebee;
+            --checkin-blue: #0288d1;
+            
             --bg-main: #0b0f19;
             --bg-canvas: #111827;
             --bg-card: #1f2937;
-            --bg-sidebar: #111827;
             --border-color: #374151;
             --text-main: #f9fafb;
             --text-muted: #9ca3af;
-            
-            /* POS Context States */
-            --color-vacant: #10b981;
-            --color-active: #ef4444;
-            --color-edit: #3b82f6;
-            --color-pending: #f59e0b;
         }
 
         * { 
@@ -27,14 +30,14 @@
             -webkit-user-select: none;
             margin: 0; 
             padding: 0; 
-            touch-action: none; /* Block browser pinching/scrolling entirely */
+            touch-action: none; /* Prevents all default browser scrolling gestures */
         }
 
         body, html { 
             width: 100%; 
             height: 100%; 
             overflow: hidden; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            font-family: 'Segoe UI', -apple-system, Tahoma, sans-serif;
             background-color: var(--bg-main); 
             color: var(--text-main); 
         }
@@ -76,8 +79,8 @@
             transition: background-color 0.12s ease, transform 0.1s ease;
         }
         .pos-btn:active { transform: scale(0.96); background-color: #374151; }
-        .pos-btn.primary { background-color: #2563eb; border-color: #3b82f6; }
-        .pos-btn.success { background-color: #059669; border-color: #10b981; }
+        .pos-btn.primary { background-color: var(--pizza-red); border-color: var(--pizza-red); }
+        .pos-btn.success { background-color: var(--pizza-green); border-color: var(--pizza-green); }
         .pos-btn.danger { background-color: #b91c1c; border-color: #ef4444; }
         .pos-btn.scale-btn { width: 52px; padding: 0; justify-content: center; font-size: 22px; }
 
@@ -91,13 +94,13 @@
             position: relative;
         }
 
-        /* --- Viewport-Locked Canvas (NO SCROLLBARS) --- */
+        /* --- Viewport-Locked Canvas (NO SCROLLBARS AT ALL) --- */
         #canvas-wrapper { 
             flex: 1; 
             position: relative; 
             height: 100%;
             background-color: var(--bg-canvas);
-            overflow: hidden; /* Guaranteed no scrollbars */
+            overflow: hidden;
         }
         
         #canvas { 
@@ -109,21 +112,20 @@
             overflow: hidden;
         }
 
-        /* Architectural blueprint grid visible only when updating positions */
         .edit-mode #canvas {
             background-image: radial-gradient(circle, #374151 2px, transparent 2px);
             background-size: 20px 20px;
         }
 
-        /* --- Disposable Split Window Sidebar --- */
+        /* --- Split Window Sidebar Matching Main UI Colors --- */
         #order-sidebar {
-            width: 400px;
+            width: 420px;
             height: 100%;
-            background-color: var(--bg-sidebar);
-            border-left: 2px solid var(--border-color);
+            background-color: #f1f5f9;
+            border-left: 2px solid #cbd5e1;
             display: flex;
             flex-direction: column;
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s ease;
+            transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), width 0.22s ease;
             z-index: 50;
             overflow: hidden;
         }
@@ -135,52 +137,103 @@
         }
 
         .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: var(--bg-main);
-        }
-
-        .sidebar-header h2 { font-size: 18px; font-weight: 700; }
-
-        .order-list-container {
-            flex: 1;
-            overflow-y: auto; /* Allow scrolling inside the sidebar list only */
             padding: 16px;
+            background-color: #ffffff;
+            border-bottom: 2px solid #e2e8f0;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            -webkit-overflow-scrolling: touch;
         }
 
-        /* --- Premium Sidebar Order Cards --- */
-        .order-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px;
+        .sidebar-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #0f172a;
+        }
+        .sidebar-title-row h2 { font-size: 18px; font-weight: 800; }
+
+        /* Internal Sub Tabs matching the Main Form layout profile */
+        .sidebar-subtabs {
+            display: flex;
+            gap: 8px;
+            background: #f8fafc;
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .sidebar-tab-btn {
+            flex: 1;
+            height: 44px;
+            border: none;
+            background: transparent;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 6px;
             cursor: pointer;
             display: flex;
-            flex-direction: column;
-            gap: 8px;
-            transition: border-color 0.15s ease, transform 0.1s ease;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
         }
-        .order-card:active { transform: scale(0.98); }
-        .order-card.unprocessed { border-left: 5px solid var(--color-pending); }
-        .order-card.table-order { border-left: 5px solid var(--color-edit); }
 
-        .order-card-row { display: flex; justify-content: space-between; align-items: center; }
-        .order-id-label { font-weight: 700; font-size: 15px; color: var(--text-main); }
-        .order-time-label { font-size: 13px; color: var(--text-muted); }
-        .order-detail-label { font-size: 14px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .order-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-        .order-badge.pending { background-color: rgba(245, 158, 11, 0.2); color: var(--color-pending); }
-        .order-badge.active { background-color: rgba(59, 130, 246, 0.2); color: var(--color-edit); }
-        .order-price-tag { font-weight: 700; color: var(--color-vacant); font-size: 15px; }
+        .sidebar-tab-btn.active {
+            background-color: #334155;
+            color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
 
-        /* --- Graphical Table Components --- */
+        .sidebar-tab-badge {
+            background: #cbd5e1;
+            color: #0f172a;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .sidebar-tab-btn.active .sidebar-tab-badge {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+        }
+
+        .order-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* --- High Fidelity Order Cards Matching Main Dashboard Layout --- */
+        .order-card {
+            background: var(--card-white);
+            border-radius: 6px;
+            padding: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+            border: 1px solid #cbd5e1;
+            border-left: 12px solid transparent;
+            cursor: pointer;
+            width: 100%;
+        }
+        .order-card:active { transform: scale(0.985); background-color: #f8fafc; }
+
+        .indicator-table-open { border-left-color: var(--pizza-green) !important; }
+        .indicator-table-closed { border-left-color: #ff9800 !important; }
+
+        .address-info { flex-grow: 1; min-width: 0; }
+        .address-title { font-weight: 800; font-size: 1.15rem; color: #000000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .order-details { font-size: 0.90rem; color: #334155; margin-top: 4px; line-height: 1.4; text-align: left; }
+        .time-tag { font-weight: bold; color: #b91c1c; }
+        .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.35rem; min-width: 80px; }
+
+        /* --- Graphical Table Elements --- */
         .table-item {
             position: absolute;
             display: flex;
@@ -211,7 +264,7 @@
 
         .table-item.vacant .table-illustration .table-top { fill: #064e3b; stroke: var(--color-vacant); stroke-width: 3; }
         .table-item.vacant .table-illustration .chair { fill: #134e4a; stroke: var(--color-vacant); stroke-width: 1.5; }
-        .table-item.active .table-illustration .table-top { fill: #450a0a; stroke: var(--color-active); stroke-width: 3; }
+        .table-item.active .table-illustration .table-top { fill: #450a0a; stroke: var(--color-active); stroke-width: 3; stroke-dasharray: none; }
         .table-item.active .table-illustration .chair { fill: #7f1d1d; stroke: var(--color-active); stroke-width: 1.5; }
 
         .table-details {
@@ -258,11 +311,24 @@
 
             <div id="order-sidebar" class="collapsed">
                 <div class="sidebar-header">
-                    <h2>Actieve Bestellingen</h2>
-                    <button class="pos-btn scale-btn" style="height: 36px; width: 36px; font-size: 14px;" onclick="toggleSidebar()">✕</button>
-                </div>
-                <div class="order-list-container" id="order-list-target">
+                    <div class="sidebar-title-row">
+                        <h2>Tafel Bestellingen</h2>
+                        <button class="pos-btn scale-btn" style="height: 36px; width: 36px; font-size: 14px; background: #e2e8f0; color: #000; border: none;" onclick="toggleSidebar()">✕</button>
                     </div>
+                    
+                    <div class="sidebar-subtabs">
+                        <button id="subtabActive" class="sidebar-tab-btn active" onclick="switchSidebarTab('active')">
+                            <span>Actief</span>
+                            <span id="badgeActiveCount" class="sidebar-tab-badge">0</span>
+                        </button>
+                        <button id="subtabInactive" class="sidebar-tab-btn" onclick="switchSidebarTab('inactive')">
+                            <span>Historiek</span>
+                            <span id="badgeInactiveCount" class="sidebar-tab-badge">0</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="order-list-container" id="order-list-target"></div>
             </div>
         </div>
     </div>
@@ -271,7 +337,9 @@
         const canvas = document.getElementById('canvas');
         const orderListTarget = document.getElementById('order-list-target');
         const sidebar = document.getElementById('order-sidebar');
-        let appState = { editMode: false, gridSize: 20, tableWidth: 120, tableHeight: 120 };
+        
+        let appState = { editMode: false, gridSize: 20, tableWidth: 120, tableHeight: 120, currentSidebarTab: 'active' };
+        let cacheData = { activeTables: [], inactiveTables: [] };
 
         function initLayout(payload) {
             appState.editMode = payload.editMode;
@@ -301,7 +369,7 @@
             canvas.style.backgroundImage = payload.backgroundImage ? `url('${payload.backgroundImage}')` : 'none';
             canvas.innerHTML = '';
 
-            // 1. Render Interactive Floorplan Canvas Tables
+            // Render Floorplan Tables Map Matrix
             payload.tables.forEach(table => {
                 const el = document.createElement('div');
                 el.className = `table-item ${table.isActive ? 'active' : 'vacant'}`;
@@ -333,47 +401,62 @@
                     el.style.top = "100px";
                 }
 
-                // Force layout containment parameters inside the viewport bounds right now
                 clampElementToCanvas(el);
-
                 attachInteractions(el);
                 canvas.appendChild(el);
             });
 
-            // 2. Render Sidebar Order Feed List
-            orderListTarget.innerHTML = '';
-            if (payload.orders && payload.orders.length > 0) {
-                payload.orders.forEach(order => {
-                    const card = document.createElement('div');
-                    card.className = `order-card ${order.processed ? 'table-order' : 'unprocessed'}`;
-                    card.onclick = () => sendToWinForms({ action: 'orderClicked', orderId: order.orderId });
+            // Store references internally for sub-tab switching
+            cacheData.activeTables = payload.activeOrders || [];
+            cacheData.inactiveTables = payload.inactiveOrders || [];
 
-                    card.innerHTML = `
-                        <div class="order-card-row">
-                            <span class="order-id-label">Bestelling #${order.idDisplay}</span>
-                            <span class="order-time-label">${order.timeDisplay}</span>
-                        </div>
-                        <div class="order-detail-label">${order.destination}</div>
-                        <div class="order-card-row" style="margin-top: 4px;">
-                            <span class="order-badge ${order.processed ? 'active' : 'pending'}">
-                                ${order.processed ? 'Actief' : 'Nieuw'}
-                            </span>
-                            <span class="order-price-tag">${order.totalPrice}</span>
-                        </div>
-                    `;
-                    orderListTarget.appendChild(card);
-                });
-            } else {
-                orderListTarget.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin-top:40px; font-size:14px;">Geen actieve bestellingen gevonden</div>`;
+            document.getElementById('badgeActiveCount').innerText = cacheData.activeTables.length;
+            document.getElementById('badgeInactiveCount').innerText = cacheData.inactiveTables.length;
+
+            renderSidebarContent();
+        }
+
+        function switchSidebarTab(tabName) {
+            appState.currentSidebarTab = tabName;
+            document.getElementById('subtabActive').classList.toggle('active', tabName === 'active');
+            document.getElementById('subtabInactive').classList.toggle('active', tabName === 'inactive');
+            renderSidebarContent();
+        }
+
+        function renderSidebarContent() {
+            orderListTarget.innerHTML = '';
+            const list = (appState.currentSidebarTab === 'active') ? cacheData.activeTables : cacheData.inactiveTables;
+
+            if (!list || list.length === 0) {
+                orderListTarget.innerHTML = `<div style="text-align:center; color:#64748b; margin-top:40px; font-size:14px;">Geen bestellingen gevonden</div>`;
+                return;
             }
+
+            list.forEach(order => {
+                const card = document.createElement('div');
+                // Use dashboard classes for live status coloring directly
+                card.className = `order-card ${appState.currentSidebarTab === 'active' ? 'indicator-table-open' : 'indicator-table-closed'}`;
+                card.onclick = () => sendToWinForms({ action: 'orderClicked', orderId: order.orderId });
+
+                card.innerHTML = `
+                    <div class="address-info">
+                        <div class="address-title">Tafel: ${order.idDisplay}</div>
+                        <div class="order-details">
+                            <span class="time-tag">Tijd: ${order.timeDisplay}</span><br>
+                            Status: ${appState.currentSidebarTab === 'active' ? 'Geopend' : 'Afgesloten'}
+                        </div>
+                    </div>
+                    <div class="price-tag">${order.totalPrice}</div>
+                `;
+                orderListTarget.appendChild(card);
+            });
         }
 
         function toggleSidebar() {
             sidebar.classList.toggle('collapsed');
-            // Re-enforce bounding constraints across all elements since the layout width shifted
             setTimeout(() => {
                 document.querySelectorAll('.table-item').forEach(el => clampElementToCanvas(el));
-            }, 300);
+            }, 250);
         }
 
         function toggleEditMode() {
@@ -409,14 +492,12 @@
             let maxAllowedX = canvas.clientWidth - element.clientWidth;
             let maxAllowedY = canvas.clientHeight - element.clientHeight;
 
-            // Prevent layout crash if wrapper has not parsed explicit width yet
             if (maxAllowedX < 0) maxAllowedX = 0;
             if (maxAllowedY < 0) maxAllowedY = 0;
 
             let clampedX = Math.max(0, Math.min(currentX, maxAllowedX));
             let clampedY = Math.max(0, Math.min(currentY, maxAllowedY));
 
-            // Force alignment to grid spacing rules directly during sizing corrections
             clampedX = Math.round(clampedX / appState.gridSize) * appState.gridSize;
             clampedY = Math.round(clampedY / appState.gridSize) * appState.gridSize;
 
@@ -455,7 +536,6 @@
                 let alignedX = Math.round(unalignedX / appState.gridSize) * appState.gridSize;
                 let alignedY = Math.round(unalignedY / appState.gridSize) * appState.gridSize;
 
-                // Viewport boundary containment constraints checks
                 alignedX = Math.max(0, Math.min(alignedX, canvas.clientWidth - element.clientWidth));
                 alignedY = Math.max(0, Math.min(alignedY, canvas.clientHeight - element.clientHeight));
 
