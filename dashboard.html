@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PizzaApp Dashboard Pro v3.5</title>
+    <title>PizzaApp Dashboard Pro v3.6</title>
     <style>
         :root {
             --pizza-red: #973030;
@@ -51,120 +51,132 @@
 
         /* --- SIDEBAR CONTAINER --- */
         .sidebar-container {
-            width: 280px; 
+            width: 300px; /* Slightly wider for better touchscreen text fit */
             flex-shrink: 0;
             background: #ffffff; 
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            box-shadow: 3px 0 12px rgba(0,0,0,0.12);
             display: flex;
             flex-direction: column;
             z-index: 100;
-            border-right: 1px solid #e0e0e0;
+            border-right: 2px solid #dcdcdc;
         }
 
-        /* IMPROVED: Segmented Touch Containers for Primary Navigation */
+        /* --- TOUCHSCREEN-OPTIMIZED PRIMARY BUTTONS --- */
         .main-tabs { 
             display: flex; 
             flex-direction: column; 
-            gap: 6px;
-            padding: 12px;
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #e5e5e5;
+            gap: 8px;
+            padding: 14px;
+            background-color: #fdfdfd;
+            border-bottom: 2px solid #e2e8f0;
         }
         .main-btn { 
             width: 100%; 
-            padding: 14px 16px; 
-            border: 2px solid #e0e0e0; 
-            border-radius: 8px;
-            font-size: 1rem; 
+            min-height: 62px; /* Massive hit target */
+            padding: 16px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 10px;
+            font-size: 1.05rem; 
             font-weight: 800; 
             cursor: pointer; 
-            background: #ffffff; 
-            color: #555; 
+            background: #f8fafc; 
+            color: #475569; 
             text-transform: uppercase; 
-            text-align: left;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.15s ease-in-out;
+            touch-action: manipulation;
+            transition: all 0.1s ease;
         }
+        /* Instant physical press animation */
         .main-btn:active {
-            transform: scale(0.98);
+            transform: scale(0.96);
         }
         .main-btn .tab-title {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
         .main-btn .tab-badge {
-            background: #e0e0e0;
-            color: #333;
-            padding: 2px 8px;
+            background: #e2e8f0;
+            color: #1e293b;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
+            font-weight: 900;
         }
-        
-        /* High-contrast Active States matching UI Header */
+        /* Active high-visibility state */
         .main-btn.active { 
             background-color: var(--pizza-red); 
             color: #ffffff; 
             border-color: var(--pizza-red);
-            box-shadow: 0 4px 6px rgba(151, 48, 48, 0.2);
+            box-shadow: 0 4px 10px rgba(151, 48, 48, 0.3);
         }
         .main-btn.active .tab-badge {
             background: rgba(255, 255, 255, 0.25);
             color: #ffffff;
         }
 
-        /* Sub-Buttons Layout */
+        /* --- TOUCHSCREEN-OPTIMIZED SUB FILTER BUTTONS --- */
         .sub-tabs { 
             display: flex; 
             flex-direction: column; 
             background-color: #fff; 
-            padding: 12px; 
-            gap: 8px; 
+            padding: 14px; 
+            gap: 10px; /* Safe distance to prevent fat-finger issues */
             overflow-y: auto;
             flex-grow: 1;
         }
         .sub-btn { 
             display: none; 
             width: 100%;
-            padding: 12px 14px; 
-            border: 1px solid #e0e0e0; 
-            border-radius: 6px; 
+            min-height: 56px; /* Thick list items */
+            padding: 14px 16px; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 8px; 
             cursor: pointer; 
-            font-size: 0.95rem; 
+            font-size: 1.05rem; 
             font-weight: 700; 
-            background: #fff; 
-            color: #444;
+            background: #f1f5f9; /* Subtle tint so it feels like an organic button grid */
+            color: #334155;
             text-align: left;
             white-space: nowrap; 
-            transition: all 0.1s;
+            touch-action: manipulation;
+            transition: all 0.1s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .sub-btn:active {
+            transform: scale(0.96);
         }
         .sub-btn[data-code="all"] { display: block; }
+        
+        /* Dark high-visibility focus status for active criteria */
         .sub-btn.active { 
-            background-color: #444444; 
-            color: white; 
-            border-color: #444444; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15); 
+            background-color: #1e293b; 
+            color: #ffffff; 
+            border-color: #1e293b; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.18); 
         }
 
-        /* Sticky Search Field */
+        /* Large Touch Search Bar */
         .search-box {
-            padding: 12px;
-            background: #f8f9fa;
-            border-top: 1px solid #e5e5e5;
+            padding: 14px;
+            background: #f8fafc;
+            border-top: 2px solid #e2e8f0;
             flex-shrink: 0;
         }
         .search-box input {
             width: 100%;
-            padding: 12px;
-            font-size: 0.95rem;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            padding: 16px; /* Super comfortable keyboard focus element */
+            font-size: 1.1rem;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
             outline: none;
+            background-color: #ffffff;
         }
         .search-box input:focus {
             border-color: var(--pizza-red);
+            box-shadow: 0 0 0 3px rgba(151, 48, 48, 0.15);
         }
 
         /* --- CONTENT AREA --- */
@@ -189,7 +201,7 @@
             flex-grow: 1;
         }
 
-        /* Order Card UI */
+        /* Order Card UI Layout */
         .order-card {
             background: var(--card-white); border-radius: 8px; padding: 14px 18px;
             display: grid; grid-template-columns: 1fr 100px 160px;
@@ -340,7 +352,6 @@
         }
 
         function updateFilterTabs() {
-            // NEW: Push total counters directly onto the high-level system buttons
             document.getElementById('badgeOnlineTotal').innerText = latestData.online ? latestData.online.length : 0;
             document.getElementById('badgePosTotal').innerText = latestData.pos ? latestData.pos.length : 0;
 
