@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PizzaApp Dashboard Pro v3.4</title>
+    <title>PizzaApp Dashboard Pro v3.5</title>
     <style>
         :root {
             --pizza-red: #973030;
@@ -38,8 +38,6 @@
             touch-action: pan-y;
             overscroll-behavior-y: none;
             -webkit-font-smoothing: antialiased;
-            
-            /* Changed to Row: Places Sidebar and Content side-by-side */
             display: flex;
             flex-direction: row;
         }
@@ -51,92 +49,125 @@
 
         .hidden-config { display: none !important; }
 
-        /* --- SIDEBAR CONTAINER (LEFT SIDE) --- */
+        /* --- SIDEBAR CONTAINER --- */
         .sidebar-container {
-            width: 260px; /* Fixed standard width for easy touch-accuracy */
+            width: 280px; 
             flex-shrink: 0;
-            background: white; 
-            box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+            background: #ffffff; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
             z-index: 100;
-            border-right: 2px solid #ddd;
+            border-right: 1px solid #e0e0e0;
         }
 
-        /* Stack Main Buttons Vertically */
+        /* IMPROVED: Segmented Touch Containers for Primary Navigation */
         .main-tabs { 
             display: flex; 
             flex-direction: column; 
-            background-color: #bcbcbc; 
+            gap: 6px;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e5e5e5;
         }
         .main-btn { 
             width: 100%; 
-            padding: 16px; 
-            border: none; 
-            border-bottom: 1px solid #a3a3a3;
-            font-size: 1.1rem; 
-            font-weight: bold; 
+            padding: 14px 16px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 8px;
+            font-size: 1rem; 
+            font-weight: 800; 
             cursor: pointer; 
-            background: #bcbcbc; 
-            color: #444; 
+            background: #ffffff; 
+            color: #555; 
             text-transform: uppercase; 
             text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.15s ease-in-out;
         }
+        .main-btn:active {
+            transform: scale(0.98);
+        }
+        .main-btn .tab-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .main-btn .tab-badge {
+            background: #e0e0e0;
+            color: #333;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        
+        /* High-contrast Active States matching UI Header */
         .main-btn.active { 
             background-color: var(--pizza-red); 
-            color: white; 
-            border-bottom-color: var(--pizza-red);
+            color: #ffffff; 
+            border-color: var(--pizza-red);
+            box-shadow: 0 4px 6px rgba(151, 48, 48, 0.2);
+        }
+        .main-btn.active .tab-badge {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
         }
 
-        /* Stack Sub-Buttons Vertically */
+        /* Sub-Buttons Layout */
         .sub-tabs { 
             display: flex; 
             flex-direction: column; 
             background-color: #fff; 
             padding: 12px; 
-            gap: 10px; 
-            overflow-y: auto; /* Allow vertical scrolling inside sidebar if buttons overflow */
+            gap: 8px; 
+            overflow-y: auto;
             flex-grow: 1;
         }
         .sub-btn { 
             display: none; 
             width: 100%;
-            padding: 14px 16px; 
-            border: 1px solid #ccc; 
-            border-radius: 8px; 
+            padding: 12px 14px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 6px; 
             cursor: pointer; 
-            font-size: 1rem; 
+            font-size: 0.95rem; 
             font-weight: 700; 
-            background: white; 
+            background: #fff; 
             color: #444;
             text-align: left;
             white-space: nowrap; 
-            transition: all 0.2s;
+            transition: all 0.1s;
         }
         .sub-btn[data-code="all"] { display: block; }
         .sub-btn.active { 
-            background-color: #444; 
+            background-color: #444444; 
             color: white; 
-            border-color: #444; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+            border-color: #444444; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15); 
         }
 
-        /* Live Search Bar inside Sidebar */
+        /* Sticky Search Field */
         .search-box {
             padding: 12px;
-            background: #fff;
-            border-top: 1px solid #eee;
+            background: #f8f9fa;
+            border-top: 1px solid #e5e5e5;
             flex-shrink: 0;
         }
         .search-box input {
             width: 100%;
             padding: 12px;
-            font-size: 1rem;
-            border: 2px solid #ccc;
+            font-size: 0.95rem;
+            border: 1px solid #ccc;
             border-radius: 6px;
+            outline: none;
+        }
+        .search-box input:focus {
+            border-color: var(--pizza-red);
         }
 
-        /* --- CONTENT AREA (RIGHT SIDE) --- */
+        /* --- CONTENT AREA --- */
         .content { 
             flex-grow: 1; 
             overflow-y: auto; 
@@ -144,7 +175,7 @@
             display: flex; 
             flex-direction: column; 
             gap: 12px; 
-            height: 100%; /* Spans full height of screen layout */
+            height: 100%; 
         }
 
         #emptyState {
@@ -158,12 +189,12 @@
             flex-grow: 1;
         }
 
-        /* Order Card Layout */
+        /* Order Card UI */
         .order-card {
             background: var(--card-white); border-radius: 8px; padding: 14px 18px;
             display: grid; grid-template-columns: 1fr 100px 160px;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08); border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06); border: 1px solid #e0e0e0;
             border-left: 12px solid transparent; cursor: pointer;
             position: relative; transition: transform 0.1s;
         }
@@ -174,7 +205,6 @@
         .time-tag { font-weight: bold; color: #d32f2f; }
         .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.5rem; padding-right: 15px; }
 
-        /* Touch-Ready Action Button */
         .btn-checkin {
             padding: 22px 15px;
             border: none;
@@ -186,13 +216,12 @@
             text-transform: uppercase;
             background-color: var(--checkin-blue);
             min-width: 130px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             transition: background 0.2s, transform 0.1s;
         }
         .btn-checkin:active { background-color: #0277bd; transform: translateY(2px); }
 
         .urgency-high { border-right: 10px solid #d32f2f; background-color: var(--danger-red); }
-
         .status-6 { border-left-color: var(--table-inactive-side); } 
         .is-table-active { border-left-color: var(--table-active-side) !important; }
         .status-3 { background-color: var(--pizza-blue) !important; }
@@ -204,7 +233,6 @@
         .flash-anim { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.4; } }
 
-        /* --- PAYMENT BADGES --- */
         .badge { 
             display: inline-block; font-weight: 800; font-size: 0.8rem; 
             padding: 4px 12px; border-radius: 14px; margin-top: 6px; border: 1px solid currentColor; text-transform: uppercase;
@@ -214,15 +242,20 @@
         .pay-2 { background-color: #e3f2fd; color: #0277bd; } 
         .pay-3 { background-color: #fce4ec; color: #c2185b; } 
         .pay-4 { background-color: #fff3e0; color: #e65100; } 
-
     </style>
 </head>
 <body>
 
     <div class="sidebar-container">
         <div class="main-tabs">
-            <button id="tabOnline" class="main-btn active" onclick="setMain('online')">Online Orders</button>
-            <button id="tabPos" class="main-btn" onclick="setMain('pos')">Kassa Orders</button>
+            <button id="tabOnline" class="main-btn active" onclick="setMain('online')">
+                <span class="tab-title">🌐 Online Orders</span>
+                <span id="badgeOnlineTotal" class="tab-badge">0</span>
+            </button>
+            <button id="tabPos" class="main-btn" onclick="setMain('pos')">
+                <span class="tab-title">🏪 Kassa Orders</span>
+                <span id="badgePosTotal" class="tab-badge">0</span>
+            </button>
         </div>
 
         <div class="sub-tabs" id="subTabs">
@@ -307,12 +340,19 @@
         }
 
         function updateFilterTabs() {
+            // NEW: Push total counters directly onto the high-level system buttons
+            document.getElementById('badgeOnlineTotal').innerText = latestData.online ? latestData.online.length : 0;
+            document.getElementById('badgePosTotal').innerText = latestData.pos ? latestData.pos.length : 0;
+
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
-            const counts = { "2":0, "7":0, "6":0, "3":0, "4":0, "all": list.length };
-            list.forEach(o => { 
-                const s = String(o.order_status_code);
-                if(counts[s] !== undefined) counts[s]++; 
-            });
+            const counts = { "2":0, "7":0, "6":0, "3":0, "4":0, "all": list ? list.length : 0 };
+            
+            if (list) {
+                list.forEach(o => { 
+                    const s = String(o.order_status_code);
+                    if(counts[s] !== undefined) counts[s]++; 
+                });
+            }
 
             document.querySelectorAll('.sub-btn').forEach(btn => {
                 const code = btn.getAttribute('data-code');
@@ -340,12 +380,10 @@
             const m = String(method).toLowerCase();
             const mid = String(id);
             if (m === "payonline") return `<span class="badge pay-online">Reeds Betaald</span>`;
-            
             if (mid === "1" ) return `<span class="badge pay-1">Contant</span>`;
             if (mid === "2"    ) return `<span class="badge pay-2">Bancontact</span>`;
             if (mid === "3"  ) return `<span class="badge pay-3">Payconiq</span>`;
             if (mid === "4" ) return `<span class="badge pay-4">Combinatie</span>`;
-            
             return `<span class="badge pay-1">Contant</span>`;
         }
 
@@ -362,11 +400,10 @@
             feed.innerHTML = '';
             
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
-            
-            // Filters based on both Sidebar Tab select state and Search box string input
+            if (!list) return;
+
             const filtered = list.filter(o => {
                 const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
-                
                 const clientInfo = (o.clientName || '').toLowerCase();
                 const addressInfo = (o.address || '').toLowerCase();
                 const phoneInfo = (o.phone_no || '').toLowerCase();
