@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PizzaApp Dashboard Pro v3.9</title>
+    <title>PizzaApp Dashboard Pro v4.0</title>
     <style>
         :root {
             --pizza-red: #973030;
@@ -111,7 +111,7 @@
             color: #ffffff;
         }
 
-        /* Secondary Sub Filters */
+        /* Secondary Sub Filters with Matching Badge Styles */
         .sub-tabs { 
             display: flex; 
             flex-direction: column; 
@@ -134,18 +134,38 @@
             font-weight: 700; 
             background: #f8fafc; 
             color: #1e293b;
-            text-align: left;
+            
+            /* Unified Side-by-Side Content Distribution Grid */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            
             white-space: nowrap; 
             touch-action: manipulation;
             transition: transform 0.05s ease;
         }
         .sub-btn:active { transform: scale(0.96); }
-        .sub-btn[data-code="all"] { display: block; }
+        .sub-btn[data-code="all"] { display: flex; }
+        .sub-btn .sub-title { display: flex; align-items: center; gap: 8px; }
+        
+        .sub-btn .sub-badge {
+            background: #cbd5e1;
+            color: #0f172a;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 900;
+        }
+        
         .sub-btn.active { 
             background-color: #334155; 
             color: #ffffff; 
             border-color: #334155; 
             box-shadow: 0 2px 6px rgba(0,0,0,0.15); 
+        }
+        .sub-btn.active .sub-badge {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
         }
 
         /* Search Box */
@@ -204,7 +224,7 @@
             cursor: pointer;
             position: relative; 
             transition: transform 0.05s ease;
-            width: 100%; /* Guarantees single column stretch consistency */
+            width: 100%; 
         }
         .order-card:active { transform: scale(0.995); background-color: #f8fafc; }
 
@@ -276,7 +296,7 @@
         .pay-3 { background-color: #fce4ec; color: #c2185b; } 
         .pay-4 { background-color: #fff3e0; color: #e65100; }
 
-        /* --- DYNAMIC MONITOR SCALING (Preserves Font Scale visibility for large panels) --- */
+        /* --- DYNAMIC MONITOR SCALING --- */
         @media (min-width: 1400px) {
             .sidebar-container { width: 280px; }
             .main-btn { min-height: 60px; font-size: 1.05rem; }
@@ -304,12 +324,24 @@
         </div>
 
         <div class="sub-tabs" id="subTabs">
-            <button class="sub-btn active" data-code="all" onclick="setFilter('all')">Alles</button>
-            <button class="sub-btn" data-code="2" onclick="setFilter('2')">🚚 Levering</button>
-            <button class="sub-btn" data-code="7" onclick="setFilter('7')">🛍️ Afhaal</button>
-            <button class="sub-btn" data-code="6" onclick="setFilter('6')">🍽️ Tafels</button>
-            <button class="sub-btn" data-code="3" onclick="setFilter('3')">📝 Concept</button>
-            <button class="sub-btn" data-code="4" onclick="setFilter('4')">❌ Geannuleerd</button>
+            <button class="sub-btn active" data-code="all" onclick="setFilter('all')">
+                <span class="sub-title">Alles</span><span class="sub-badge">0</span>
+            </button>
+            <button class="sub-btn" data-code="2" onclick="setFilter('2')">
+                <span class="sub-title">🚚 Levering</span><span class="sub-badge">0</span>
+            </button>
+            <button class="sub-btn" data-code="7" onclick="setFilter('7')">
+                <span class="sub-title">🛍️ Afhaal</span><span class="sub-badge">0</span>
+            </button>
+            <button class="sub-btn" data-code="6" onclick="setFilter('6')">
+                <span class="sub-title">🍽️ Tafels</span><span class="sub-badge">0</span>
+            </button>
+            <button class="sub-btn" data-code="3" onclick="setFilter('3')">
+                <span class="sub-title">📝 Concept</span><span class="sub-badge">0</span>
+            </button>
+            <button class="sub-btn" data-code="4" onclick="setFilter('4')">
+                <span class="sub-title">❌ Geannuleerd</span><span class="sub-badge">0</span>
+            </button>
         </div>
 
         <div class="search-box">
@@ -402,9 +434,17 @@
                 const code = btn.getAttribute('data-code');
                 const count = counts[code];
                 const baseNames = { "all":"Alles", "2":" Levering", "7":" Afhaal", "6":" Tafels", "3":" Concept", "4":" Geannuleerd" };
-                btn.innerText = `${baseNames[code]} (${count})`;
+                
+                // Target layout spans inside sub-buttons precisely to inject values safely
+                const titleSpan = btn.querySelector('.sub-title');
+                const badgeSpan = btn.querySelector('.sub-badge');
+                if (titleSpan) titleSpan.innerText = baseNames[code];
+                if (badgeSpan) badgeSpan.innerText = count;
+
                 if (code === 'all') return;
-                btn.style.display = count > 0 ? 'block' : 'none';
+                
+                // Set layout to 'flex' instead of 'block' to protect spacing constraints
+                btn.style.display = count > 0 ? 'flex' : 'none'; 
                 if (activeStatus === code && count === 0) setFilter('all');
             });
         }
