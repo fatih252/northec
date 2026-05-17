@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POS Touchscreen Layout</title>
+    <title>POS Touchscreen Floorplan Layout</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -22,7 +22,7 @@
             -webkit-user-select: none;
             margin: 0; 
             padding: 0; 
-            touch-action: none; /* Disables browser scrolling/accidental swipes during drag */
+            touch-action: none; /* Block browser swipe-to-scroll behaviours entirely */
         }
 
         body, html { 
@@ -36,7 +36,7 @@
         
         #app-container { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
-        /* --- Touchscreen Optimized Control Bar (Min 50px height targets) --- */
+        /* --- Touch Controls Top Panel Bar --- */
         #control-bar {
             height: 75px;
             background-color: #0b0f19;
@@ -71,17 +71,17 @@
         .pos-btn.danger { background-color: #b91c1c; border-color: #ef4444; }
         .pos-btn.scale-btn { width: 52px; padding: 0; justify-content: center; font-size: 22px; }
 
-        /* --- Floorplan Canvas Workspace --- */
+        /* --- Viewport Canvas --- */
         #canvas-wrapper { flex: 1; position: relative; overflow: auto; background-color: #131b2e; }
         #canvas { position: absolute; width: 3000px; height: 3000px; background-size: cover; background-position: center; }
 
-        /* High-contrast alignment dots visible ONLY during layout changes */
+        /* Render alignment dot grids during active edit status loops */
         .edit-mode #canvas {
             background-image: radial-gradient(circle, #334155 2px, transparent 2px);
             background-size: 20px 20px;
         }
 
-        /* --- Graphical Table Components --- */
+        /* --- Illustrative Touch Elements --- */
         .table-item {
             position: absolute;
             display: flex;
@@ -101,7 +101,6 @@
         }
         .edit-mode .table-item:active { transform: scale(1.02); }
 
-        /* Perfect crisp Vector SVG Illustrations */
         .table-illustration {
             position: absolute;
             top: 0;
@@ -238,8 +237,6 @@
                         y: parseInt(el.style.top) || 0
                     });
                 });
-                
-                // FIX: Sent data payload directly matching the backend parsing expects
                 sendToWinForms({ action: 'saveLayout', data: updates });
             }
         }
@@ -259,7 +256,8 @@
 
             element.addEventListener('pointerdown', (e) => {
                 if (!appState.editMode) {
-                    sendToWinForms({ action: 'tableClicked', tableId: element.getAttribute('data-id') });
+                    const cleanId = parseInt(element.getAttribute('data-id'));
+                    sendToWinForms({ action: 'tableClicked', tableId: cleanId });
                     return;
                 }
                 isDragging = true;
@@ -280,11 +278,10 @@
                 let unalignedX = initialLeft + deltaX;
                 let unalignedY = initialTop + deltaY;
 
-                // FIX: Real-time Magnetic Grid Snapping (Aligns while moving)
+                // Live Active Snapping alignment calculation
                 let alignedX = Math.round(unalignedX / appState.gridSize) * appState.gridSize;
                 let alignedY = Math.round(unalignedY / appState.gridSize) * appState.gridSize;
 
-                // Border Constraints
                 alignedX = Math.max(0, Math.min(alignedX, canvas.clientWidth - element.clientWidth));
                 alignedY = Math.max(0, Math.min(alignedY, canvas.clientHeight - element.clientHeight));
 
