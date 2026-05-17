@@ -19,13 +19,18 @@
             --table-active-side: #d32f2f;
         }
 
-        /* --- NATIVE APP LOCKDOWN --- */
+        /* --- NATIVE APP LOCKDOWN & BASE LAYOUT --- */
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            margin: 0; 
+            padding: 0;
+        }
 
         body {
             font-family: 'Segoe UI', Tahoma, sans-serif;
             background-color: var(--bg-gray);
-            margin: 0; padding: 0;
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
@@ -33,6 +38,10 @@
             touch-action: pan-y;
             overscroll-behavior-y: none;
             -webkit-font-smoothing: antialiased;
+            
+            /* Modern Flexbox Layout to prevent empty space at the bottom */
+            display: flex;
+            flex-direction: column;
         }
 
         ::-webkit-scrollbar { width: 10px; }
@@ -44,8 +53,9 @@
 
         /* Header Section */
         .header-container {
-            position: sticky; top: 0; z-index: 100;
-            background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            flex-shrink: 0; /* Prevents the header from squeezing */
+            background: white; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
         .main-tabs { display: flex; background-color: #bcbcbc; border-bottom: 2px solid var(--pizza-red); }
@@ -54,8 +64,6 @@
             cursor: pointer; background: #bcbcbc; color: #444; text-transform: uppercase; 
         }
         .main-btn.active { background-color: var(--pizza-red); color: white; }
-
-      
 
         /* Sub-buttons (Big for touchscreen) */
         .sub-tabs { display: flex; background-color: #fff; padding: 10px; gap: 8px; overflow-x: auto; min-height: 64px; }
@@ -67,7 +75,15 @@
         .sub-btn[data-code="all"] { display: block; }
         .sub-btn.active { background-color: #444; color: white; border-color: #444; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
-        .content { height: calc(100vh - 195px); overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        /* Content feed stretches exactly to fill the rest of the webview viewport */
+        .content { 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            padding: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
 
         #emptyState {
             display: none; flex-direction: column; align-items: center; justify-content: center;
@@ -140,8 +156,6 @@
             <button id="tabOnline" class="main-btn active" onclick="setMain('online')">Online Bestellingen</button>
             <button id="tabPos" class="main-btn" onclick="setMain('pos')">Kassa Bestellingen</button>
         </div>
-
-     
 
         <div class="sub-tabs" id="subTabs">
             <button class="sub-btn active" data-code="all" onclick="setFilter('all')">Alles</button>
@@ -250,20 +264,16 @@
             };
         }
 
-        // --- UPDATED PAYMENT LOGIC ---
         function getPaymentBadge(method, id) {
             const m = String(method).toLowerCase();
-               const         mid = String(id);
-            // Priority 1: Online Paid
+            const mid = String(id);
             if (m === "payonline") return `<span class="badge pay-online">Reeds Betaald</span>`;
             
-            // Priority 2: Specific IDs for Offline Payment (1-4)
             if (mid === "1" ) return `<span class="badge pay-1">Contant</span>`;
             if (mid === "2"    ) return `<span class="badge pay-2">Bancontact</span>`;
             if (mid === "3"  ) return `<span class="badge pay-3">Payconiq</span>`;
             if (mid === "4" ) return `<span class="badge pay-4">Combinatie</span>`;
             
-            // Fallback
             return `<span class="badge pay-1">Contant</span>`;
         }
 
@@ -280,12 +290,9 @@
             
             const list = (activeMain === 'online') ? latestData.online : latestData.pos;
             const filtered = list.filter(o => {
-                const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
-               
-                return matchStatus ;
+                return (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
             });
     
-
             const sorted = filtered.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
 
             if (sorted.length === 0) {
