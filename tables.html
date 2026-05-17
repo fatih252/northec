@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POS Touchscreen Floorplan</title>
+    <title>POS Touchscreen Layout</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -11,12 +11,8 @@
             --border-color: #334155;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            
-            /* POS Status Colors */
             --color-vacant: #10b981;
-            --color-vacant-bg: rgba(16, 185, 129, 0.1);
             --color-active: #ef4444;
-            --color-active-bg: rgba(239, 68, 68, 0.15);
             --color-edit: #3b82f6;
         }
 
@@ -26,26 +22,21 @@
             -webkit-user-select: none;
             margin: 0; 
             padding: 0; 
-            touch-action: none; /* Prevents default browser pinching/scrolling on touchscreens */
+            touch-action: none; /* Disables browser scrolling/accidental swipes during drag */
         }
 
         body, html { 
             width: 100%; 
             height: 100%; 
             overflow: hidden; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background-color: var(--bg-main); 
             color: var(--text-main); 
         }
         
-        #app-container { 
-            display: flex; 
-            flex-direction: column; 
-            width: 100%; 
-            height: 100%; 
-        }
+        #app-container { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
-        /* --- Premium Touch Control Bar --- */
+        /* --- Touchscreen Optimized Control Bar (Min 50px height targets) --- */
         #control-bar {
             height: 75px;
             background-color: #0b0f19;
@@ -59,7 +50,6 @@
 
         .btn-group { display: flex; gap: 12px; align-items: center; }
 
-        /* Large Touch Targets (Minimum 48px height for fast typing/tapping) */
         .pos-btn {
             background-color: var(--bg-card);
             color: var(--text-main);
@@ -73,52 +63,25 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: background-color 0.12s ease, transform 0.1s ease, border-color 0.12s ease;
+            transition: background-color 0.12s ease, transform 0.1s ease;
         }
-        .pos-btn:active { 
-            transform: scale(0.96); 
-            background-color: #334155;
-        }
-
+        .pos-btn:active { transform: scale(0.96); background-color: #334155; }
         .pos-btn.primary { background-color: #2563eb; border-color: #3b82f6; }
-        .pos-btn.primary:active { background-color: #1d4ed8; }
-        
         .pos-btn.success { background-color: #059669; border-color: #10b981; }
-        .pos-btn.success:active { background-color: #047857; }
-
         .pos-btn.danger { background-color: #b91c1c; border-color: #ef4444; }
-        .pos-btn.danger:active { background-color: #991b1b; }
+        .pos-btn.scale-btn { width: 52px; padding: 0; justify-content: center; font-size: 22px; }
 
-        .pos-btn.scale-btn {
-            width: 52px;
-            padding: 0;
-            justify-content: center;
-            font-size: 22px;
-        }
+        /* --- Floorplan Canvas Workspace --- */
+        #canvas-wrapper { flex: 1; position: relative; overflow: auto; background-color: #131b2e; }
+        #canvas { position: absolute; width: 3000px; height: 3000px; background-size: cover; background-position: center; }
 
-        /* --- Floorplan Canvas Viewport --- */
-        #canvas-wrapper { 
-            flex: 1; 
-            position: relative; 
-            overflow: auto; 
-            background-color: #131b2e; 
-        }
-        
-        #canvas { 
-            position: absolute; 
-            width: 2400px; 
-            height: 2400px; 
-            background-size: cover; 
-            background-position: center; 
-        }
-
-        /* Subtle radial grid mapping when configuring positions */
+        /* High-contrast alignment dots visible ONLY during layout changes */
         .edit-mode #canvas {
-            background-image: radial-gradient(circle, #334155 1.5px, transparent 1.5px);
+            background-image: radial-gradient(circle, #334155 2px, transparent 2px);
             background-size: 20px 20px;
         }
 
-        /* --- Illustrative Touch Table Components --- */
+        /* --- Graphical Table Components --- */
         .table-item {
             position: absolute;
             display: flex;
@@ -128,11 +91,9 @@
             border-radius: 16px;
             padding: 12px;
             cursor: pointer;
-            transition: transform 0.1s ease;
         }
-        .table-item:active { transform: scale(0.95); }
+        .table-item:active { transform: scale(0.96); }
         
-        /* Edit layout states */
         .edit-mode .table-item { 
             cursor: move; 
             outline: 2px dashed var(--color-edit);
@@ -140,7 +101,7 @@
         }
         .edit-mode .table-item:active { transform: scale(1.02); }
 
-        /* Elegant SVG vector blueprints for tables */
+        /* Perfect crisp Vector SVG Illustrations */
         .table-illustration {
             position: absolute;
             top: 0;
@@ -151,14 +112,11 @@
             pointer-events: none;
         }
 
-        /* Color configurations map to structural status states */
         .table-item.vacant .table-illustration .table-top { fill: #064e3b; stroke: var(--color-vacant); stroke-width: 3; }
         .table-item.vacant .table-illustration .chair { fill: #134e4a; stroke: var(--color-vacant); stroke-width: 1.5; }
-        
         .table-item.active .table-illustration .table-top { fill: #450a0a; stroke: var(--color-active); stroke-width: 3; }
         .table-item.active .table-illustration .chair { fill: #7f1d1d; stroke: var(--color-active); stroke-width: 1.5; }
 
-        /* Clear text groupings built over illustration */
         .table-details {
             position: relative;
             z-index: 2;
@@ -169,34 +127,9 @@
             pointer-events: none;
         }
 
-        .table-name { 
-            font-size: 16px; 
-            font-weight: 700; 
-            color: var(--text-main);
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .table-timer { 
-            font-size: 12px; 
-            color: #f97316; 
-            font-weight: 800; 
-            background: rgba(0, 0, 0, 0.6);
-            padding: 2px 6px;
-            border-radius: 6px;
-            width: fit-content;
-            margin: 0 auto;
-        }
-
-        .table-price {
-            font-size: 13px;
-            font-weight: 700;
-            color: #f8fafc;
-            background: var(--color-active);
-            padding: 2px 8px;
-            border-radius: 20px;
-            margin-top: 4px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
+        .table-name { font-size: 16px; font-weight: 700; color: var(--text-main); text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
+        .table-timer { font-size: 12px; color: #f97316; font-weight: 800; background: rgba(0, 0, 0, 0.7); padding: 2px 6px; border-radius: 6px; width: fit-content; margin: 0 auto; }
+        .table-price { font-size: 13px; font-weight: 700; color: #f8fafc; background: var(--color-active); padding: 2px 8px; border-radius: 20px; margin-top: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
@@ -205,11 +138,10 @@
         <div id="control-bar">
             <div class="btn-group">
                 <button id="btn-edit-toggle" class="pos-btn primary" onclick="toggleEditMode()">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     <span>Wijzig tafel locaties</span>
                 </button>
-                <button id="btn-scale-up" class="pos-btn scale-btn" onclick="adjustTableSizes(15)" style="display:none">+</button>
-                <button id="btn-scale-down" class="pos-btn scale-btn" onclick="adjustTableSizes(-15)" style="display:none">-</button>
+                <button id="btn-scale-up" class="pos-btn scale-btn" onclick="adjustTableSizes(10)" style="display:none">+</button>
+                <button id="btn-scale-down" class="pos-btn scale-btn" onclick="adjustTableSizes(-10)" style="display:none">-</button>
             </div>
 
             <div class="btn-group">
@@ -243,24 +175,19 @@
 
             if (appState.editMode) {
                 document.body.classList.add('edit-mode');
-                editToggleBtn.innerHTML = `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> <span>Opslaan</span>`;
+                editToggleBtn.innerText = "Opslaan";
                 editToggleBtn.className = "pos-btn success";
                 plusBtn.style.display = "flex";
                 minBtn.style.display = "flex";
             } else {
                 document.body.classList.remove('edit-mode');
-                editToggleBtn.innerHTML = `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg> <span>Wijzig tafel locaties</span>`;
+                editToggleBtn.innerText = "Wijzig tafel locaties";
                 editToggleBtn.className = "pos-btn primary";
                 plusBtn.style.display = "none";
                 minBtn.style.display = "none";
             }
 
-            if (payload.backgroundImage) {
-                canvas.style.backgroundImage = `url('${payload.backgroundImage}')`;
-            } else {
-                canvas.style.backgroundImage = 'none';
-            }
-
+            canvas.style.backgroundImage = payload.backgroundImage ? `url('${payload.backgroundImage}')` : 'none';
             canvas.innerHTML = '';
 
             payload.tables.forEach(table => {
@@ -270,14 +197,13 @@
                 el.style.width = `${appState.tableWidth}px`;
                 el.style.height = `${appState.tableHeight}px`;
 
-                // Vector injection to draw table illustration with surrounding seats
                 el.innerHTML = `
                     <svg class="table-illustration" viewBox="0 0 100 100" preserveAspectRatio="none">
                         <rect class="chair" x="2" y="35" width="10" height="30" rx="3"/>
                         <rect class="chair" x="88" y="35" width="10" height="30" rx="3"/>
                         <rect class="chair" x="35" y="2" width="30" height="10" rx="3"/>
                         <rect class="chair" x="35" y="88" width="30" height="10" rx="3"/>
-                        <rect class="table-top" x="18" x="18" width="64" height="64" rx="12"/>
+                        <rect class="table-top" x="18" y="18" width="64" height="64" rx="12"/>
                     </svg>
                     <div class="table-details">
                         <div class="table-name">${table.name}</div>
@@ -290,6 +216,9 @@
                     const [x, y] = table.location.split(',');
                     el.style.left = `${x}px`;
                     el.style.top = `${y}px`;
+                } else {
+                    el.style.left = "40px";
+                    el.style.top = "100px";
                 }
 
                 attachInteractions(el);
@@ -309,7 +238,9 @@
                         y: parseInt(el.style.top) || 0
                     });
                 });
-                sendToWinForms({ action: 'saveLayout', data: JSON.stringify(updates) });
+                
+                // FIX: Sent data payload directly matching the backend parsing expects
+                sendToWinForms({ action: 'saveLayout', data: updates });
             }
         }
 
@@ -322,7 +253,6 @@
             });
         }
 
-        // Seamless drag tracking optimized for touchscreen input
         function attachInteractions(element) {
             let isDragging = false;
             let startX, startY, initialLeft, initialTop;
@@ -343,10 +273,23 @@
 
             element.addEventListener('pointermove', (e) => {
                 if (!isDragging) return;
+                
                 const deltaX = e.clientX - startX;
                 const deltaY = e.clientY - startY;
-                element.style.left = `${initialLeft + deltaX}px`;
-                element.style.top = `${initialTop + deltaY}px`;
+                
+                let unalignedX = initialLeft + deltaX;
+                let unalignedY = initialTop + deltaY;
+
+                // FIX: Real-time Magnetic Grid Snapping (Aligns while moving)
+                let alignedX = Math.round(unalignedX / appState.gridSize) * appState.gridSize;
+                let alignedY = Math.round(unalignedY / appState.gridSize) * appState.gridSize;
+
+                // Border Constraints
+                alignedX = Math.max(0, Math.min(alignedX, canvas.clientWidth - element.clientWidth));
+                alignedY = Math.max(0, Math.min(alignedY, canvas.clientHeight - element.clientHeight));
+
+                element.style.left = `${alignedX}px`;
+                element.style.top = `${alignedY}px`;
             });
 
             element.addEventListener('pointerup', (e) => {
@@ -354,12 +297,6 @@
                 isDragging = false;
                 element.releasePointerCapture(e.pointerId);
                 element.style.zIndex = "";
-
-                // Snapping framework configuration calculation 
-                let currentLeft = parseInt(element.style.left);
-                let currentTop = parseInt(element.style.top);
-                element.style.left = `${Math.round(currentLeft / appState.gridSize) * appState.gridSize}px`;
-                element.style.top = `${Math.round(currentTop / appState.gridSize) * appState.gridSize}px`;
             });
         }
 
