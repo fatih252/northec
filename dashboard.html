@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PizzaApp Dashboard Pro v3.6</title>
+    <title>PizzaApp Dashboard Pro v3.7</title>
     <style>
         :root {
             --pizza-red: #973030;
             --pizza-green: #2e7d32;
-            --new-order-bg: #71A783;
-            --pizza-blue: #B3DAFF;
-            --bg-gray: #f0f0f0;
-            --card-white: #FFFFFF;
+            --new-order-bg: #4d805e; /* High contrast variant for low-res screens */
+            --pizza-blue: #b3daff;
+            --bg-gray: #e2e8f0; /* Darker background baseline for better screen contrast */
+            --card-white: #ffffff;
             --warning-orange: #fff3e0;
             --danger-red: #ffebee;
             --checkin-blue: #0288d1;
@@ -19,18 +19,18 @@
             --table-active-side: #d32f2f;
         }
 
-        /* --- NATIVE APP LOCKDOWN & BASE LAYOUT --- */
+        /* --- NATIVE APP LOCKDOWN & SYSTEM BASE --- */
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
         html, body {
             height: 100%;
             margin: 0; 
             padding: 0;
+            background-color: var(--bg-gray);
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background-color: var(--bg-gray);
+            font-family: 'Segoe UI', -apple-system, Tahoma, sans-serif;
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
@@ -42,151 +42,141 @@
             flex-direction: row;
         }
 
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; border: 2px solid #f1f1f1; }
+        /* High-Visibility Touch Scrollbars */
+        ::-webkit-scrollbar { width: 14px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; border: 3px solid #f1f5f9; }
         ::-webkit-scrollbar-thumb:hover { background: var(--pizza-red); }
 
         .hidden-config { display: none !important; }
 
-        /* --- SIDEBAR CONTAINER --- */
+        /* --- LOW-RES ACCURATE SIDEBAR --- */
         .sidebar-container {
-            width: 300px; /* Slightly wider for better touchscreen text fit */
+            width: 250px; /* Optimized down from 300px to protect order feed width */
             flex-shrink: 0;
             background: #ffffff; 
-            box-shadow: 3px 0 12px rgba(0,0,0,0.12);
+            box-shadow: 3px 0 10px rgba(0,0,0,0.15);
             display: flex;
             flex-direction: column;
             z-index: 100;
-            border-right: 2px solid #dcdcdc;
+            border-right: 2px solid #cbd5e1;
+            height: 100%;
         }
 
-        /* --- TOUCHSCREEN-OPTIMIZED PRIMARY BUTTONS --- */
+        /* Primary Category Selectors */
         .main-tabs { 
             display: flex; 
             flex-direction: column; 
-            gap: 8px;
-            padding: 14px;
-            background-color: #fdfdfd;
+            gap: 6px;
+            padding: 10px;
+            background-color: #f8fafc;
             border-bottom: 2px solid #e2e8f0;
+            flex-shrink: 0;
         }
         .main-btn { 
             width: 100%; 
-            min-height: 62px; /* Massive hit target */
-            padding: 16px; 
-            border: 2px solid #e2e8f0; 
-            border-radius: 10px;
-            font-size: 1.05rem; 
+            min-height: 54px; 
+            padding: 12px; 
+            border: 2px solid #cbd5e1; 
+            border-radius: 8px;
+            font-size: 0.95rem; 
             font-weight: 800; 
             cursor: pointer; 
-            background: #f8fafc; 
-            color: #475569; 
+            background: #ffffff; 
+            color: #334155; 
             text-transform: uppercase; 
             display: flex;
             justify-content: space-between;
             align-items: center;
             touch-action: manipulation;
-            transition: all 0.1s ease;
+            transition: transform 0.05s ease;
         }
-        /* Instant physical press animation */
-        .main-btn:active {
-            transform: scale(0.96);
-        }
-        .main-btn .tab-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .main-btn:active { transform: scale(0.96); }
+        .main-btn .tab-title { display: flex; align-items: center; gap: 8px; }
         .main-btn .tab-badge {
             background: #e2e8f0;
-            color: #1e293b;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            color: #0f172a;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
             font-weight: 900;
         }
-        /* Active high-visibility state */
         .main-btn.active { 
             background-color: var(--pizza-red); 
             color: #ffffff; 
             border-color: var(--pizza-red);
-            box-shadow: 0 4px 10px rgba(151, 48, 48, 0.3);
         }
         .main-btn.active .tab-badge {
             background: rgba(255, 255, 255, 0.25);
             color: #ffffff;
         }
 
-        /* --- TOUCHSCREEN-OPTIMIZED SUB FILTER BUTTONS --- */
+        /* Secondary Sub Filter Setup - Squish protected for OSK instances */
         .sub-tabs { 
             display: flex; 
             flex-direction: column; 
-            background-color: #fff; 
-            padding: 14px; 
-            gap: 10px; /* Safe distance to prevent fat-finger issues */
+            background-color: #ffffff; 
+            padding: 10px; 
+            gap: 8px; 
             overflow-y: auto;
             flex-grow: 1;
+            flex-shrink: 1; /* Automatically contracts if on-screen keyboard shows up */
         }
         .sub-btn { 
             display: none; 
             width: 100%;
-            min-height: 56px; /* Thick list items */
-            padding: 14px 16px; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 8px; 
+            min-height: 48px; 
+            padding: 12px; 
+            border: 1px solid #94a3b8; /* Darker border for low-contrast panels */
+            border-radius: 6px; 
             cursor: pointer; 
-            font-size: 1.05rem; 
+            font-size: 0.95rem; 
             font-weight: 700; 
-            background: #f1f5f9; /* Subtle tint so it feels like an organic button grid */
-            color: #334155;
+            background: #f8fafc; 
+            color: #1e293b;
             text-align: left;
             white-space: nowrap; 
             touch-action: manipulation;
-            transition: all 0.1s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.05s ease;
         }
-        .sub-btn:active {
-            transform: scale(0.96);
-        }
+        .sub-btn:active { transform: scale(0.96); }
         .sub-btn[data-code="all"] { display: block; }
-        
-        /* Dark high-visibility focus status for active criteria */
         .sub-btn.active { 
-            background-color: #1e293b; 
+            background-color: #334155; 
             color: #ffffff; 
-            border-color: #1e293b; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.18); 
+            border-color: #334155; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15); 
         }
 
-        /* Large Touch Search Bar */
+        /* High Visibility Search Field */
         .search-box {
-            padding: 14px;
-            background: #f8fafc;
-            border-top: 2px solid #e2e8f0;
+            padding: 10px;
+            background: #f1f5f9;
+            border-top: 2px solid #cbd5e1;
             flex-shrink: 0;
         }
         .search-box input {
             width: 100%;
-            padding: 16px; /* Super comfortable keyboard focus element */
-            font-size: 1.1rem;
-            border: 2px solid #cbd5e1;
-            border-radius: 8px;
+            padding: 12px; 
+            font-size: 1rem;
+            border: 2px solid #94a3b8;
+            border-radius: 6px;
             outline: none;
             background-color: #ffffff;
+            color: #0f172a;
         }
         .search-box input:focus {
             border-color: var(--pizza-red);
-            box-shadow: 0 0 0 3px rgba(151, 48, 48, 0.15);
         }
 
-        /* --- CONTENT AREA --- */
+        /* --- CONTENT FEED VIEWPORT --- */
         .content { 
             flex-grow: 1; 
             overflow-y: auto; 
-            padding: 15px; 
+            padding: 12px; 
             display: flex; 
             flex-direction: column; 
-            gap: 12px; 
+            gap: 10px; 
             height: 100%; 
         }
 
@@ -196,62 +186,97 @@
             align-items: center; 
             justify-content: center;
             height: 100%; 
-            color: #888; 
+            color: #64748b; 
             text-align: center;
             flex-grow: 1;
         }
 
-        /* Order Card UI Layout */
+        /* --- TOUCH COMPLIANT FLEX ORDER CARD --- */
         .order-card {
-            background: var(--card-white); border-radius: 8px; padding: 14px 18px;
-            display: grid; grid-template-columns: 1fr 100px 160px;
+            background: var(--card-white); 
+            border-radius: 6px; 
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.06); border: 1px solid #e0e0e0;
-            border-left: 12px solid transparent; cursor: pointer;
-            position: relative; transition: transform 0.1s;
+            gap: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+            border: 1px solid #cbd5e1;
+            border-left: 12px solid transparent; 
+            cursor: pointer;
+            position: relative; 
+            transition: transform 0.05s ease;
         }
-        .order-card:active { transform: scale(0.99); background-color: #f8f8f8; }
+        .order-card:active { transform: scale(0.99); background-color: #f8fafc; }
 
-        .address-title { font-weight: 800; font-size: 1.25rem; color: #000; }
-        .order-details { font-size: 1rem; color: #555; margin-top: 4px; line-height: 1.4; }
-        .time-tag { font-weight: bold; color: #d32f2f; }
-        .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.5rem; padding-right: 15px; }
+        /* Left side content scales up natively */
+        .address-info {
+            flex-grow: 1;
+            min-width: 0; /* Important: Allows browser text layout wrapping algorithms to work */
+        }
+        .address-title { 
+            font-weight: 800; 
+            font-size: 1.2rem; 
+            color: #000000;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* Graceful text containment on low width */
+        }
+        .order-details { font-size: 0.95rem; color: #334155; margin-top: 4px; line-height: 1.4; }
+        .time-tag { font-weight: bold; color: #b91c1c; }
 
+        /* Right side structural lock block */
+        .card-right-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+        .price-tag { 
+            text-align: right; 
+            font-weight: 900; 
+            color: var(--pizza-red); 
+            font-size: 1.4rem; 
+            min-width: 80px;
+        }
+
+        /* Action Targets */
         .btn-checkin {
-            padding: 22px 15px;
+            padding: 16px 20px;
             border: none;
-            border-radius: 10px;
-            color: white;
+            border-radius: 8px;
+            color: #ffffff;
             font-weight: 900;
-            font-size: 1.1rem;
+            font-size: 1rem;
             cursor: pointer;
             text-transform: uppercase;
             background-color: var(--checkin-blue);
-            min-width: 130px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            touch-action: manipulation;
         }
-        .btn-checkin:active { background-color: #0277bd; transform: translateY(2px); }
+        .btn-checkin:active { background-color: #026ca6; }
 
-        .urgency-high { border-right: 10px solid #d32f2f; background-color: var(--danger-red); }
+        /* Alert Status Identifiers */
+        .urgency-high { border-right: 10px solid #b91c1c; background-color: var(--danger-red); }
         .status-6 { border-left-color: var(--table-inactive-side); } 
         .is-table-active { border-left-color: var(--table-active-side) !important; }
         .status-3 { background-color: var(--pizza-blue) !important; }
         .status-4 { opacity: 0.4; filter: grayscale(1); text-decoration: line-through; }
         
         .is-new { background-color: var(--new-order-bg) !important; border-color: var(--new-order-bg); }
-        .is-new * { color: white !important; }
+        .is-new * { color: #ffffff !important; }
 
-        .flash-anim { animation: blinker 1.5s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0.4; } }
+        .flash-anim { animation: blinker 2s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.5; } }
 
+        /* Status Badges */
         .badge { 
-            display: inline-block; font-weight: 800; font-size: 0.8rem; 
-            padding: 4px 12px; border-radius: 14px; margin-top: 6px; border: 1px solid currentColor; text-transform: uppercase;
+            display: inline-block; font-weight: 800; font-size: 0.75rem; 
+            padding: 3px 10px; border-radius: 12px; margin-top: 4px; border: 1px solid currentColor; text-transform: uppercase;
         }
-        .pay-online { background-color: #e8f5e9; color: #2e7d32; } 
-        .pay-1 { background-color: #fafafa; color: #666; } 
-        .pay-2 { background-color: #e3f2fd; color: #0277bd; } 
+        .pay-online { background-color: #e8f5e9; color: #1b5e20; } 
+        .pay-1 { background-color: #f8fafc; color: #475569; } 
+        .pay-2 { background-color: #e3f2fd; color: #0a58ca; } 
         .pay-3 { background-color: #fce4ec; color: #c2185b; } 
         .pay-4 { background-color: #fff3e0; color: #e65100; } 
     </style>
@@ -261,11 +286,11 @@
     <div class="sidebar-container">
         <div class="main-tabs">
             <button id="tabOnline" class="main-btn active" onclick="setMain('online')">
-                <span class="tab-title">🌐 Online Orders</span>
+                <span class="tab-title">🌐 Online</span>
                 <span id="badgeOnlineTotal" class="tab-badge">0</span>
             </button>
             <button id="tabPos" class="main-btn" onclick="setMain('pos')">
-                <span class="tab-title">🏪 Kassa Orders</span>
+                <span class="tab-title">🏪 Kassa</span>
                 <span id="badgePosTotal" class="tab-badge">0</span>
             </button>
         </div>
@@ -280,7 +305,7 @@
         </div>
 
         <div class="search-box">
-            <input type="text" id="orderSearch" placeholder="🔍 Zoek bestelling..." oninput="render()">
+            <input type="text" id="orderSearch" placeholder=" Zoek bestelling..." oninput="render()">
         </div>
     </div>
 
@@ -298,6 +323,7 @@
         let activeMain = 'online';
         let activeStatus = 'all';
 
+        // Core system loop triggers layout calculations
         setInterval(() => render(), 30000);
 
         window.addEventListener('dragstart', (e) => e.preventDefault());
@@ -368,7 +394,7 @@
             document.querySelectorAll('.sub-btn').forEach(btn => {
                 const code = btn.getAttribute('data-code');
                 const count = counts[code];
-                const baseNames = { "all":"Alles", "2":"🚚 Levering", "7":"🛍️ Afhaal", "6":"🍽️ Tafels", "3":"📝 Concept", "4":"❌ Geannuleerd" };
+                const baseNames = { "all":"Alles", "2":" Levering", "7":" Afhaal", "6":" Tafels", "3":" Concept", "4":" Geannuleerd" };
                 btn.innerText = `${baseNames[code]} (${count})`;
                 if (code === 'all') return;
                 btn.style.display = count > 0 ? 'block' : 'none';
@@ -451,21 +477,18 @@
                 let actionHtml = '';
 
                 if (status === "6") {
-                    title = `🍽️ Tafel: ${o.table?.name || '?'}`;
+                    title = `Tafel: ${o.table?.name || '?'}`;
                     if (o.table_active === true && o.table?.name) {
                         card.classList.add('is-table-active'); 
-                        actionHtml = `<div class="table-actions">
-                            <button class="btn-checkin" onclick="handleAction(event, 'table_checkin', '${o.order_id}')">Check In</button>
-                        </div>`;
+                        actionHtml = `<button class="btn-checkin" onclick="handleAction(event, 'table_checkin', '${o.order_id}')">Check In</button>`;
                     }
                 } 
                 else if (o.take_away || status === "7") {
                     const person = (o.clientName && o.clientName.trim() !== "") ? o.clientName : (o.phone_no ||  "" );
-                    title = `🛍️ Afhaal: ${person}`;
-                } else {
-                    title = `🚚 ${title}`;
+                    title = `Afhaal: ${person}`;
                 }
 
+                // Rendered inside clean structural flex layers to eliminate wrapping text truncation bugs
                 card.innerHTML = `
                     <div class="address-info">
                         <div class="address-title">${title}</div>
@@ -475,8 +498,10 @@
                             ${getPaymentBadge(o.payment_method,o.payment_method_id)}
                         </div>
                     </div>
-                    <div class="price-tag">€${parseFloat(o.value || 0).toFixed(2)}</div>
-                    ${actionHtml}
+                    <div class="card-right-controls">
+                        <div class="price-tag">€${parseFloat(o.value || 0).toFixed(2)}</div>
+                        ${actionHtml}
+                    </div>
                 `;
 
                 card.onclick = () => window.chrome.webview.postMessage({ action: "open_order", orderId: o.order_id });
