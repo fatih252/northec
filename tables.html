@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Table Layout Map</title>
+    <style>
+        * { box-sizing: border-box; user-select: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f5; }
+        
+        #canvas {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Pure CSS Grid generation - replaces winforms OnPaint system completely */
+        .edit-mode #canvas {
+            background-image: radial-gradient(circle, #cbd5e1 1.5px, transparent 1.5px);
+            background-size: 20px 20px;
+        }
+
+        .table-item {
+            position: absolute;
+            width: 110px;
+            height: 110px;
+            background-color: #ffffff;
+            border: 3px solid #64748b;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 8px;
+            transition: transform 0.1s linear, box-shadow 0.2s ease;
+        }
+
+        .table-item:active { transform: scale(0.97); }
+        .edit-mode .table-item { cursor: move; }
+
+        /* Dynamic Status Stylings */
+        .table-item.active {
+            background-color: #fef2f2;
+            border-color: #ef4444;
+        }
+        .table-item.vacant {
+            background-color: #f0fdf4;
+            border-color: #22c55e;
+        }
+
+        .table-icon {
+            width: 42px;
+            height: 42px;
+            margin-bottom: 4px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        /* CSS Status Asset Icons using standard Inline SVGs */
+        .vacant .table-icon {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2322c55e'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'/%3E%3C/svg%3E");
+        }
+        .active .table-icon {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ef4444'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'/%3E%3C/svg%3E");
+        }
+
+        .table-name { font-weight: bold; color: #1e293b; font-size: 14px; text-align: center; }
+        .table-timer { font-size: 12px; color: #ef4444; margin-top: 2px; font-weight: 600; }
+
+        /* Performance friendly custom CSS Tooltip instead of heavy WinForms native tooltips */
+        .table-item[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 115%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 50;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas"></div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        let appState = { editMode: false, gridSize: 20 };
+
+        // Core execution entrance called explicitly from native WinForms code
+        function initLayout(payload) {
+            appState.editMode = payload.editMode;
+            appState.gridSize = payload.gridSize || 20;
+            
+            if(payload.editMode) {
+                document.body.classList.add('edit-mode');
+            } else {
+                document.body.classList.remove('edit-mode');
+            }
+
+            // Load Background layout context
+            if (payload.backgroundImage) {
+                canvas.style.backgroundImage = `url('${payload.backgroundImage}')`;
+            } else {
+                canvas.style.backgroundColor = "#ffffff";
+            }
+
+            canvas.innerHTML = ''; // Wipe element tree cleanly
+
+            // Build dynamic table UI
+            payload.tables.forEach(table => {
+                const el = document.createElement('div');
+                el.className = `table-item ${table.isActive ? 'active' : 'vacant'}`;
+                el.id = `table-${table.id}`;
+                el.setAttribute('data-id', table.id);
+                
+                if (table.isActive && !appState.editMode) {
+                    el.setAttribute('data-tooltip', `Totaal bedrag: ${table.totalPrice}`);
+                }
+
+                // Internal Nodes 
+                const icon = document.createElement('div');
+                icon.className = 'table-icon';
+                el.appendChild(icon);
+
+                const name = document.createElement('div');
+                name.className = 'table-name';
+                name.innerText = table.name;
+                el.appendChild(name);
+
+                if (table.isActive && !appState.editMode) {
+                    const timer = document.createElement('div');
+                    timer.className = 'table-timer';
+                    timer.innerText = `${table.minutesOpen}"`;
+                    el.appendChild(timer);
+                }
+
+                // Process Positions Matrix Coordinates
+                if (table.location && table.location.includes(',')) {
+                    const [x, y] = table.location.split(',');
+                    el.style.left = `${x}px`;
+                    el.style.top = `${y}px`;
+                } else {
+                    // Quick default fallback stack placement
+                    el.style.left = '20px';
+                    el.style.top = '20px';
+                }
+
+                attachInteractions(el);
+                canvas.appendChild(el);
+            });
+        }
+
+        function attachInteractions(element) {
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            element.addEventListener('pointerdown', (e) => {
+                if (!appState.editMode) {
+                    // Normal Action: Open C# Form via Event Messaging
+                    sendToWinForms({ action: 'tableClicked', tableId: element.getAttribute('data-id') });
+                    return;
+                }
+
+                // Edit Mode Activation: Drag-and-Drop Processing Setup
+                isDragging = true;
+                element.setPointerCapture(e.pointerId);
+                
+                initialLeft = parseInt(element.style.left) || 0;
+                initialTop = parseInt(element.style.top) || 0;
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                element.style.zIndex = "1000";
+            });
+
+            element.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                
+                let rawX = initialLeft + deltaX;
+                let rawY = initialTop + deltaY;
+
+                // Enforce safety edge boundaries
+                rawX = Math.max(0, Math.min(rawX, canvas.clientWidth - element.clientWidth));
+                rawY = Math.max(0, Math.min(rawY, canvas.clientHeight - element.clientHeight));
+
+                // Instant UI feedback loop placement
+                element.style.left = `${rawX}px`;
+                element.style.top = `${rawY}px`;
+            });
+
+            element.addEventListener('pointerup', (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                element.releasePointerCapture(e.pointerId);
+                element.style.zIndex = "";
+
+                // Active Snapping Grid logic calculation run completely client side
+                let currentLeft = parseInt(element.style.left);
+                let currentTop = parseInt(element.style.top);
+
+                let snappedX = Math.round(currentLeft / appState.gridSize) * appState.gridSize;
+                let snappedY = Math.round(currentTop / appState.gridSize) * appState.gridSize;
+
+                element.style.left = `${snappedX}px`;
+                element.style.top = `${snappedY}px`;
+            });
+        }
+
+        // Gather coordinates and return values payload cleanly to C# code thread
+        function requestLayoutSave() {
+            const updates = [];
+            document.querySelectorAll('.table-item').forEach(el => {
+                updates.push({
+                    id: parseInt(el.getAttribute('data-id')),
+                    x: parseInt(el.style.left) || 0,
+                    y: parseInt(el.style.top) || 0
+                });
+            });
+            sendToWinForms({ action: 'saveLayout', data: JSON.stringify(updates) });
+        }
+
+        function sendToWinForms(data) {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(data);
+            } else {
+                console.log("WinForms Link Unavailable:", data);
+            }
+        }
+
+        // Signal host context initialization complete ready loop
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { sendToWinForms({ action: 'ready' }); }, 300);
+        });
+    </script>
+</body>
+</html>
