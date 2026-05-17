@@ -19,8 +19,10 @@
             --border-color: #374151;
             --text-main: #f9fafb;
             --text-muted: #9ca3af;
-            --color-vacant: #10b981;
-            --color-active: #ef4444;
+            
+            /* REVERSED POS COLOR LOGIC */
+            --color-vacant: #ef4444; /* Available / Free Table = RED */
+            --color-active: #10b981; /* Occupied / Open Order Table = GREEN */
             --color-edit: #3b82f6;
         }
 
@@ -30,7 +32,7 @@
             -webkit-user-select: none;
             margin: 0; 
             padding: 0; 
-            touch-action: none; /* Complete lockdown against default double-tap zooms or gestures */
+            touch-action: none; /* Complete lockdown against default gestures/pinching */
         }
 
         body, html { 
@@ -44,7 +46,7 @@
         
         #app-container { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
-        /* --- High Visibility Touch Control Bar (Optimized for Low-Res) --- */
+        /* --- Touch Control Bar (Optimized for Low-Res) --- */
         #control-bar {
             min-height: 85px;
             background-color: var(--bg-main);
@@ -54,13 +56,13 @@
             justify-content: space-between;
             padding: 10px 16px;
             z-index: 9999;
-            flex-wrap: wrap; /* Allows safe wrapping on 1024x768 monitors without clipping */
+            flex-wrap: wrap; 
             gap: 8px;
         }
 
         .btn-group { display: flex; gap: 10px; align-items: center; }
 
-        /* Massive Touch Targets (Minimum 58px-60px for fast, error-free tapping) */
+        /* Large Touch Targets (Minimum 58px-60px for touchscreen terminals) */
         .pos-btn {
             background-color: var(--bg-card);
             color: var(--text-main);
@@ -92,7 +94,7 @@
             position: relative;
         }
 
-        /* --- Viewport-Locked Workspace (NO SCROLLBARS AT ALL) --- */
+        /* --- Viewport-Locked Canvas (NO SCROLLBARS AT ALL) --- */
         #canvas-wrapper { 
             width: 100%;
             height: 100%;
@@ -110,7 +112,7 @@
             overflow: hidden;
         }
 
-        /* CRISP EMBEDDED SHARP RECTILINEAR GRIDLINES (Visible back in Edit Mode) */
+        /* CRISP EMBEDDED RETICLE GRIDLINES (Visible during location updates) */
         .edit-mode #canvas {
             background-image: 
                 linear-gradient(to right, rgba(55, 65, 81, 0.7) 1.5px, transparent 1.5px),
@@ -118,7 +120,7 @@
             background-size: 20px 20px;
         }
 
-        /* --- Overlay Sidebar (Prevents Canvas/Table Compression!) --- */
+        /* --- Overlay Sidebar Slider (Prevents Table Shifts) --- */
         #order-sidebar {
             position: absolute;
             right: 0;
@@ -130,7 +132,7 @@
             display: flex;
             flex-direction: column;
             transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 9500; /* Preemptively positions cleanly over grid elements */
+            z-index: 9500; 
             box-shadow: -5px 0 25px rgba(0,0,0,0.4);
         }
 
@@ -139,79 +141,63 @@
         }
 
         .sidebar-header {
-            padding: 14px;
+            padding: 16px;
             background-color: #ffffff;
             border-bottom: 2px solid #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .sidebar-title-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             color: #0f172a;
+            flex-shrink: 0;
         }
-        .sidebar-title-row h2 { font-size: 18px; font-weight: 800; }
+        .sidebar-header h2 { font-size: 18px; font-weight: 800; }
 
-        .sidebar-subtabs {
-            display: flex;
-            gap: 6px;
-            background: #f8fafc;
-            padding: 4px;
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
-        }
-
-        .sidebar-tab-btn {
-            flex: 1;
-            height: 46px;
-            border: none;
-            background: transparent;
-            color: #475569;
-            font-size: 14px;
-            font-weight: 700;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .sidebar-tab-btn.active {
-            background-color: #334155;
-            color: #ffffff;
-        }
-
-        .sidebar-tab-badge {
-            background: #cbd5e1;
-            color: #0f172a;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 800;
-        }
-        .sidebar-tab-btn.active .sidebar-tab-badge {
-            background: rgba(255, 255, 255, 0.25);
-            color: #ffffff;
-        }
-
+        /* Single Unified Scrolling Column with Vertical Sections */
         .order-list-container {
             flex: 1;
             overflow-y: auto;
-            padding: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* Vertically Stacked Sub-headers matching Dashboard styles */
+        .sidebar-section-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 6px;
+        }
+
+        .sidebar-section-badge {
+            background: #cbd5e1;
+            color: #0f172a;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .vertical-stack-bucket {
             display: flex;
             flex-direction: column;
             gap: 10px;
+            margin-bottom: 10px;
         }
 
         /* --- Dashboard Styled Order Cards --- */
         .order-card {
             background: var(--card-white);
             border-radius: 6px;
-            padding: 12px;
+            padding: 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -227,12 +213,12 @@
         .indicator-table-closed { border-left-color: #ff9800 !important; }
 
         .address-info { flex-grow: 1; min-width: 0; }
-        .address-title { font-weight: 800; font-size: 1.1rem; color: #000000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .order-details { font-size: 0.85rem; color: #334155; margin-top: 2px; line-height: 1.4; text-align: left; }
+        .address-title { font-weight: 800; font-size: 1.15rem; color: #000000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .order-details { font-size: 0.85rem; color: #334155; margin-top: 4px; line-height: 1.4; text-align: left; }
         .time-tag { font-weight: bold; color: #b91c1c; }
-        .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.3rem; min-width: 75px; }
+        .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.35rem; min-width: 75px; }
 
-        /* --- Illustrative Vectors --- */
+        /* --- Illustrative SVG Tables Configuration --- */
         .table-item {
             position: absolute;
             display: flex;
@@ -254,10 +240,12 @@
             pointer-events: none;
         }
 
-        .table-item.vacant .table-illustration .table-top { fill: #064e3b; stroke: var(--color-vacant); stroke-width: 3; }
-        .table-item.vacant .table-illustration .chair { fill: #134e4a; stroke: var(--color-vacant); stroke-width: 1.5; }
-        .table-item.active .table-illustration .table-top { fill: #450a0a; stroke: var(--color-active); stroke-width: 3; }
-        .table-item.active .table-illustration .chair { fill: #7f1d1d; stroke: var(--color-active); stroke-width: 1.5; }
+        /* Swapped Graphic Color Rule Maps */
+        .table-item.vacant .table-illustration .table-top { fill: #450a0a; stroke: var(--color-vacant); stroke-width: 3; }
+        .table-item.vacant .table-illustration .chair { fill: #7f1d1d; stroke: var(--color-vacant); stroke-width: 1.5; }
+        
+        .table-item.active .table-illustration .table-top { fill: #064e3b; stroke: var(--color-active); stroke-width: 3; }
+        .table-item.active .table-illustration .chair { fill: #134e4a; stroke: var(--color-active); stroke-width: 1.5; }
 
         .table-details {
             position: relative;
@@ -271,9 +259,9 @@
 
         .table-name { font-size: 16px; font-weight: 700; color: var(--text-main); text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
         .table-timer { font-size: 12px; color: #f97316; font-weight: 800; background: rgba(0, 0, 0, 0.7); padding: 2px 6px; border-radius: 6px; width: fit-content; margin: 0 auto; }
-        .table-price { font-size: 13px; font-weight: 700; color: #f8fafc; background: var(--color-active); padding: 2px 8px; border-radius: 20px; margin-top: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .table-price { font-size: 13px; font-weight: 700; color: #f8fafc; background: var(--pizza-green); padding: 2px 8px; border-radius: 20px; margin-top: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
 
-        /* --- Low Resolution Hardware Safeguards Context --- */
+        /* --- Low Resolution Hardware Media Constraints Context --- */
         @media (max-width: 1024px) {
             #order-sidebar { width: 330px; }
             .pos-btn { height: 54px; padding: 0 14px; font-size: 14px; }
@@ -311,35 +299,34 @@
 
             <div id="order-sidebar" class="collapsed">
                 <div class="sidebar-header">
-                    <div class="sidebar-title-row">
-                        <h2>Tafel Bestellingen</h2>
-                        <button class="pos-btn scale-btn" style="height: 38px; width: 38px; font-size: 14px; background: #e2e8f0; color: #000; border: none;" onclick="toggleSidebar()">✕</button>
-                    </div>
-                    
-                    <div class="sidebar-subtabs">
-                        <button id="subtabActive" class="sidebar-tab-btn active" onclick="switchSidebarTab('active')">
-                            <span>Actief</span>
-                            <span id="badgeActiveCount" class="sidebar-tab-badge">0</span>
-                        </button>
-                        <button id="subtabInactive" class="sidebar-tab-btn" onclick="switchSidebarTab('inactive')">
-                            <span>Historiek</span>
-                            <span id="badgeInactiveCount" class="sidebar-tab-badge">0</span>
-                        </button>
-                    </div>
+                    <h2>Tafelbeheer overzicht</h2>
+                    <button class="pos-btn scale-btn" style="height: 38px; width: 38px; font-size: 14px; background: #e2e8f0; color: #000; border: none;" onclick="toggleSidebar()">✕</button>
                 </div>
                 
-                <div class="order-list-container" id="order-list-target"></div>
+                <div class="order-list-container">
+                    <div class="sidebar-section-title">
+                        <span>Actieve Tafels</span>
+                        <span id="badgeActiveCount" class="sidebar-section-badge">0</span>
+                    </div>
+                    <div id="active-bucket" class="vertical-stack-bucket"></div>
+
+                    <div class="sidebar-section-title" style="margin-top: 15px;">
+                        <span>Historiek (Vandaag)</span>
+                        <span id="badgeInactiveCount" class="sidebar-section-badge">0</span>
+                    </div>
+                    <div id="inactive-bucket" class="vertical-stack-bucket"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('canvas');
-        const orderListTarget = document.getElementById('order-list-target');
+        const activeBucket = document.getElementById('active-bucket');
+        const inactiveBucket = document.getElementById('inactive-bucket');
         const sidebar = document.getElementById('order-sidebar');
         
-        let appState = { editMode: false, gridSize: 20, tableWidth: 120, tableHeight: 120, currentSidebarTab: 'active' };
-        let cacheData = { activeTables: [], inactiveTables: [] };
+        let appState = { editMode: false, gridSize: 20, tableWidth: 120, tableHeight: 120 };
 
         function initLayout(payload) {
             appState.editMode = payload.editMode;
@@ -369,6 +356,7 @@
             canvas.style.backgroundImage = payload.backgroundImage ? `url('${payload.backgroundImage}')` : 'none';
             canvas.innerHTML = '';
 
+            // Floorplan Table Rendering Layout Loops
             payload.tables.forEach(table => {
                 const el = document.createElement('div');
                 el.className = `table-item ${table.isActive ? 'active' : 'vacant'}`;
@@ -400,41 +388,29 @@
                     el.style.top = "100px";
                 }
 
-                // Initial clamp containment pass
                 clampElementToCanvas(el);
-
                 attachInteractions(el);
                 canvas.appendChild(el);
             });
 
-            cacheData.activeTables = payload.activeOrders || [];
-            cacheData.inactiveTables = payload.inactiveOrders || [];
-
-            document.getElementById('badgeActiveCount').innerText = cacheData.activeTables.length;
-            document.getElementById('badgeInactiveCount').innerText = cacheData.inactiveTables.length;
-
-            renderSidebarContent();
+            // Render both tracking modules simultaneously inside one scrolling column feed
+            renderBucketList(activeBucket, payload.activeOrders, 'indicator-table-open', 'Geopend', 'badgeActiveCount');
+            renderBucketList(inactiveBucket, payload.inactiveOrders, 'indicator-table-closed', 'Afgesloten', 'badgeInactiveCount');
         }
 
-        function switchSidebarTab(tabName) {
-            appState.currentSidebarTab = tabName;
-            document.getElementById('subtabActive').classList.toggle('active', tabName === 'active');
-            document.getElementById('subtabInactive').classList.toggle('active', tabName === 'inactive');
-            renderSidebarContent();
-        }
+        function renderBucketList(targetElement, list, indicatorClass, statusText, badgeId) {
+            targetElement.innerHTML = '';
+            const count = list ? list.length : 0;
+            document.getElementById(badgeId).innerText = count;
 
-        function renderSidebarContent() {
-            orderListTarget.innerHTML = '';
-            const list = (appState.currentSidebarTab === 'active') ? cacheData.activeTables : cacheData.inactiveTables;
-
-            if (!list || list.length === 0) {
-                orderListTarget.innerHTML = `<div style="text-align:center; color:#64748b; margin-top:40px; font-size:14px;">Geen bestellingen gevonden</div>`;
+            if (count === 0) {
+                targetElement.innerHTML = `<div style="text-align:center; color:#64748b; padding:10px; font-size:13px;">Geen items gevonden</div>`;
                 return;
             }
 
             list.forEach(order => {
                 const card = document.createElement('div');
-                card.className = `order-card ${appState.currentSidebarTab === 'active' ? 'indicator-table-open' : 'indicator-table-closed'}`;
+                card.className = `order-card ${indicatorClass}`;
                 card.onclick = () => sendToWinForms({ action: 'orderClicked', orderId: order.orderId });
 
                 card.innerHTML = `
@@ -442,18 +418,17 @@
                         <div class="address-title">Tafel: ${order.idDisplay}</div>
                         <div class="order-details">
                             <span class="time-tag">Tijd: ${order.timeDisplay}</span><br>
-                            Status: ${appState.currentSidebarTab === 'active' ? 'Geopend' : 'Afgesloten'}
+                            Status: ${statusText}
                         </div>
                     </div>
                     <div class="price-tag">${order.totalPrice}</div>
                 `;
-                orderListTarget.appendChild(card);
+                targetElement.appendChild(card);
             });
         }
 
         function toggleSidebar() {
             sidebar.classList.toggle('collapsed');
-            // NO LONGER RE-CLAMPING ON SIDEBAR TOGGLE, PREVENTING TABLE JUMPS!
         }
 
         function toggleEditMode() {
@@ -533,7 +508,6 @@
                 let alignedX = Math.round(unalignedX / appState.gridSize) * appState.gridSize;
                 let alignedY = Math.round(unalignedY / appState.gridSize) * appState.gridSize;
 
-                // Viewport boundaries boundary checks
                 alignedX = Math.max(0, Math.min(alignedX, canvas.clientWidth - element.clientWidth));
                 alignedY = Math.max(0, Math.min(alignedY, canvas.clientHeight - element.clientHeight));
 
