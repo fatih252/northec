@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PizzaApp Dashboard Pro v4.1</title>
+    <title>PizzaApp Dashboard Pro v4.2</title>
     <style>
         :root {
             --pizza-red: #973030;
@@ -48,7 +48,7 @@
 
         .hidden-config { display: none !important; }
 
-        /* --- SIDEBAR CONTAINER --- */
+        /* --- ADAPTIVE SIDEBAR --- */
         .sidebar-container {
             width: 250px; 
             flex-shrink: 0;
@@ -109,7 +109,7 @@
             color: #ffffff;
         }
 
-        /* Secondary Sub Filters with Badges */
+        /* Secondary Sub Filters with Badges and Left Indicators */
         .sub-tabs { 
             display: flex; 
             flex-direction: column; 
@@ -126,6 +126,7 @@
             min-height: 48px; 
             padding: 12px; 
             border: 1px solid #94a3b8; 
+            border-left: 6px solid transparent; /* Reserved for sidebar indicators */
             border-radius: 6px; 
             cursor: pointer; 
             font-size: 0.95rem; 
@@ -162,6 +163,11 @@
             background: rgba(255, 255, 255, 0.25);
             color: #ffffff;
         }
+
+        /* NEW: SPECIFIC LEFT-INDICATORS FOR SIDEBAR FILTER BUTTONS */
+        .sub-btn[data-code="2"] { border-left-color: #6082B6 !important; } /* Delivery Blue */
+        .sub-btn[data-code="7"] { border-left-color: #fdd835 !important; } /* Takeaway Yellow */
+        .sub-btn[data-code="6"] { border-left-color: var(--pizza-green) !important; } /* Table Green default */
 
         /* Search Box */
         .search-box {
@@ -223,11 +229,11 @@
         }
         .order-card:active { transform: scale(0.995); background-color: #f8fafc; }
 
-        /* NEW CUSTOM COLOR INDICATORS */
+        /* ORDER CARD BORDER INDICATORS */
         .indicator-table-open { border-left-color: var(--pizza-green) !important; }
         .indicator-table-closed { border-left-color: #ff9800 !important; }
         .indicator-takeaway { border-left-color: #fdd835 !important; }
-        .indicator-delivery { border-left-color: #4fc3f7 !important; }
+        .indicator-delivery { border-left-color: #6082B6 !important; } /* Updated to #6082B6 */
 
         .address-info {
             flex-grow: 1;
@@ -526,7 +532,6 @@
                 let title = o.address || "Adres onbekend";
                 let actionHtml = '';
 
-                /* EVALUATE NEW COLOR CLASS RULES DYNAMICALLY */
                 if (status === "6") {
                     title = `Tafel: ${o.table?.name || '?'}`;
                     if (o.table_active === true || o.table_active === 1 || String(o.table_active).toLowerCase() === "true") {
