@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POS Touchscreen Floorplan & Table Tabs</title>
+    <title>POS Touchscreen Floorplan Matrix</title>
     <style>
         :root {
             --pizza-red: #973030;
@@ -12,9 +12,6 @@
             --pizza-blue: #b3daff;
             --bg-gray: #e2e8f0; 
             --card-white: #ffffff;
-            --warning-orange: #fff3e0;
-            --danger-red: #ffebee;
-            --checkin-blue: #0288d1;
             
             --bg-main: #0b0f19;
             --bg-canvas: #111827;
@@ -22,6 +19,9 @@
             --border-color: #374151;
             --text-main: #f9fafb;
             --text-muted: #9ca3af;
+            --color-vacant: #10b981;
+            --color-active: #ef4444;
+            --color-edit: #3b82f6;
         }
 
         * { 
@@ -30,7 +30,7 @@
             -webkit-user-select: none;
             margin: 0; 
             padding: 0; 
-            touch-action: none; /* Prevents all default browser scrolling gestures */
+            touch-action: none; /* Complete lockdown against default double-tap zooms or gestures */
         }
 
         body, html { 
@@ -42,65 +42,63 @@
             color: var(--text-main); 
         }
         
-        #app-container { 
-            display: flex; 
-            flex-direction: column; 
-            width: 100%; 
-            height: 100%; 
-        }
+        #app-container { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
-        /* --- Touch Controls Top Panel Bar --- */
+        /* --- High Visibility Touch Control Bar (Optimized for Low-Res) --- */
         #control-bar {
-            height: 75px;
+            min-height: 85px;
             background-color: var(--bg-main);
             border-bottom: 2px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 24px;
+            padding: 10px 16px;
             z-index: 9999;
+            flex-wrap: wrap; /* Allows safe wrapping on 1024x768 monitors without clipping */
+            gap: 8px;
         }
 
-        .btn-group { display: flex; gap: 12px; align-items: center; }
+        .btn-group { display: flex; gap: 10px; align-items: center; }
 
+        /* Massive Touch Targets (Minimum 58px-60px for fast, error-free tapping) */
         .pos-btn {
             background-color: var(--bg-card);
             color: var(--text-main);
-            border: 1px solid var(--border-color);
-            height: 52px;
-            padding: 0 22px;
-            font-size: 15px;
-            font-weight: 600;
+            border: 2px solid var(--border-color);
+            height: 58px;
+            padding: 0 20px;
+            font-size: 16px;
+            font-weight: 800;
             border-radius: 10px;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: background-color 0.12s ease, transform 0.1s ease;
+            transition: background-color 0.1s ease, transform 0.05s ease;
         }
-        .pos-btn:active { transform: scale(0.96); background-color: #374151; }
+        .pos-btn:active { transform: scale(0.95); background-color: #374151; }
         .pos-btn.primary { background-color: var(--pizza-red); border-color: var(--pizza-red); }
         .pos-btn.success { background-color: var(--pizza-green); border-color: var(--pizza-green); }
         .pos-btn.danger { background-color: #b91c1c; border-color: #ef4444; }
-        .pos-btn.scale-btn { width: 52px; padding: 0; justify-content: center; font-size: 22px; }
+        .pos-btn.scale-btn { width: 58px; padding: 0; justify-content: center; font-size: 26px; }
 
-        /* --- Split Workspace Area --- */
+        /* --- Master Workspace Shell --- */
         #workspace {
             display: flex;
             flex: 1;
             width: 100%;
-            height: calc(100% - 75px);
+            height: calc(100% - 85px);
             overflow: hidden;
             position: relative;
         }
 
-        /* --- Viewport-Locked Canvas (NO SCROLLBARS AT ALL) --- */
+        /* --- Viewport-Locked Workspace (NO SCROLLBARS AT ALL) --- */
         #canvas-wrapper { 
-            flex: 1; 
-            position: relative; 
+            width: 100%;
             height: 100%;
             background-color: var(--bg-canvas);
             overflow: hidden;
+            position: relative;
         }
         
         #canvas { 
@@ -112,37 +110,41 @@
             overflow: hidden;
         }
 
+        /* CRISP EMBEDDED SHARP RECTILINEAR GRIDLINES (Visible back in Edit Mode) */
         .edit-mode #canvas {
-            background-image: radial-gradient(circle, #374151 2px, transparent 2px);
+            background-image: 
+                linear-gradient(to right, rgba(55, 65, 81, 0.7) 1.5px, transparent 1.5px),
+                linear-gradient(to bottom, rgba(55, 65, 81, 0.7) 1.5px, transparent 1.5px);
             background-size: 20px 20px;
         }
 
-        /* --- Split Window Sidebar Matching Main UI Colors --- */
+        /* --- Overlay Sidebar (Prevents Canvas/Table Compression!) --- */
         #order-sidebar {
-            width: 420px;
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 380px;
             height: 100%;
             background-color: #f1f5f9;
-            border-left: 2px solid #cbd5e1;
+            border-left: 3px solid #cbd5e1;
             display: flex;
             flex-direction: column;
-            transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), width 0.22s ease;
-            z-index: 50;
-            overflow: hidden;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 9500; /* Preemptively positions cleanly over grid elements */
+            box-shadow: -5px 0 25px rgba(0,0,0,0.4);
         }
 
         #order-sidebar.collapsed {
-            width: 0px;
-            border-left: none;
             transform: translateX(100%);
         }
 
         .sidebar-header {
-            padding: 16px;
+            padding: 14px;
             background-color: #ffffff;
             border-bottom: 2px solid #e2e8f0;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
         .sidebar-title-row {
@@ -153,10 +155,9 @@
         }
         .sidebar-title-row h2 { font-size: 18px; font-weight: 800; }
 
-        /* Internal Sub Tabs matching the Main Form layout profile */
         .sidebar-subtabs {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             background: #f8fafc;
             padding: 4px;
             border-radius: 8px;
@@ -165,7 +166,7 @@
 
         .sidebar-tab-btn {
             flex: 1;
-            height: 44px;
+            height: 46px;
             border: none;
             background: transparent;
             color: #475569;
@@ -176,13 +177,12 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
         }
 
         .sidebar-tab-btn.active {
             background-color: #334155;
             color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .sidebar-tab-badge {
@@ -201,39 +201,38 @@
         .order-list-container {
             flex: 1;
             overflow-y: auto;
-            padding: 14px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
-        /* --- High Fidelity Order Cards Matching Main Dashboard Layout --- */
+        /* --- Dashboard Styled Order Cards --- */
         .order-card {
             background: var(--card-white);
             border-radius: 6px;
-            padding: 14px;
+            padding: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 14px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             border: 1px solid #cbd5e1;
             border-left: 12px solid transparent;
             cursor: pointer;
             width: 100%;
         }
-        .order-card:active { transform: scale(0.985); background-color: #f8fafc; }
 
         .indicator-table-open { border-left-color: var(--pizza-green) !important; }
         .indicator-table-closed { border-left-color: #ff9800 !important; }
 
         .address-info { flex-grow: 1; min-width: 0; }
-        .address-title { font-weight: 800; font-size: 1.15rem; color: #000000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .order-details { font-size: 0.90rem; color: #334155; margin-top: 4px; line-height: 1.4; text-align: left; }
+        .address-title { font-weight: 800; font-size: 1.1rem; color: #000000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .order-details { font-size: 0.85rem; color: #334155; margin-top: 2px; line-height: 1.4; text-align: left; }
         .time-tag { font-weight: bold; color: #b91c1c; }
-        .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.35rem; min-width: 80px; }
+        .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.3rem; min-width: 75px; }
 
-        /* --- Graphical Table Elements --- */
+        /* --- Illustrative Vectors --- */
         .table-item {
             position: absolute;
             display: flex;
@@ -245,13 +244,6 @@
             cursor: pointer;
         }
         
-        .edit-mode .table-item { 
-            cursor: move; 
-            outline: 2px dashed var(--color-edit);
-            outline-offset: 4px;
-        }
-        .edit-mode .table-item:active { transform: scale(1.02); }
-
         .table-illustration {
             position: absolute;
             top: 0;
@@ -264,7 +256,7 @@
 
         .table-item.vacant .table-illustration .table-top { fill: #064e3b; stroke: var(--color-vacant); stroke-width: 3; }
         .table-item.vacant .table-illustration .chair { fill: #134e4a; stroke: var(--color-vacant); stroke-width: 1.5; }
-        .table-item.active .table-illustration .table-top { fill: #450a0a; stroke: var(--color-active); stroke-width: 3; stroke-dasharray: none; }
+        .table-item.active .table-illustration .table-top { fill: #450a0a; stroke: var(--color-active); stroke-width: 3; }
         .table-item.active .table-illustration .chair { fill: #7f1d1d; stroke: var(--color-active); stroke-width: 1.5; }
 
         .table-details {
@@ -280,6 +272,14 @@
         .table-name { font-size: 16px; font-weight: 700; color: var(--text-main); text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
         .table-timer { font-size: 12px; color: #f97316; font-weight: 800; background: rgba(0, 0, 0, 0.7); padding: 2px 6px; border-radius: 6px; width: fit-content; margin: 0 auto; }
         .table-price { font-size: 13px; font-weight: 700; color: #f8fafc; background: var(--color-active); padding: 2px 8px; border-radius: 20px; margin-top: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+
+        /* --- Low Resolution Hardware Safeguards Context --- */
+        @media (max-width: 1024px) {
+            #order-sidebar { width: 330px; }
+            .pos-btn { height: 54px; padding: 0 14px; font-size: 14px; }
+            .pos-btn.scale-btn { width: 54px; }
+            #control-bar { min-height: 75px; }
+        }
     </style>
 </head>
 <body>
@@ -295,7 +295,7 @@
             </div>
 
             <div class="btn-group">
-                <button class="pos-btn" onclick="toggleSidebar()">Bestellingen Lijst</button>
+                <button class="pos-btn" onclick="toggleSidebar()" style="border-color: #64748b;">Bestellingen Lijst</button>
                 <button class="pos-btn" onclick="sendToWinForms({action: 'triggerBackgroundPicker'})">Achtergrond Laden</button>
                 <button class="pos-btn" onclick="sendToWinForms({action: 'removeBackground'})" style="color: var(--text-muted)">Wissen</button>
                 <button class="pos-btn danger" onclick="sendToWinForms({action: 'resetLayout'})">Reset Layout</button>
@@ -313,7 +313,7 @@
                 <div class="sidebar-header">
                     <div class="sidebar-title-row">
                         <h2>Tafel Bestellingen</h2>
-                        <button class="pos-btn scale-btn" style="height: 36px; width: 36px; font-size: 14px; background: #e2e8f0; color: #000; border: none;" onclick="toggleSidebar()">✕</button>
+                        <button class="pos-btn scale-btn" style="height: 38px; width: 38px; font-size: 14px; background: #e2e8f0; color: #000; border: none;" onclick="toggleSidebar()">✕</button>
                     </div>
                     
                     <div class="sidebar-subtabs">
@@ -369,7 +369,6 @@
             canvas.style.backgroundImage = payload.backgroundImage ? `url('${payload.backgroundImage}')` : 'none';
             canvas.innerHTML = '';
 
-            // Render Floorplan Tables Map Matrix
             payload.tables.forEach(table => {
                 const el = document.createElement('div');
                 el.className = `table-item ${table.isActive ? 'active' : 'vacant'}`;
@@ -401,12 +400,13 @@
                     el.style.top = "100px";
                 }
 
+                // Initial clamp containment pass
                 clampElementToCanvas(el);
+
                 attachInteractions(el);
                 canvas.appendChild(el);
             });
 
-            // Store references internally for sub-tab switching
             cacheData.activeTables = payload.activeOrders || [];
             cacheData.inactiveTables = payload.inactiveOrders || [];
 
@@ -434,7 +434,6 @@
 
             list.forEach(order => {
                 const card = document.createElement('div');
-                // Use dashboard classes for live status coloring directly
                 card.className = `order-card ${appState.currentSidebarTab === 'active' ? 'indicator-table-open' : 'indicator-table-closed'}`;
                 card.onclick = () => sendToWinForms({ action: 'orderClicked', orderId: order.orderId });
 
@@ -454,9 +453,7 @@
 
         function toggleSidebar() {
             sidebar.classList.toggle('collapsed');
-            setTimeout(() => {
-                document.querySelectorAll('.table-item').forEach(el => clampElementToCanvas(el));
-            }, 250);
+            // NO LONGER RE-CLAMPING ON SIDEBAR TOGGLE, PREVENTING TABLE JUMPS!
         }
 
         function toggleEditMode() {
@@ -536,6 +533,7 @@
                 let alignedX = Math.round(unalignedX / appState.gridSize) * appState.gridSize;
                 let alignedY = Math.round(unalignedY / appState.gridSize) * appState.gridSize;
 
+                // Viewport boundaries boundary checks
                 alignedX = Math.max(0, Math.min(alignedX, canvas.clientWidth - element.clientWidth));
                 alignedY = Math.max(0, Math.min(alignedY, canvas.clientHeight - element.clientHeight));
 
