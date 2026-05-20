@@ -278,7 +278,8 @@
         
         function sendToWinForms(action, payload = {}) {
             if (window.chrome && window.chrome.webview) {
-                window.chrome.webview.postMessage({ action, ...payload });
+                payload.action = action;
+                window.chrome.webview.postMessage(payload);
             }
         }
 
@@ -304,7 +305,6 @@
                 const btn = document.createElement('button');
                 btn.className = `cat-btn ${c.isActive ? 'active' : ''}`;
                 
-                // If a color exists and it's active, use the color. If not active, use it as a subtle border hint
                 if(c.color) {
                     if(c.isActive) btn.style.backgroundColor = c.color;
                     else btn.style.borderLeft = `6px solid ${c.color}`;
