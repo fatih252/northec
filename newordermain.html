@@ -6,148 +6,275 @@
     <title>POS Touchscreen Ordering</title>
     <style>
         :root {
-            --bg-main: #0f172a;
+            --bg-base: #0f172a;
             --bg-panel: #1e293b;
-            --border-color: #334155;
-            --text-light: #f8fafc;
+            --bg-card: #334155;
+            --border-color: #475569;
+            --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --accent-red: #dc2626;
-            --accent-green: #16a34a;
-            --accent-blue: #2563eb;
-            --btn-active: #3b82f6;
+            
+            --brand-primary: #3b82f6;
+            --brand-success: #10b981;
+            --brand-danger: #ef4444;
+            --brand-warning: #f59e0b;
         }
 
-        * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: pan-y; }
+        * { 
+            box-sizing: border-box; 
+            user-select: none; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-tap-highlight-color: transparent; 
+            touch-action: pan-y; 
+        }
         
-        body, html { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-main); color: var(--text-light); }
+        body, html { 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: var(--bg-base); 
+            color: var(--text-main); 
+        }
 
-        #pos-layout { display: flex; width: 100%; height: 100%; }
+        #app-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- TOP HEADER BAR --- */
+        #top-header {
+            height: 65px;
+            background-color: var(--bg-panel);
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .header-title { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+
+        .btn-close {
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 2px solid var(--border-color);
+            padding: 0 20px;
+            height: 44px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.1s ease;
+        }
+        .btn-close:active { background-color: var(--brand-danger); color: white; border-color: var(--brand-danger); transform: scale(0.95); }
+
+        /* --- MAIN POS LAYOUT --- */
+        #pos-layout { 
+            display: flex; 
+            flex: 1; 
+            overflow: hidden; 
+        }
 
         /* --- LEFT: Categories Column --- */
         #col-categories {
-            width: 220px;
+            width: 240px;
             background-color: var(--bg-panel);
             border-right: 2px solid var(--border-color);
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            padding: 10px;
+            gap: 8px;
         }
         
         .cat-btn {
-            min-height: 70px;
-            padding: 15px;
-            background: transparent;
-            color: var(--text-light);
-            border: none;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 16px;
+            min-height: 65px;
+            padding: 0 15px;
+            background: var(--bg-base);
+            color: var(--text-main);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            font-size: 15px;
             font-weight: 700;
             text-align: left;
             cursor: pointer;
-            transition: background 0.1s;
+            display: flex;
+            align-items: center;
+            transition: all 0.15s ease;
         }
-        .cat-btn.active { background-color: var(--accent-red); border-left: 6px solid #fca5a5; }
-        .cat-btn:active { background-color: #334155; }
+        .cat-btn.active { 
+            background-color: var(--brand-primary); 
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+        }
+        .cat-btn:active { transform: scale(0.96); }
 
         /* --- CENTER: Products Grid --- */
         #col-products {
             flex: 1;
-            padding: 15px;
+            padding: 20px;
             overflow-y: auto;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 15px;
             align-content: start;
+            background-color: var(--bg-base);
         }
 
         .prod-btn {
-            background-color: #334155;
+            background-color: var(--bg-card);
             border: 2px solid var(--border-color);
-            border-radius: 12px;
-            height: 120px;
+            border-radius: 14px;
+            height: 130px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 10px;
+            padding: 12px;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            transition: transform 0.1s ease, border-color 0.1s ease;
         }
-        .prod-btn:active { transform: scale(0.96); background-color: var(--btn-active); border-color: var(--btn-active); }
-        .prod-name { font-weight: 800; font-size: 15px; margin-bottom: 5px; }
-        .prod-price { font-weight: 600; color: #a7f3d0; font-size: 14px; }
+        .prod-btn:active { 
+            transform: scale(0.94); 
+            border-color: var(--text-main); 
+        }
+        .prod-name { font-weight: 800; font-size: 15px; margin-bottom: 8px; line-height: 1.2; }
+        .prod-price { font-weight: 700; color: #6ee7b7; font-size: 14px; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 20px; }
 
         /* --- RIGHT: Shopping Cart --- */
         #col-cart {
-            width: 380px;
+            width: 400px;
             background-color: var(--bg-panel);
             border-left: 2px solid var(--border-color);
             display: flex;
             flex-direction: column;
+            z-index: 5;
+            box-shadow: -4px 0 15px rgba(0,0,0,0.2);
         }
 
-        #cart-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        #cart-list { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
         
         .cart-item {
-            background: #0f172a;
+            background: var(--bg-base);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px;
+            border-radius: 10px;
+            padding: 14px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        .cart-item-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .cart-item-title { font-weight: 700; font-size: 15px; }
-        .cart-item-price { font-weight: 800; color: var(--accent-green); }
-        .cart-item-options { font-size: 12px; color: var(--text-muted); line-height: 1.4; white-space: pre-wrap; }
+        .cart-item-header { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
+        .cart-item-title { font-weight: 800; font-size: 15px; color: var(--text-main); }
+        .cart-item-price { font-weight: 900; color: var(--brand-success); font-size: 16px; }
+        .cart-item-options { font-size: 13px; color: var(--text-muted); line-height: 1.4; white-space: pre-wrap; margin-left: 5px; }
         
-        .cart-controls { display: flex; gap: 6px; margin-top: 5px; }
-        .ctrl-btn { flex: 1; background: #334155; border: none; color: white; height: 36px; border-radius: 6px; font-weight: bold; font-size: 18px; cursor: pointer; }
-        .ctrl-btn:active { background: #475569; }
+        .cart-controls { display: flex; gap: 8px; margin-top: 4px; }
+        .ctrl-btn { 
+            flex: 1; 
+            background: var(--bg-card); 
+            border: 1px solid var(--border-color); 
+            color: white; 
+            height: 44px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            font-size: 20px; 
+            cursor: pointer; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .ctrl-btn:active { background: #475569; transform: scale(0.95); }
+        .ctrl-btn.btn-delete { background: var(--brand-danger); border-color: var(--brand-danger); font-size: 16px; }
 
         /* --- Cart Footer / Actions --- */
-        #cart-footer { padding: 15px; background: #0b0f19; border-top: 2px solid var(--border-color); }
+        #cart-footer { 
+            padding: 20px; 
+            background: #0b0f19; 
+            border-top: 2px solid var(--border-color); 
+        }
         
-        .totals-row { display: flex; justify-content: space-between; font-size: 24px; font-weight: 900; margin-bottom: 15px; color: var(--accent-green); }
+        .totals-row { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 28px; 
+            font-weight: 900; 
+            margin-bottom: 20px; 
+            color: var(--brand-success); 
+            align-items: center;
+        }
+        .totals-label { color: var(--text-main); font-size: 20px; }
         
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .action-btn { height: 60px; font-size: 15px; font-weight: 800; border: none; border-radius: 8px; color: white; cursor: pointer; text-transform: uppercase; }
-        .action-btn:active { transform: scale(0.97); }
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .action-btn { 
+            height: 60px; 
+            font-size: 15px; 
+            font-weight: 800; 
+            border: none; 
+            border-radius: 10px; 
+            color: white; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        .action-btn:active { transform: scale(0.96); }
         
-        .btn-pay { grid-column: span 2; background-color: var(--accent-green); height: 70px; font-size: 18px; }
-        .btn-table { background-color: var(--accent-blue); }
-        .btn-takeaway { background-color: #d97706; }
-        .btn-delivery { background-color: var(--accent-red); }
-        .btn-discount { background-color: #475569; }
+        .btn-pay { grid-column: span 2; background-color: var(--brand-success); height: 75px; font-size: 18px; }
+        .btn-table { background-color: var(--brand-primary); }
+        .btn-takeaway { background-color: var(--brand-warning); }
+        .btn-delivery { background-color: var(--brand-danger); }
+        .btn-discount { background-color: var(--border-color); }
     </style>
 </head>
 <body>
 
-    <div id="pos-layout">
-        <div id="col-categories"></div>
-        <div id="col-products"></div>
-        
-        <div id="col-cart">
-            <div id="cart-list"></div>
-            <div id="cart-footer">
-                <div class="totals-row">
-                    <span>Totaal</span>
-                    <span id="cart-total">€ 0.00</span>
+    <div id="app-wrapper">
+        <header id="top-header">
+            <div class="header-title" id="lbl-order-title">Nieuwe Bestelling</div>
+            <button class="btn-close" onclick="sendToWinForms('closeForm')">✕ Sluiten</button>
+        </header>
+
+        <div id="pos-layout">
+            <div id="col-categories"></div>
+            <div id="col-products"></div>
+            
+            <div id="col-cart">
+                <div id="cart-list"></div>
+                <div id="cart-footer">
+                    <div class="totals-row">
+                        <span class="totals-label">Totaal</span>
+                        <span id="cart-total">€ 0.00</span>
+                    </div>
+                    <div class="action-grid" id="action-buttons"></div>
                 </div>
-                <div class="action-grid" id="action-buttons"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // Data State
         let categories = [];
         let products = [];
         let cart = [];
-        let orderState = 0; // Defines which checkout buttons show
+        let orderState = 0; 
         
         function sendToWinForms(action, payload = {}) {
             if (window.chrome && window.chrome.webview) {
@@ -155,7 +282,6 @@
             }
         }
 
-        // Master UI Updater (Called by C#)
         function updateUI(payload) {
             if (payload.categories) renderCategories(payload.categories);
             if (payload.products) renderProducts(payload.products);
@@ -165,16 +291,25 @@
                 orderState = payload.orderState;
                 renderActionButtons();
             }
+
+            if (payload.orderIdTitle) {
+                document.getElementById('lbl-order-title').innerText = payload.orderIdTitle;
+            }
         }
 
-        // --- Render Functions ---
         function renderCategories(cats) {
             const container = document.getElementById('col-categories');
             container.innerHTML = '';
             cats.forEach(c => {
                 const btn = document.createElement('button');
                 btn.className = `cat-btn ${c.isActive ? 'active' : ''}`;
-                if(c.color) btn.style.borderLeftColor = c.color;
+                
+                // If a color exists and it's active, use the color. If not active, use it as a subtle border hint
+                if(c.color) {
+                    if(c.isActive) btn.style.backgroundColor = c.color;
+                    else btn.style.borderLeft = `6px solid ${c.color}`;
+                }
+
                 btn.innerText = c.name;
                 btn.onclick = () => sendToWinForms('categoryClicked', { id: c.id });
                 container.appendChild(btn);
@@ -203,11 +338,15 @@
             container.innerHTML = '';
             document.getElementById('cart-total').innerText = `€ ${total.toFixed(2)}`;
 
+            if (cartItems.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin-top:40px;">Winkelmand is leeg</div>`;
+                return;
+            }
+
             cartItems.forEach(item => {
                 const row = document.createElement('div');
                 row.className = 'cart-item';
                 
-                // Construct details string (options, extras, comments)
                 let details = '';
                 if(item.details && item.details.length > 0) {
                     details = `<div class="cart-item-options">${item.details.join('\n')}</div>`;
@@ -222,12 +361,11 @@
                     <div class="cart-controls">
                         <button class="ctrl-btn" onclick="sendToWinForms('decreaseQty', { lineId: '${item.lineId}' })">-</button>
                         <button class="ctrl-btn" onclick="sendToWinForms('increaseQty', { lineId: '${item.lineId}' })">+</button>
-                        <button class="ctrl-btn" style="background:#dc2626;" onclick="sendToWinForms('deleteItem', { lineId: '${item.lineId}' })">🗑</button>
+                        <button class="ctrl-btn btn-delete" onclick="sendToWinForms('deleteItem', { lineId: '${item.lineId}' })">✕</button>
                     </div>
                 `;
                 container.appendChild(row);
             });
-            // Auto scroll to bottom
             container.scrollTop = container.scrollHeight;
         }
 
@@ -235,21 +373,18 @@
             const container = document.getElementById('action-buttons');
             container.innerHTML = '';
 
-            // Layout changes based on if it's an existing Table Order or New Order
             if (orderState === 10 || orderState === 11) {
-                // Table Mode Edit
                 container.innerHTML = `
                     <button class="action-btn btn-table" onclick="sendToWinForms('updateOrder')">Inchecken</button>
-                    <button class="action-btn btn-pay" style="grid-column: 2;" onclick="sendToWinForms('closeOrder')">Uitchecken</button>
+                    <button class="action-btn btn-pay" style="grid-column: 2; height: 60px;" onclick="sendToWinForms('closeOrder')">Uitchecken / Betalen</button>
                 `;
             } else {
-                // Standard POS
                 container.innerHTML = `
                     <button class="action-btn btn-table" onclick="sendToWinForms('checkoutType', { type: 'table' })">Tafel</button>
                     <button class="action-btn btn-takeaway" onclick="sendToWinForms('checkoutType', { type: 'takeaway' })">Afhaal</button>
                     <button class="action-btn btn-delivery" onclick="sendToWinForms('checkoutType', { type: 'delivery' })">Bezorging</button>
                     <button class="action-btn btn-discount" onclick="sendToWinForms('addPromo')">Korting</button>
-                    <button class="action-btn btn-pay" onclick="sendToWinForms('payOnline')">Online Betaling</button>
+                    <button class="action-btn btn-pay" onclick="sendToWinForms('payOnline')">Online Betalen</button>
                 `;
             }
         }
