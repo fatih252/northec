@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POS Touchscreen Ordering</title>
+    <title>POS Touchscreen Ordering Console</title>
     <style>
         :root {
             --bg-base: #0f172a;
@@ -12,31 +12,40 @@
             --border-color: #475569;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
+            
             --brand-primary: #3b82f6;
             --brand-success: #10b981;
             --brand-danger: #ef4444;
             --brand-warning: #f59e0b;
         }
 
+        /* --- DASHBOARD UI OVERRIDE ZOOM LOCKDOWN --- */
         * { 
+            -webkit-tap-highlight-color: transparent; 
             box-sizing: border-box; 
             user-select: none; 
+            -webkit-user-select: none;
             margin: 0; 
             padding: 0; 
-            -webkit-tap-highlight-color: transparent; 
-            touch-action: pan-y; 
+            touch-action: none; /* Stops dual-tap or pinch zooming behaviors */
         }
         
         body, html { 
             width: 100%; 
             height: 100%; 
             overflow: hidden; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            font-family: 'Segoe UI', -apple-system, Tahoma, sans-serif; 
             background-color: var(--bg-base); 
             color: var(--text-main); 
+            overscroll-behavior: none;
         }
 
-        #app-wrapper { display: flex; flex-direction: column; width: 100%; height: 100%; }
+        #app-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
 
         /* --- TOP HEADER BAR --- */
         #top-header {
@@ -56,24 +65,29 @@
 
         .btn-close {
             background-color: transparent;
-            color: var(--text-muted);
+            color: var(--text-main);
             border: 2px solid var(--border-color);
             padding: 0 20px;
-            height: 44px;
+            height: 46px;
             border-radius: 8px;
             font-size: 15px;
-            font-weight: 700;
+            font-weight: 800;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 8px;
             transition: all 0.1s ease;
         }
-        .btn-close:active { background-color: var(--brand-danger); color: white; border-color: var(--brand-danger); transform: scale(0.95); }
+        .btn-close:active { background-color: var(--brand-danger); border-color: var(--brand-danger); transform: scale(0.95); }
 
         /* --- MAIN POS LAYOUT --- */
-        #pos-layout { display: flex; flex: 1; overflow: hidden; }
+        #pos-layout { 
+            display: flex; 
+            flex: 1; 
+            overflow: hidden; 
+        }
 
+        /* --- LEFT: Categories Column --- */
         #col-categories {
             width: 240px;
             background-color: var(--bg-panel);
@@ -86,7 +100,7 @@
         }
         
         .cat-btn {
-            min-height: 65px;
+            min-height: 60px;
             padding: 0 15px;
             background: var(--bg-base);
             color: var(--text-main);
@@ -98,18 +112,22 @@
             cursor: pointer;
             display: flex;
             align-items: center;
-            transition: all 0.15s ease;
+            transition: all 0.1s ease;
         }
-        .cat-btn.active { background-color: var(--brand-primary); box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); }
+        .cat-btn.active { 
+            background-color: var(--brand-primary); 
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+        }
         .cat-btn:active { transform: scale(0.96); }
 
+        /* --- CENTER: Products Grid --- */
         #col-products {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
             align-content: start;
             background-color: var(--bg-base);
         }
@@ -118,68 +136,119 @@
             background-color: var(--bg-card);
             border: 2px solid var(--border-color);
             border-radius: 14px;
-            height: 130px;
+            height: 120px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 12px;
+            padding: 10px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-            transition: transform 0.1s ease, border-color 0.1s ease;
         }
-        .prod-btn:active { transform: scale(0.94); border-color: var(--text-main); }
-        .prod-name { font-weight: 800; font-size: 15px; margin-bottom: 8px; line-height: 1.2; }
-        .prod-price { font-weight: 700; color: #6ee7b7; font-size: 14px; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 20px; }
+        .prod-btn:active { 
+            transform: scale(0.94); 
+            background-color: var(--brand-primary);
+            border-color: var(--brand-primary); 
+        }
+        .prod-name { font-weight: 800; font-size: 14px; margin-bottom: 6px; line-height: 1.2; }
+        .prod-price { font-weight: 700; color: #6ee7b7; font-size: 13px; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 20px; }
 
+        /* --- RIGHT: Shopping Cart --- */
         #col-cart {
-            width: 400px;
+            width: 390px;
             background-color: var(--bg-panel);
             border-left: 2px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            z-index: 5;
             box-shadow: -4px 0 15px rgba(0,0,0,0.2);
         }
 
-        #cart-list { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        #cart-list { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 12px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
         
         .cart-item {
             background: var(--bg-base);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 14px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            gap: 8px;
         }
         
         .cart-item-header { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
-        .cart-item-title { font-weight: 800; font-size: 15px; color: var(--text-main); }
-        .cart-item-price { font-weight: 900; color: var(--brand-success); font-size: 16px; }
-        .cart-item-options { font-size: 13px; color: var(--text-muted); line-height: 1.4; white-space: pre-wrap; margin-left: 5px; }
+        .cart-item-title { font-weight: 800; font-size: 14px; color: var(--text-main); }
+        .cart-item-price { font-weight: 900; color: var(--brand-success); font-size: 15px; }
+        .cart-item-options { font-size: 12px; color: var(--text-muted); line-height: 1.4; white-space: pre-wrap; }
         
-        .cart-controls { display: flex; gap: 8px; margin-top: 4px; }
-        .ctrl-btn { flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); color: white; height: 44px; border-radius: 8px; font-weight: bold; font-size: 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        .cart-controls { display: flex; gap: 6px; margin-top: 2px; }
+        .ctrl-btn { 
+            flex: 1; 
+            background: var(--bg-card); 
+            border: 1px solid var(--border-color); 
+            color: white; 
+            height: 44px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            font-size: 22px; 
+            cursor: pointer; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
         .ctrl-btn:active { background: #475569; transform: scale(0.95); }
         .ctrl-btn.btn-delete { background: var(--brand-danger); border-color: var(--brand-danger); font-size: 16px; }
 
-        #cart-footer { padding: 20px; background: #0b0f19; border-top: 2px solid var(--border-color); }
+        /* --- Cart Footer / Actions --- */
+        #cart-footer { 
+            padding: 16px; 
+            background: #0b0f19; 
+            border-top: 2px solid var(--border-color); 
+        }
         
-        .totals-row { display: flex; justify-content: space-between; font-size: 28px; font-weight: 900; margin-bottom: 20px; color: var(--brand-success); align-items: center; }
-        .totals-label { color: var(--text-main); font-size: 20px; }
+        .totals-row { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 26px; 
+            font-weight: 900; 
+            margin-bottom: 16px; 
+            color: var(--brand-success); 
+            align-items: center;
+        }
+        .totals-label { color: var(--text-main); font-size: 18px; }
         
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .action-btn { height: 60px; font-size: 15px; font-weight: 800; border: none; border-radius: 10px; color: white; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .action-btn { 
+            height: 56px; 
+            font-size: 14px; 
+            font-weight: 800; 
+            border: none; 
+            border-radius: 8px; 
+            color: white; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+        }
         .action-btn:active { transform: scale(0.96); }
         
-        .btn-pay { grid-column: span 2; background-color: var(--brand-success); height: 75px; font-size: 18px; }
+        .btn-pay { grid-column: span 2; background-color: var(--brand-success); height: 70px; font-size: 17px; }
         .btn-table { background-color: var(--brand-primary); }
         .btn-takeaway { background-color: var(--brand-warning); }
         .btn-delivery { background-color: var(--brand-danger); }
         .btn-discount { background-color: var(--border-color); }
+
+        @media (max-width: 1024px) {
+            #col-categories { width: 190px; }
+            #col-cart { width: 320px; }
+            .pos-btn { height: 44px; font-size: 13px; }
+        }
     </style>
 </head>
 <body>
@@ -208,33 +277,33 @@
     </div>
 
     <script>
-        let categories = [];
-        let products = [];
-        let cart = [];
-        let orderState = 0; 
-        
-        // FIX: Enforced strict stringified payload sending
+        // Zoom lockdown listeners matching main dashboard layout hooks
+        window.addEventListener('dragstart', (e) => e.preventDefault());
+        window.addEventListener('drop', (e) => e.preventDefault());
+        window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
+        });
+
         function sendToWinForms(action, payload) {
             let data = payload || {};
             data.action = action;
             if (window.chrome && window.chrome.webview) {
-                // Must send as a JSON String to avoid C# parsing crashes
+                // Securely stringify objects to avoid type boundary crashes
                 window.chrome.webview.postMessage(JSON.stringify(data));
             }
         }
 
         function updateUI(payload) {
-            if (payload.categories) renderCategories(payload.categories);
-            if (payload.products) renderProducts(payload.products);
-            if (payload.cart) renderCart(payload.cart, payload.total);
+            if (payload.Categories) renderCategories(payload.Categories);
+            if (payload.Products) renderProducts(payload.Products);
+            if (payload.Cart) renderCart(payload.Cart, payload.Total);
             
-            if (payload.orderState !== undefined) {
-                orderState = payload.orderState;
-                renderActionButtons();
+            if (payload.OrderState !== undefined) {
+                renderActionButtons(payload.OrderState);
             }
-
-            if (payload.orderIdTitle) {
-                document.getElementById('lbl-order-title').innerText = payload.orderIdTitle;
+            if (payload.OrderIdTitle) {
+                document.getElementById('lbl-order-title').innerText = payload.OrderIdTitle;
             }
         }
 
@@ -243,13 +312,13 @@
             container.innerHTML = '';
             cats.forEach(c => {
                 const btn = document.createElement('button');
-                btn.className = `cat-btn ${c.isActive ? 'active' : ''}`;
-                if(c.color) {
-                    if(c.isActive) btn.style.backgroundColor = c.color;
-                    else btn.style.borderLeft = `6px solid ${c.color}`;
+                btn.className = `cat-btn ${c.IsActive ? 'active' : ''}`;
+                if(c.Color) {
+                    if(c.IsActive) btn.style.backgroundColor = c.Color;
+                    else btn.style.borderLeft = `6px solid ${c.Color}`;
                 }
-                btn.innerText = c.name;
-                btn.onclick = () => sendToWinForms('categoryClicked', { id: c.id });
+                btn.innerText = c.Name;
+                btn.onclick = () => sendToWinForms('categoryClicked', { id: c.Id });
                 container.appendChild(btn);
             });
         }
@@ -260,13 +329,13 @@
             prods.forEach(p => {
                 const btn = document.createElement('div');
                 btn.className = 'prod-btn';
-                if(p.color) btn.style.backgroundColor = p.color;
+                if(p.Color) btn.style.backgroundColor = p.Color;
                 
                 btn.innerHTML = `
-                    <div class="prod-name">${p.name}</div>
-                    <div class="prod-price">€${p.price.toFixed(2)}</div>
+                    <div class="prod-name">${p.Name}</div>
+                    <div class="prod-price">€${p.Price.toFixed(2)}</div>
                 `;
-                btn.onclick = () => sendToWinForms('productClicked', { id: p.id, mainId: p.mainId });
+                btn.onclick = () => sendToWinForms('productClicked', { id: p.Id, mainId: p.MainId });
                 container.appendChild(btn);
             });
         }
@@ -276,7 +345,7 @@
             container.innerHTML = '';
             document.getElementById('cart-total').innerText = `€ ${total.toFixed(2)}`;
 
-            if (cartItems.length === 0) {
+            if (!cartItems || cartItems.length === 0) {
                 container.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin-top:40px;">Winkelmand is leeg</div>`;
                 return;
             }
@@ -286,20 +355,20 @@
                 row.className = 'cart-item';
                 
                 let details = '';
-                if(item.details && item.details.length > 0) {
-                    details = `<div class="cart-item-options">${item.details.join('\n')}</div>`;
+                if(item.Details && item.Details.length > 0) {
+                    details = `<div class="cart-item-options">${item.Details.join('\n')}</div>`;
                 }
 
                 row.innerHTML = `
-                    <div class="cart-item-header" onclick="sendToWinForms('editCartItem', { lineId: '${item.lineId}' })">
-                        <div class="cart-item-title">${item.amount}x ${item.name}</div>
-                        <div class="cart-item-price">€${item.lineTotal.toFixed(2)}</div>
+                    <div class="cart-item-header" onclick="sendToWinForms('editCartItem', { lineId: '${item.LineId}' })">
+                        <div class="cart-item-title">${item.Amount}x ${item.Name}</div>
+                        <div class="cart-item-price">€${item.LineTotal.toFixed(2)}</div>
                     </div>
                     ${details}
                     <div class="cart-controls">
-                        <button class="ctrl-btn" onclick="sendToWinForms('decreaseQty', { lineId: '${item.lineId}' })">-</button>
-                        <button class="ctrl-btn" onclick="sendToWinForms('increaseQty', { lineId: '${item.lineId}' })">+</button>
-                        <button class="ctrl-btn btn-delete" onclick="sendToWinForms('deleteItem', { lineId: '${item.lineId}' })">✕</button>
+                        <button class="ctrl-btn" onclick="sendToWinForms('decreaseQty', { lineId: '${item.LineId}' })">-</button>
+                        <button class="ctrl-btn" onclick="sendToWinForms('increaseQty', { lineId: '${item.LineId}' })">+</button>
+                        <button class="ctrl-btn btn-delete" onclick="sendToWinForms('deleteItem', { lineId: '${item.LineId}' })">✕</button>
                     </div>
                 `;
                 container.appendChild(row);
@@ -307,20 +376,20 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        function renderActionButtons() {
+        function renderActionButtons(state) {
             const container = document.getElementById('action-buttons');
             container.innerHTML = '';
 
-            if (orderState === 10 || orderState === 11) {
+            if (state === 10 || state === 11) {
                 container.innerHTML = `
-                    <button class="action-btn btn-table" onclick="sendToWinForms('updateOrder')">Inchecken</button>
-                    <button class="action-btn btn-pay" style="grid-column: 2; height: 60px;" onclick="sendToWinForms('closeOrder')">Uitchecken / Betalen</button>
+                    <button class="action-btn btn-table" onclick="sendToWinForms('updateOrder')">Inchecken (F11)</button>
+                    <button class="action-btn btn-pay" style="grid-column: 2; height: 56px;" onclick="sendToWinForms('closeOrder')">Uitchecken (F12)</button>
                 `;
             } else {
                 container.innerHTML = `
-                    <button class="action-btn btn-table" onclick="sendToWinForms('checkoutType', { type: 'table' })">Tafel</button>
-                    <button class="action-btn btn-takeaway" onclick="sendToWinForms('checkoutType', { type: 'takeaway' })">Afhaal</button>
-                    <button class="action-btn btn-delivery" onclick="sendToWinForms('checkoutType', { type: 'delivery' })">Bezorging</button>
+                    <button class="action-btn btn-table" onclick="sendToWinForms('checkoutType', { type: 'table' })">Tafel (F6)</button>
+                    <button class="action-btn btn-takeaway" onclick="sendToWinForms('checkoutType', { type: 'takeaway' })">Afhaal (F7)</button>
+                    <button class="action-btn btn-delivery" onclick="sendToWinForms('checkoutType', { type: 'delivery' })">Bezorging (F8)</button>
                     <button class="action-btn btn-discount" onclick="sendToWinForms('addPromo')">Korting</button>
                     <button class="action-btn btn-pay" onclick="sendToWinForms('payOnline')">Online Betalen</button>
                 `;
