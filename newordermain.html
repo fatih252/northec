@@ -2,407 +2,454 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Northec POS Ordering</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Northec Modern POS</title>
     <style>
+        :root {
+            --bg-color: #F3F4F6;
+            --surface-color: #FFFFFF;
+            --primary-color: #3B82F6; /* Modern Blue */
+            --primary-active: #2563EB;
+            --success-color: #10B981; /* Emerald Green */
+            --success-active: #059669;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --border-color: #E5E7EB;
+            --danger-color: #EF4444;
+            --danger-active: #DC2626;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             user-select: none;
             -webkit-user-select: none;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background-color: #D3D3D3; /* LightGray */
+            background-color: var(--bg-color);
             height: 100vh;
             overflow: hidden;
             display: flex;
+            color: var(--text-main);
         }
 
-        /* 3-Column POS Master Layout Grid matching original sizing */
-        .pos-container {
-            display: grid;
-            grid-template-columns: 270px 1fr 420px;
+        /* --- MACRO LAYOUT --- */
+        .pos-layout {
+            display: flex;
             width: 100%;
             height: 100vh;
-            background-color: #A9A9A9; /* DarkGray */
-            gap: 2px;
-            border: 2px solid #A9A9A9;
         }
 
-        /* Column 1: Categories Panel */
-        .category-column {
-            background-color: #D3D3D3;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .scroll-btn {
-            background-color: #CD853F; /* Peru */
-            color: white;
-            border: 1px solid white;
-            height: 92px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .scroll-btn:active {
-            background-color: #8B5A2B;
-        }
-
-        .category-list {
+        .shopping-zone {
             flex: 1;
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            scrollbar-width: none; /* Hide scrollbar for touchscreen */
-        }
-        .category-list::-webkit-scrollbar {
-            display: none;
+            overflow: hidden;
         }
 
-        .category-btn {
-            width: 100%;
-            min-height: 50px;
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+        .checkout-zone {
+            width: 400px; /* Fixed comfortable width for right hand */
+            background-color: var(--surface-color);
+            box-shadow: -4px 0 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        /* --- CATEGORIES (Horizontal Top Bar) --- */
+        .category-bar {
+            background-color: var(--surface-color);
+            padding: 15px;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            scrollbar-width: none; /* Firefox */
+        }
+        
+        .category-bar::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .category-pill {
+            flex: 0 0 auto;
+            padding: 14px 24px;
+            border-radius: 50px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             font-size: 16px;
-            font-weight: bold;
-            text-align: center;
-            padding: 10px;
+            font-weight: 600;
+            border: 2px solid transparent;
             cursor: pointer;
-            white-space: normal;
-            word-wrap: break-word;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
-        /* Column 2: Products Content Grid */
-        .products-column {
-            background-color: #A9A9A9;
+        .category-pill:active, .category-pill.active {
+            background-color: var(--primary-color);
+            color: white;
+            transform: scale(0.95);
+        }
+
+        /* --- PRODUCTS GRID --- */
+        .products-area {
+            flex: 1;
+            padding: 20px;
             overflow-y: auto;
-            padding: 10px;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            grid-auto-rows: 100px;
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 15px;
             align-content: start;
         }
 
         .product-card {
-            background-color: #006400; /* DarkGreen Default */
-            color: white;
-            border: 1px solid #FFF;
-            border-radius: 4px;
-            padding: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            text-align: center;
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: space-between;
+            height: 120px;
             cursor: pointer;
-            word-break: break-word;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            border: 2px solid transparent;
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
             overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .product-card:active {
-            opacity: 0.8;
+            transform: scale(0.92);
+            border-color: var(--primary-color);
         }
 
-        .product-card .price-tag {
-            font-size: 12px;
-            margin-top: 5px;
-            font-weight: normal;
-        }
-
-        /* Column 3: Summary Cart Panel & Master Control Deck */
-        .cart-column {
-            background-color: #D3D3D3;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .cart-items-container {
-            flex: 1;
-            overflow-y: auto;
-            background-color: #A9A9A9;
-            padding: 5px;
-        }
-
-        .cart-item {
-            background-color: white;
-            border-radius: 4px;
-            padding: 10px;
-            margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-
-        .cart-item-info {
-            flex: 1;
-            padding-right: 10px;
-        }
-
-        .cart-item-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .cart-item-details {
-            font-size: 12px;
-            color: #666;
-            margin-top: 2px;
-            white-space: pre-line;
-        }
-
-        .cart-item-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .qty-btn {
-            background-color: #CD853F;
-            color: white;
-            border: none;
-            width: 35px;
-            height: 35px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .item-qty {
+        .product-name {
             font-size: 15px;
-            font-weight: bold;
-            min-width: 30px;
-            text-align: center;
+            font-weight: 700;
+            line-height: 1.2;
+            word-wrap: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
-        .item-price {
-            font-size: 14px;
-            font-weight: bold;
-            min-width: 60px;
+        .product-price {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-top: auto;
             text-align: right;
         }
 
-        /* Bottom Operational Matrix */
-        .control-deck {
-            background-color: #A9A9A9;
+        /* Subtle color tag bar at the bottom of the card */
+        .color-accent {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+        }
+
+        /* --- CART AREA --- */
+        .cart-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
             padding: 10px;
             display: flex;
             flex-direction: column;
             gap: 8px;
-            border-top: 2px solid white;
+            background-color: #FAFAFA;
         }
 
-        .comment-box {
-            width: 100%;
-            height: 65px;
-            background-color: #Gainsboro;
-            border: none;
-            padding: 8px;
-            font-size: 14px;
-            resize: none;
-            border-radius: 4px;
-        }
-
-        .meta-row {
+        .cart-item {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
             gap: 10px;
         }
 
-        .delivery-toggle-container {
+        .cart-item-top {
             display: flex;
-            background-color: #777;
-            border-radius: 4px;
-            padding: 2px;
-            flex: 1;
+            justify-content: space-between;
+            align-items: flex-start;
         }
 
-        .toggle-option {
-            flex: 1;
-            text-align: center;
-            padding: 8px 0;
+        .cart-title {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .cart-details {
             font-size: 13px;
+            color: var(--text-muted);
+            white-space: pre-line;
+            line-height: 1.4;
+        }
+
+        .cart-price {
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .cart-controls {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        .qty-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            border: none;
+            font-size: 22px;
             font-weight: bold;
             color: white;
             cursor: pointer;
-            border-radius: 4px;
-        }
-
-        .toggle-option.active {
-            background-color: #CD853F;
-        }
-
-        .total-display-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            min-width: 120px;
-        }
-
-        .total-label {
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .total-amount {
-            font-size: 24px;
-            font-weight: bold;
-            color: black;
-        }
-
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-        }
-
-        .action-btn {
-            background-color: #CD853F;
-            color: white;
-            border: 1px solid white;
-            padding: 12px 5px;
-            font-size: 13px;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-            text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
+            background-color: var(--primary-color);
         }
 
-        .action-btn:active {
-            opacity: 0.8;
+        .qty-btn:active { background-color: var(--primary-active); }
+        .qty-btn.minus { background-color: var(--danger-color); }
+        .qty-btn.minus:active { background-color: var(--danger-active); }
+
+        .qty-display {
+            font-size: 18px;
+            font-weight: 700;
+            min-width: 25px;
+            text-align: center;
         }
 
-        .action-btn.submit {
-            background-color: #2E8B57; /* SeaGreen execution fallback */
-            grid-column: span 3;
-            font-size: 16px;
-            padding: 15px;
-            margin-top: 4px;
+        /* --- CHECKOUT CONTROLS --- */
+        .checkout-panel {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--surface-color);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
+
+        /* Segmented Toggle */
+        .type-toggle {
+            display: flex;
+            background-color: var(--bg-color);
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background-color: var(--surface-color);
+            color: var(--text-main);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .comment-input {
+            width: 100%;
+            height: 60px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            resize: none;
+            background-color: #FAFAFA;
+        }
+        
+        .comment-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+            padding: 5px 0;
+        }
+
+        .action-matrix {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-action {
+            padding: 16px;
+            border-radius: 10px;
+            border: none;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            color: white;
+            background-color: var(--text-muted);
+            transition: opacity 0.1s;
+        }
+
+        .btn-action:active { opacity: 0.8; }
+        
+        .btn-action.table { background-color: #8B5CF6; } /* Purple */
+        .btn-action.pay { 
+            grid-column: span 2; 
+            background-color: var(--success-color); 
+            font-size: 18px; 
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+        .btn-action.pay:active { background-color: var(--success-active); }
+
     </style>
 </head>
 <body>
 
-    <div class="pos-container">
-        <div class="category-column">
-            <button class="scroll-btn" onclick="scrollCategories(-120)">OMHOOG</button>
-            <div class="category-list" id="categoryContainer">
+    <div class="pos-layout">
+        
+        <div class="shopping-zone">
+            <div class="category-bar" id="categoryContainer">
                 </div>
-            <button class="scroll-btn" onclick="scrollCategories(120)">OMLAAG</button>
+
+            <div class="products-area" id="productsContainer">
+                </div>
         </div>
 
-        <div class="products-column" id="productsContainer">
+        <div class="checkout-zone">
+            
+            <div class="cart-header">
+                <span>Bestelling</span>
+                <span style="font-size: 14px; color: var(--text-muted);" id="itemCount">0 items</span>
             </div>
 
-        <div class="cart-column">
-            <div class="cart-items-container" id="cartContainer">
+            <div class="cart-items" id="cartContainer">
                 </div>
 
-            <div class="control-deck">
-                <textarea class="comment-box" id="txtComment" placeholder="Opmerking toevoegen..." oninput="updateCommentState()"></textarea>
+            <div class="checkout-panel">
                 
-                <div class="meta-row">
-                    <div class="delivery-toggle-container">
-                        <div class="toggle-option active" id="typeDelivery" onclick="setDeliveryType('delivery')">Bezorging</div>
-                        <div class="toggle-option" id="typeTakeaway" onclick="setDeliveryType('takeaway')">Afhaling</div>
-                    </div>
-                    <div class="total-display-wrapper">
-                        <span class="total-label">Totaal</span>
-                        <span class="total-amount" id="lblTotPrice">€ 0.00</span>
-                    </div>
+                <div class="type-toggle">
+                    <div class="toggle-btn active" id="btnDel" onclick="setDeliveryType('delivery')">Bezorging (F8)</div>
+                    <div class="toggle-btn" id="btnTak" onclick="setDeliveryType('takeaway')">Afhaling (F7)</div>
                 </div>
 
-                <div class="action-grid">
-                    <button class="action-btn" onclick="notifyAction('btnTable')">Tafel (F6)</button>
-                    <button class="action-btn" onclick="notifyAction('btnUpdateOrder')">Inchecken</button>
-                    <button class="action-btn" onclick="notifyAction('btnCloseOrder')">Uitchecken</button>
-                    <button class="action-btn submit" onclick="notifyAction('btnSubmitOrder')">Bestelling Afronden</button>
+                <textarea class="comment-input" id="txtComment" placeholder="Opmerking voor de keuken..." oninput="updateCommentState()"></textarea>
+
+                <div class="totals-row">
+                    <span>Totaal</span>
+                    <span id="lblTotPrice">€ 0.00</span>
                 </div>
+
+                <div class="action-matrix">
+                    <button class="btn-action table" onclick="notifyAction('btnTable')">Tafel (F6)</button>
+                    <button class="btn-action" onclick="notifyAction('btnCloseOrder')" style="background-color: #F59E0B;">Uitchecken</button>
+                    <button class="btn-action pay" onclick="notifyAction('btnSubmitOrder')">Afronden & Betalen</button>
+                </div>
+
             </div>
         </div>
     </div>
 
     <script>
         let currentCart = [];
-        let currentDeliveryType = 'delivery';
+        let activeCategoryId = null;
 
-        // Initialize handshake when DOM elements load completely
+        // Boot sequence
         document.addEventListener("DOMContentLoaded", () => {
             sendHostMessage({ action: "ui_ready" });
         });
 
-        // Helper communication pipe safely wrapping WebView2 message architecture
         function sendHostMessage(payload) {
             if (window.chrome && window.chrome.webview) {
                 window.chrome.webview.postMessage(payload);
             } else {
-                console.log("WebView2 Host Context Missing. Payload trace: ", payload);
+                console.warn("WebView2 Host Context Missing:", payload);
             }
         }
 
-        // ---------------------------------------------------------
-        // Host Callback Bindings (Inbound Messaging Hooks)
-        // ---------------------------------------------------------
+        // --- HOST TO JS BINDINGS ---
         window.renderCategories = function(categories) {
             const container = document.getElementById("categoryContainer");
             container.innerHTML = "";
+            
             categories.forEach(cat => {
-                const btn = document.createElement("button");
-                btn.className = "category-btn";
+                const btn = document.createElement("div");
+                btn.className = "category-pill";
+                btn.id = "cat_" + cat.id;
                 btn.innerText = cat.name;
-                btn.style.backgroundColor = cat.color ? `rgba(${cat.color.replace('Color [', '').replace(']', '')})` : '#8B0000';
-                btn.onclick = () => sendHostMessage({ action: "get_products", mainProductId: parseInt(cat.id) });
+                
+                btn.onclick = () => {
+                    // Visual active state handling
+                    document.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Request products
+                    sendHostMessage({ action: "get_products", mainProductId: parseInt(cat.id) });
+                };
+                
                 container.appendChild(btn);
             });
-            // Automatically click the first category item to avoid a blank display
-            if(categories.length > 0) {
-                sendHostMessage({ action: "get_products", mainProductId: parseInt(categories[0].id) });
+
+            if (categories.length > 0) {
+                document.getElementById("cat_" + categories[0].id).click();
             }
         };
 
         window.renderProducts = function(products) {
             const container = document.getElementById("productsContainer");
             container.innerHTML = "";
+            
             products.forEach(prod => {
                 const card = document.createElement("div");
                 card.className = "product-card";
-                if(prod.color) {
-                    card.style.backgroundColor = prod.color.startsWith('#') ? prod.color : '#' + parseInt(prod.color).toString(16).substring(2);
-                }
+                
+                const hexColor = prod.color ? prod.color : "var(--primary-color)";
                 
                 card.innerHTML = `
-                    <div>${prod.name}</div>
-                    <div class="price-tag">€ ${parseFloat(prod.pos_value).toFixed(2)}</div>
+                    <div class="product-name">${prod.name}</div>
+                    <div class="product-price">€ ${parseFloat(prod.pos_value).toFixed(2)}</div>
+                    <div class="color-accent" style="background-color: ${hexColor}"></div>
                 `;
+                
                 card.onclick = () => sendHostMessage({ action: "product_clicked", product: prod });
                 container.appendChild(card);
             });
         };
 
         window.addProductToCart = function(product) {
-            // Check for match configurations inside existing entries to append instead of duplicate 
             const existingItem = currentCart.find(item => item.lineId === product.lineId);
             if (existingItem) {
                 existingItem.amount += 1;
@@ -424,40 +471,47 @@
             document.getElementById("lblTotPrice").innerText = "€ " + totalString;
         };
 
-        // ---------------------------------------------------------
-        // Cart Mutations & Interface Rendering Core
-        // ---------------------------------------------------------
+        // --- CART UI & LOGIC ---
         function renderCartUI() {
             const container = document.getElementById("cartContainer");
             container.innerHTML = "";
+            
+            let activeItemCount = 0;
 
             currentCart.forEach(item => {
-                if (item.action === 'D') return; // Do not render elements flagged as dropped
+                if (item.action === 'D') return; 
+                activeItemCount += item.amount;
 
-                const row = document.createElement("div");
-                row.className = "cart-item";
-
-                // Generate strings formatting details modifications loop
                 let subDetails = "";
                 if (item.productOptionList) item.productOptionList.forEach(o => subDetails += `${o.prefix || ''} ${o.name}\n`);
                 if (item.extraList) item.extraList.forEach(e => subDetails += `${e.prefix || '+'} ${e.name}\n`);
                 if (item.productExtraList) item.productExtraList.forEach(pe => subDetails += `${pe.prefix || '+'} ${pe.name}\n`);
-                if (item.comment) subDetails += `${item.comment}\n`;
+                if (item.comment) subDetails += `📝 ${item.comment}\n`;
 
+                const row = document.createElement("div");
+                row.className = "cart-item";
+                
                 row.innerHTML = `
-                    <div class="cart-item-info">
-                        <div class="cart-item-title">[${item.mainProductName}] ${item.name}</div>
-                        <div class="cart-item-details">${subDetails.trim()}</div>
+                    <div class="cart-item-top">
+                        <div>
+                            <div class="cart-title">${item.mainProductName ? '['+item.mainProductName+'] ' : ''}${item.name}</div>
+                            ${subDetails ? `<div class="cart-details">${subDetails.trim()}</div>` : ''}
+                        </div>
+                        <div class="cart-price">€ ${(item.lineTotal * item.amount).toFixed(2)}</div>
                     </div>
-                    <div class="cart-item-controls">
-                        <button class="qty-btn" onclick="adjustQuantity('${item.lineId}', -1)">-</button>
-                        <span class="item-qty">${item.amount}x</span>
+                    <div class="cart-controls">
+                        <button class="qty-btn minus" onclick="adjustQuantity('${item.lineId}', -1)">-</button>
+                        <span class="qty-display">${item.amount}</span>
                         <button class="qty-btn" onclick="adjustQuantity('${item.lineId}', 1)">+</button>
-                        <span class="item-price">€ ${(item.lineTotal * item.amount).toFixed(2)}</span>
                     </div>
                 `;
                 container.appendChild(row);
             });
+
+            document.getElementById("itemCount").innerText = `${activeItemCount} item${activeItemCount !== 1 ? 's' : ''}`;
+            
+            // Auto-scroll to bottom of cart when items are added
+            container.scrollTop = container.scrollHeight;
         }
 
         function adjustQuantity(lineId, direction) {
@@ -472,9 +526,8 @@
                     item.amount -= 1;
                     if (item.action !== 'I') item.action = 'U';
                 } else {
-                    // Item dropped completely below single representation index boundary
                     if (item.orderDetailId !== 0) {
-                        item.action = 'D'; // Soft flag delete for remote storage updates
+                        item.action = 'D'; // Soft delete for DB sync
                     } else {
                         currentCart = currentCart.filter(i => i.lineId !== lineId);
                     }
@@ -485,14 +538,12 @@
         }
 
         function setDeliveryType(type) {
-            currentDeliveryType = type;
-            document.getElementById("typeDelivery").classList.toggle("active", type === 'delivery');
-            document.getElementById("typeTakeaway").classList.toggle("active", type === 'takeaway');
+            document.getElementById("btnDel").classList.toggle("active", type === 'delivery');
+            document.getElementById("btnTak").classList.toggle("active", type === 'takeaway');
             sendHostMessage({ action: "set_delivery_type", type: type });
         }
 
         function updateCommentState() {
-            // Maps the comment field directly back onto the active orchestrator context via notification action
             sendHostMessage({ action: "sync_comment", value: document.getElementById("txtComment").value });
         }
 
@@ -504,9 +555,12 @@
             sendHostMessage({ action: "trigger_action", id: actionId });
         }
 
-        function scrollCategories(offset) {
-            document.getElementById("categoryContainer").scrollBy({ top: offset, behavior: 'smooth' });
-        }
+        // Global Keyboard Shortcut Bindings (F6, F7, F8)
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'F6') { e.preventDefault(); notifyAction('btnTable'); }
+            if (e.key === 'F7') { e.preventDefault(); setDeliveryType('takeaway'); }
+            if (e.key === 'F8') { e.preventDefault(); setDeliveryType('delivery'); }
+        });
     </script>
 </body>
 </html>
