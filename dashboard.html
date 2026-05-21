@@ -485,92 +485,97 @@
             window.chrome.webview.postMessage({ action: action, orderId: orderId });
         }
 
-        function render() {
-            const feed = document.getElementById('orderFeed');
-            const empty = document.getElementById('emptyState');
-            const searchQuery = document.getElementById('orderSearch').value.toLowerCase();
-            
-            feed.innerHTML = '';
-            
-            const list = (activeMain === 'online') ? latestData.online : latestData.pos;
-            if (!list) return;
-
-            const filtered = list.filter(o => {
-                const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
-                const clientInfo = (o.clientName || '').toLowerCase();
-                const addressInfo = (o.address || '').toLowerCase();
-                const phoneInfo = (o.phone_no || '').toLowerCase();
-                const orderIdInfo = String(o.order_id || '').toLowerCase();
-                const matchSearch = clientInfo.includes(searchQuery) || 
-                                      addressInfo.includes(searchQuery) || 
-                                      phoneInfo.includes(searchQuery) || 
-                                      orderIdInfo.includes(searchQuery);
-
-                return matchStatus && matchSearch;
-            });
+function render() {
+    const feed = document.getElementById('orderFeed');
+    const empty = document.getElementById('emptyState');
+    const searchQuery = document.getElementById('orderSearch').value.toLowerCase();
     
-            const sorted = filtered.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
+    feed.innerHTML = '';
+    
+    const list = (activeMain === 'online') ? latestData.online : latestData.pos;
+    if (!list) return;
 
-            if (sorted.length === 0) {
-                feed.style.display = 'none';
-                empty.style.display = 'flex';
-                return;
+    const filtered = list.filter(o => {
+        const matchStatus = (activeStatus === 'all' || String(o.order_status_code) === activeStatus);
+        const clientInfo = (o.clientName || '').toLowerCase();
+        const addressInfo = (o.address || '').toLowerCase();
+        const phoneInfo = (o.phone_no || '').toLowerCase();
+        const orderIdInfo = String(o.order_id || '').toLowerCase();
+        const matchSearch = clientInfo.includes(searchQuery) || 
+                              addressInfo.includes(searchQuery) || 
+                              phoneInfo.includes(searchQuery) || 
+                              orderIdInfo.includes(searchQuery);
+
+        return matchStatus && matchSearch;
+    });
+
+    const sorted = filtered.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
+
+    if (sorted.length === 0) {
+        feed.style.display = 'none';
+        empty.style.display = 'flex';
+        return;
+    } else {
+        feed.style.display = 'flex'; 
+        empty.style.display = 'none';
+    }
+
+    sorted.forEach(o => {
+        const card = document.createElement('div');
+        const status = String(o.order_status_code);
+        const timing = getTimeData(o.order_date);
+        
+        card.className = `order-card status-${status} ${timing.urgency}`;
+        const isProcessed = (o.processed === true || o.processed === 1 || String(o.processed).toLowerCase() === "true");
+        if (!isProcessed) card.classList.add('is-new', 'flash-anim');
+
+        // --- NEW: DELIVERY COST CALCULATION MATCHING WINFORMS ---
+        const baseValue = parseFloat(o.value || 0);
+        const deliveryCost = o.take_away ? 0 : parseFloat(o.delivery_cost || 0);
+        const totPrice = o.is_external ? baseValue : (baseValue + deliveryCost);
+
+        let title = o.address || "Adres onbekend";
+        let actionHtml = '';
+
+        if (status === "6") {
+            title = `Tafel: ${o.table?.name || '?'}`;
+            if (o.table_active === true || o.table_active === 1 || String(o.table_active).toLowerCase() === "true") {
+                card.classList.add('indicator-table-open'); 
+                if (o.table?.name) {
+                    actionHtml = `<button class="btn-checkin" onclick="handleAction(event, 'table_checkin', '${o.order_id}')">Check In</button>`;
+                }
             } else {
-                feed.style.display = 'flex'; 
-                empty.style.display = 'none';
+                card.classList.add('indicator-table-closed');
             }
-
-            sorted.forEach(o => {
-                const card = document.createElement('div');
-                const status = String(o.order_status_code);
-                const timing = getTimeData(o.order_date);
-                
-                card.className = `order-card status-${status} ${timing.urgency}`;
-                const isProcessed = (o.processed === true || o.processed === 1 || String(o.processed).toLowerCase() === "true");
-                if (!isProcessed) card.classList.add('is-new', 'flash-anim');
-
-                let title = o.address || "Adres onbekend";
-                let actionHtml = '';
-
-                if (status === "6") {
-                    title = `Tafel: ${o.table?.name || '?'}`;
-                    if (o.table_active === true || o.table_active === 1 || String(o.table_active).toLowerCase() === "true") {
-                        card.classList.add('indicator-table-open'); 
-                        if (o.table?.name) {
-                            actionHtml = `<button class="btn-checkin" onclick="handleAction(event, 'table_checkin', '${o.order_id}')">Check In</button>`;
-                        }
-                    } else {
-                        card.classList.add('indicator-table-closed');
-                    }
-                } 
-                else if (o.take_away || status === "7") {
-                    const person = (o.clientName && o.clientName.trim() !== "") ? o.clientName : (o.phone_no ||  "" );
-                    title = `Afhaal: ${person}`;
-                    card.classList.add('indicator-takeaway');
-                }
-                else if (status === "2") {
-                    card.classList.add('indicator-delivery');
-                }
-
-                card.innerHTML = `
-                    <div class="address-info">
-                        <div class="address-title">${title}</div>
-                        <div class="order-details">
-                            <span class="time-tag">Besteld om ${timing.time}</span> (${timing.mins} min)<br>
-                            ${status === "6" ? "Tafelverbruik" : getStatusName(status)} | Planning: ${o.desired_del_time || 'ZSM'}<br>
-                            ${getPaymentBadge(o.payment_method,o.payment_method_id)}
-                        </div>
-                    </div>
-                    <div class="card-right-controls">
-                        <div class="price-tag">€${parseFloat(o.value || 0).toFixed(2)}</div>
-                        ${actionHtml}
-                    </div>
-                `;
-
-                card.onclick = () => window.chrome.webview.postMessage({ action: "open_order", orderId: o.order_id });
-                feed.appendChild(card);
-            });
+        } 
+        else if (o.take_away || status === "7") {
+            const person = (o.clientName && o.clientName.trim() !== "") ? o.clientName : (o.phone_no ||  "" );
+            title = `Afhaal: ${person}`;
+            card.classList.add('indicator-takeaway');
         }
+        else if (status === "2") {
+            card.classList.add('indicator-delivery');
+        }
+
+        card.innerHTML = `
+            <div class="address-info">
+                <div class="address-title">${title}</div>
+                <div class="order-details">
+                    <span class="time-tag">Besteld om ${timing.time}</span> (${timing.mins} min)<br>
+                    ${status === "6" ? "Tafelverbruik" : getStatusName(status)} | Planning: ${o.desired_del_time || 'ZSM'}<br>
+                    ${getPaymentBadge(o.payment_method, o.payment_method_id)}
+                </div>
+            </div>
+            <div class="card-right-controls">
+                <div class="price-tag">€${totPrice.toFixed(2)}</div>
+                ${actionHtml}
+            </div>
+        `;
+
+        card.onclick = () => window.chrome.webview.postMessage({ action: "open_order", orderId: o.order_id });
+        feed.appendChild(card);
+    });
+}
 
         function getStatusName(code) {
             const names = { "2":"Levering", "3":"Concept", "4":"Geannuleerd", "6":"Tafel", "7":"Afhaling" };
