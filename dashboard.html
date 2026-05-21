@@ -529,9 +529,9 @@ function render() {
         const isProcessed = (o.processed === true || o.processed === 1 || String(o.processed).toLowerCase() === "true");
         if (!isProcessed) card.classList.add('is-new', 'flash-anim');
 
-        // --- NEW: DELIVERY COST CALCULATION MATCHING WINFORMS ---
+        // --- FIXED DELIVERY COST CALCULATION (Bypasses for Takeaway and Table Orders) ---
         const baseValue = parseFloat(o.value || 0);
-        const deliveryCost = o.take_away ? 0 : parseFloat(o.delivery_cost || 0);
+        const deliveryCost = (o.take_away || status === "6") ? 0 : parseFloat(o.delivery_cost || 0);
         const totPrice = o.is_external ? baseValue : (baseValue + deliveryCost);
 
         let title = o.address || "Adres onbekend";
@@ -576,7 +576,6 @@ function render() {
         feed.appendChild(card);
     });
 }
-
         function getStatusName(code) {
             const names = { "2":"Levering", "3":"Concept", "4":"Geannuleerd", "6":"Tafel", "7":"Afhaling" };
             return names[code] || "Bestelling";
