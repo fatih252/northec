@@ -2,401 +2,511 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POS Touchscreen Ordering Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Northec POS Ordering</title>
     <style>
-        :root {
-            --bg-base: #0f172a;
-            --bg-panel: #1e293b;
-            --bg-card: #334155;
-            --border-color: #475569;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            
-            --brand-primary: #3b82f6;
-            --brand-success: #10b981;
-            --brand-danger: #ef4444;
-            --brand-warning: #f59e0b;
-        }
-
-        /* --- DASHBOARD UI OVERRIDE ZOOM LOCKDOWN --- */
-        * { 
-            -webkit-tap-highlight-color: transparent; 
-            box-sizing: border-box; 
-            user-select: none; 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
             -webkit-user-select: none;
-            margin: 0; 
-            padding: 0; 
-            touch-action: none; /* Stops dual-tap or pinch zooming behaviors */
-        }
-        
-        body, html { 
-            width: 100%; 
-            height: 100%; 
-            overflow: hidden; 
-            font-family: 'Segoe UI', -apple-system, Tahoma, sans-serif; 
-            background-color: var(--bg-base); 
-            color: var(--text-main); 
-            overscroll-behavior: none;
+            font-family: 'Arial', sans-serif;
         }
 
-        #app-wrapper {
+        body {
+            background-color: #D3D3D3; /* LightGray */
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* 3-Column POS Master Layout Grid matching original sizing */
+        .pos-container {
+            display: grid;
+            grid-template-columns: 270px 1fr 420px;
+            width: 100%;
+            height: 100vh;
+            background-color: #A9A9A9; /* DarkGray */
+            gap: 2px;
+            border: 2px solid #A9A9A9;
+        }
+
+        /* Column 1: Categories Panel */
+        .category-column {
+            background-color: #D3D3D3;
             display: flex;
             flex-direction: column;
-            width: 100%;
             height: 100%;
         }
 
-        /* --- TOP HEADER BAR --- */
-        #top-header {
-            height: 65px;
-            background-color: var(--bg-panel);
-            border-bottom: 2px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            flex-shrink: 0;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            z-index: 10;
-        }
-
-        .header-title { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
-
-        .btn-close {
-            background-color: transparent;
-            color: var(--text-main);
-            border: 2px solid var(--border-color);
-            padding: 0 20px;
-            height: 46px;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 800;
+        .scroll-btn {
+            background-color: #CD853F; /* Peru */
+            color: white;
+            border: 1px solid white;
+            height: 92px;
+            font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.1s ease;
-        }
-        .btn-close:active { background-color: var(--brand-danger); border-color: var(--brand-danger); transform: scale(0.95); }
-
-        /* --- MAIN POS LAYOUT --- */
-        #pos-layout { 
-            display: flex; 
-            flex: 1; 
-            overflow: hidden; 
-        }
-
-        /* --- LEFT: Categories Column --- */
-        #col-categories {
-            width: 240px;
-            background-color: var(--bg-panel);
-            border-right: 2px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            padding: 10px;
-            gap: 8px;
-        }
-        
-        .cat-btn {
-            min-height: 60px;
-            padding: 0 15px;
-            background: var(--bg-base);
-            color: var(--text-main);
-            border: 2px solid transparent;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 700;
-            text-align: left;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            transition: all 0.1s ease;
-        }
-        .cat-btn.active { 
-            background-color: var(--brand-primary); 
-            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
-        }
-        .cat-btn:active { transform: scale(0.96); }
-
-        /* --- CENTER: Products Grid --- */
-        #col-products {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
-            align-content: start;
-            background-color: var(--bg-base);
-        }
-
-        .prod-btn {
-            background-color: var(--bg-card);
-            border: 2px solid var(--border-color);
-            border-radius: 14px;
-            height: 120px;
-            display: flex;
-            flex-direction: column;
             justify-content: center;
-            align-items: center;
+        }
+
+        .scroll-btn:active {
+            background-color: #8B5A2B;
+        }
+
+        .category-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            scrollbar-width: none; /* Hide scrollbar for touchscreen */
+        }
+        .category-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-btn {
+            width: 100%;
+            min-height: 50px;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-size: 16px;
+            font-weight: bold;
             text-align: center;
             padding: 10px;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            white-space: normal;
+            word-wrap: break-word;
         }
-        .prod-btn:active { 
-            transform: scale(0.94); 
-            background-color: var(--brand-primary);
-            border-color: var(--brand-primary); 
-        }
-        .prod-name { font-weight: 800; font-size: 14px; margin-bottom: 6px; line-height: 1.2; }
-        .prod-price { font-weight: 700; color: #6ee7b7; font-size: 13px; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 20px; }
 
-        /* --- RIGHT: Shopping Cart --- */
-        #col-cart {
-            width: 390px;
-            background-color: var(--bg-panel);
-            border-left: 2px solid var(--border-color);
+        /* Column 2: Products Content Grid */
+        .products-column {
+            background-color: #A9A9A9;
+            overflow-y: auto;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            grid-auto-rows: 100px;
+            gap: 10px;
+            align-content: start;
+        }
+
+        .product-card {
+            background-color: #006400; /* DarkGreen Default */
+            color: white;
+            border: 1px solid #FFF;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
             display: flex;
             flex-direction: column;
-            box-shadow: -4px 0 15px rgba(0,0,0,0.2);
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            word-break: break-word;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        #cart-list { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 12px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
+        .product-card:active {
+            opacity: 0.8;
         }
-        
+
+        .product-card .price-tag {
+            font-size: 12px;
+            margin-top: 5px;
+            font-weight: normal;
+        }
+
+        /* Column 3: Summary Cart Panel & Master Control Deck */
+        .cart-column {
+            background-color: #D3D3D3;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .cart-items-container {
+            flex: 1;
+            overflow-y: auto;
+            background-color: #A9A9A9;
+            padding: 5px;
+        }
+
         .cart-item {
-            background: var(--bg-base);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 12px;
+            background-color: white;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .cart-item-info {
+            flex: 1;
+            padding-right: 10px;
+        }
+
+        .cart-item-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .cart-item-details {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+            white-space: pre-line;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qty-btn {
+            background-color: #CD853F;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .item-qty {
+            font-size: 15px;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .item-price {
+            font-size: 14px;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        /* Bottom Operational Matrix */
+        .control-deck {
+            background-color: #A9A9A9;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             gap: 8px;
+            border-top: 2px solid white;
         }
-        
-        .cart-item-header { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
-        .cart-item-title { font-weight: 800; font-size: 14px; color: var(--text-main); }
-        .cart-item-price { font-weight: 900; color: var(--brand-success); font-size: 15px; }
-        .cart-item-options { font-size: 12px; color: var(--text-muted); line-height: 1.4; white-space: pre-wrap; }
-        
-        .cart-controls { display: flex; gap: 6px; margin-top: 2px; }
-        .ctrl-btn { 
-            flex: 1; 
-            background: var(--bg-card); 
-            border: 1px solid var(--border-color); 
-            color: white; 
-            height: 44px; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            font-size: 22px; 
-            cursor: pointer; 
+
+        .comment-box {
+            width: 100%;
+            height: 65px;
+            background-color: #Gainsboro;
+            border: none;
+            padding: 8px;
+            font-size: 14px;
+            resize: none;
+            border-radius: 4px;
+        }
+
+        .meta-row {
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .delivery-toggle-container {
+            display: flex;
+            background-color: #777;
+            border-radius: 4px;
+            padding: 2px;
+            flex: 1;
+        }
+
+        .toggle-option {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 13px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .toggle-option.active {
+            background-color: #CD853F;
+        }
+
+        .total-display-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            min-width: 120px;
+        }
+
+        .total-label {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .total-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: black;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .action-btn {
+            background-color: #CD853F;
+            color: white;
+            border: 1px solid white;
+            padding: 12px 5px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            display: flex;
+            align-items: center;
             justify-content: center;
-            align-items: center;
         }
-        .ctrl-btn:active { background: #475569; transform: scale(0.95); }
-        .ctrl-btn.btn-delete { background: var(--brand-danger); border-color: var(--brand-danger); font-size: 16px; }
 
-        /* --- Cart Footer / Actions --- */
-        #cart-footer { 
-            padding: 16px; 
-            background: #0b0f19; 
-            border-top: 2px solid var(--border-color); 
+        .action-btn:active {
+            opacity: 0.8;
         }
-        
-        .totals-row { 
-            display: flex; 
-            justify-content: space-between; 
-            font-size: 26px; 
-            font-weight: 900; 
-            margin-bottom: 16px; 
-            color: var(--brand-success); 
-            align-items: center;
-        }
-        .totals-label { color: var(--text-main); font-size: 18px; }
-        
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .action-btn { 
-            height: 56px; 
-            font-size: 14px; 
-            font-weight: 800; 
-            border: none; 
-            border-radius: 8px; 
-            color: white; 
-            cursor: pointer; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px;
-        }
-        .action-btn:active { transform: scale(0.96); }
-        
-        .btn-pay { grid-column: span 2; background-color: var(--brand-success); height: 70px; font-size: 17px; }
-        .btn-table { background-color: var(--brand-primary); }
-        .btn-takeaway { background-color: var(--brand-warning); }
-        .btn-delivery { background-color: var(--brand-danger); }
-        .btn-discount { background-color: var(--border-color); }
 
-        @media (max-width: 1024px) {
-            #col-categories { width: 190px; }
-            #col-cart { width: 320px; }
-            .pos-btn { height: 44px; font-size: 13px; }
+        .action-btn.submit {
+            background-color: #2E8B57; /* SeaGreen execution fallback */
+            grid-column: span 3;
+            font-size: 16px;
+            padding: 15px;
+            margin-top: 4px;
         }
     </style>
 </head>
 <body>
 
-    <div id="app-wrapper">
-        <header id="top-header">
-            <div class="header-title" id="lbl-order-title">Nieuwe Bestelling</div>
-            <button class="btn-close" onclick="sendToWinForms('closeForm')">✕ Sluiten</button>
-        </header>
+    <div class="pos-container">
+        <div class="category-column">
+            <button class="scroll-btn" onclick="scrollCategories(-120)">OMHOOG</button>
+            <div class="category-list" id="categoryContainer">
+                </div>
+            <button class="scroll-btn" onclick="scrollCategories(120)">OMLAAG</button>
+        </div>
 
-        <div id="pos-layout">
-            <div id="col-categories"></div>
-            <div id="col-products"></div>
-            
-            <div id="col-cart">
-                <div id="cart-list"></div>
-                <div id="cart-footer">
-                    <div class="totals-row">
-                        <span class="totals-label">Totaal</span>
-                        <span id="cart-total">€ 0.00</span>
+        <div class="products-column" id="productsContainer">
+            </div>
+
+        <div class="cart-column">
+            <div class="cart-items-container" id="cartContainer">
+                </div>
+
+            <div class="control-deck">
+                <textarea class="comment-box" id="txtComment" placeholder="Opmerking toevoegen..." oninput="updateCommentState()"></textarea>
+                
+                <div class="meta-row">
+                    <div class="delivery-toggle-container">
+                        <div class="toggle-option active" id="typeDelivery" onclick="setDeliveryType('delivery')">Bezorging</div>
+                        <div class="toggle-option" id="typeTakeaway" onclick="setDeliveryType('takeaway')">Afhaling</div>
                     </div>
-                    <div class="action-grid" id="action-buttons"></div>
+                    <div class="total-display-wrapper">
+                        <span class="total-label">Totaal</span>
+                        <span class="total-amount" id="lblTotPrice">€ 0.00</span>
+                    </div>
+                </div>
+
+                <div class="action-grid">
+                    <button class="action-btn" onclick="notifyAction('btnTable')">Tafel (F6)</button>
+                    <button class="action-btn" onclick="notifyAction('btnUpdateOrder')">Inchecken</button>
+                    <button class="action-btn" onclick="notifyAction('btnCloseOrder')">Uitchecken</button>
+                    <button class="action-btn submit" onclick="notifyAction('btnSubmitOrder')">Bestelling Afronden</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Zoom lockdown listeners matching main dashboard layout hooks
-        window.addEventListener('dragstart', (e) => e.preventDefault());
-        window.addEventListener('drop', (e) => e.preventDefault());
-        window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
-        window.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
+        let currentCart = [];
+        let currentDeliveryType = 'delivery';
+
+        // Initialize handshake when DOM elements load completely
+        document.addEventListener("DOMContentLoaded", () => {
+            sendHostMessage({ action: "ui_ready" });
         });
 
-        function sendToWinForms(action, payload) {
-            let data = payload || {};
-            data.action = action;
+        // Helper communication pipe safely wrapping WebView2 message architecture
+        function sendHostMessage(payload) {
             if (window.chrome && window.chrome.webview) {
-                // Securely stringify objects to avoid type boundary crashes
-                window.chrome.webview.postMessage(JSON.stringify(data));
+                window.chrome.webview.postMessage(payload);
+            } else {
+                console.log("WebView2 Host Context Missing. Payload trace: ", payload);
             }
         }
 
-        function updateUI(payload) {
-            if (payload.Categories) renderCategories(payload.Categories);
-            if (payload.Products) renderProducts(payload.Products);
-            if (payload.Cart) renderCart(payload.Cart, payload.Total);
-            
-            if (payload.OrderState !== undefined) {
-                renderActionButtons(payload.OrderState);
-            }
-            if (payload.OrderIdTitle) {
-                document.getElementById('lbl-order-title').innerText = payload.OrderIdTitle;
-            }
-        }
-
-        function renderCategories(cats) {
-            const container = document.getElementById('col-categories');
-            container.innerHTML = '';
-            cats.forEach(c => {
-                const btn = document.createElement('button');
-                btn.className = `cat-btn ${c.IsActive ? 'active' : ''}`;
-                if(c.Color) {
-                    if(c.IsActive) btn.style.backgroundColor = c.Color;
-                    else btn.style.borderLeft = `6px solid ${c.Color}`;
-                }
-                btn.innerText = c.Name;
-                btn.onclick = () => sendToWinForms('categoryClicked', { id: c.Id });
+        // ---------------------------------------------------------
+        // Host Callback Bindings (Inbound Messaging Hooks)
+        // ---------------------------------------------------------
+        window.renderCategories = function(categories) {
+            const container = document.getElementById("categoryContainer");
+            container.innerHTML = "";
+            categories.forEach(cat => {
+                const btn = document.createElement("button");
+                btn.className = "category-btn";
+                btn.innerText = cat.name;
+                btn.style.backgroundColor = cat.color ? `rgba(${cat.color.replace('Color [', '').replace(']', '')})` : '#8B0000';
+                btn.onclick = () => sendHostMessage({ action: "get_products", mainProductId: parseInt(cat.id) });
                 container.appendChild(btn);
             });
-        }
+            // Automatically click the first category item to avoid a blank display
+            if(categories.length > 0) {
+                sendHostMessage({ action: "get_products", mainProductId: parseInt(categories[0].id) });
+            }
+        };
 
-        function renderProducts(prods) {
-            const container = document.getElementById('col-products');
-            container.innerHTML = '';
-            prods.forEach(p => {
-                const btn = document.createElement('div');
-                btn.className = 'prod-btn';
-                if(p.Color) btn.style.backgroundColor = p.Color;
+        window.renderProducts = function(products) {
+            const container = document.getElementById("productsContainer");
+            container.innerHTML = "";
+            products.forEach(prod => {
+                const card = document.createElement("div");
+                card.className = "product-card";
+                if(prod.color) {
+                    card.style.backgroundColor = prod.color.startsWith('#') ? prod.color : '#' + parseInt(prod.color).toString(16).substring(2);
+                }
                 
-                btn.innerHTML = `
-                    <div class="prod-name">${p.Name}</div>
-                    <div class="prod-price">€${p.Price.toFixed(2)}</div>
+                card.innerHTML = `
+                    <div>${prod.name}</div>
+                    <div class="price-tag">€ ${parseFloat(prod.pos_value).toFixed(2)}</div>
                 `;
-                btn.onclick = () => sendToWinForms('productClicked', { id: p.Id, mainId: p.MainId });
-                container.appendChild(btn);
+                card.onclick = () => sendHostMessage({ action: "product_clicked", product: prod });
+                container.appendChild(card);
             });
-        }
+        };
 
-        function renderCart(cartItems, total) {
-            const container = document.getElementById('cart-list');
-            container.innerHTML = '';
-            document.getElementById('cart-total').innerText = `€ ${total.toFixed(2)}`;
-
-            if (!cartItems || cartItems.length === 0) {
-                container.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin-top:40px;">Winkelmand is leeg</div>`;
-                return;
+        window.addProductToCart = function(product) {
+            // Check for match configurations inside existing entries to append instead of duplicate 
+            const existingItem = currentCart.find(item => item.lineId === product.lineId);
+            if (existingItem) {
+                existingItem.amount += 1;
+                if (existingItem.action !== 'I') existingItem.action = 'U';
+            } else {
+                currentCart.push(product);
             }
+            renderCartUI();
+            syncCartToHost();
+        };
 
-            cartItems.forEach(item => {
-                const row = document.createElement('div');
-                row.className = 'cart-item';
-                
-                let details = '';
-                if(item.Details && item.Details.length > 0) {
-                    details = `<div class="cart-item-options">${item.Details.join('\n')}</div>`;
-                }
+        window.loadExistingOrder = function(cartItems, existingComment) {
+            currentCart = cartItems || [];
+            document.getElementById("txtComment").value = existingComment || "";
+            renderCartUI();
+        };
+
+        window.updateTotalsDisplay = function(totalString) {
+            document.getElementById("lblTotPrice").innerText = "€ " + totalString;
+        };
+
+        // ---------------------------------------------------------
+        // Cart Mutations & Interface Rendering Core
+        // ---------------------------------------------------------
+        function renderCartUI() {
+            const container = document.getElementById("cartContainer");
+            container.innerHTML = "";
+
+            currentCart.forEach(item => {
+                if (item.action === 'D') return; // Do not render elements flagged as dropped
+
+                const row = document.createElement("div");
+                row.className = "cart-item";
+
+                // Generate strings formatting details modifications loop
+                let subDetails = "";
+                if (item.productOptionList) item.productOptionList.forEach(o => subDetails += `${o.prefix || ''} ${o.name}\n`);
+                if (item.extraList) item.extraList.forEach(e => subDetails += `${e.prefix || '+'} ${e.name}\n`);
+                if (item.productExtraList) item.productExtraList.forEach(pe => subDetails += `${pe.prefix || '+'} ${pe.name}\n`);
+                if (item.comment) subDetails += `${item.comment}\n`;
 
                 row.innerHTML = `
-                    <div class="cart-item-header" onclick="sendToWinForms('editCartItem', { lineId: '${item.LineId}' })">
-                        <div class="cart-item-title">${item.Amount}x ${item.Name}</div>
-                        <div class="cart-item-price">€${item.LineTotal.toFixed(2)}</div>
+                    <div class="cart-item-info">
+                        <div class="cart-item-title">[${item.mainProductName}] ${item.name}</div>
+                        <div class="cart-item-details">${subDetails.trim()}</div>
                     </div>
-                    ${details}
-                    <div class="cart-controls">
-                        <button class="ctrl-btn" onclick="sendToWinForms('decreaseQty', { lineId: '${item.LineId}' })">-</button>
-                        <button class="ctrl-btn" onclick="sendToWinForms('increaseQty', { lineId: '${item.LineId}' })">+</button>
-                        <button class="ctrl-btn btn-delete" onclick="sendToWinForms('deleteItem', { lineId: '${item.LineId}' })">✕</button>
+                    <div class="cart-item-controls">
+                        <button class="qty-btn" onclick="adjustQuantity('${item.lineId}', -1)">-</button>
+                        <span class="item-qty">${item.amount}x</span>
+                        <button class="qty-btn" onclick="adjustQuantity('${item.lineId}', 1)">+</button>
+                        <span class="item-price">€ ${(item.lineTotal * item.amount).toFixed(2)}</span>
                     </div>
                 `;
                 container.appendChild(row);
             });
-            container.scrollTop = container.scrollHeight;
         }
 
-        function renderActionButtons(state) {
-            const container = document.getElementById('action-buttons');
-            container.innerHTML = '';
+        function adjustQuantity(lineId, direction) {
+            const item = currentCart.find(i => i.lineId === lineId);
+            if (!item) return;
 
-            if (state === 10 || state === 11) {
-                container.innerHTML = `
-                    <button class="action-btn btn-table" onclick="sendToWinForms('updateOrder')">Inchecken (F11)</button>
-                    <button class="action-btn btn-pay" style="grid-column: 2; height: 56px;" onclick="sendToWinForms('closeOrder')">Uitchecken (F12)</button>
-                `;
+            if (direction > 0) {
+                item.amount += 1;
+                if (item.action !== 'I') item.action = 'U';
             } else {
-                container.innerHTML = `
-                    <button class="action-btn btn-table" onclick="sendToWinForms('checkoutType', { type: 'table' })">Tafel (F6)</button>
-                    <button class="action-btn btn-takeaway" onclick="sendToWinForms('checkoutType', { type: 'takeaway' })">Afhaal (F7)</button>
-                    <button class="action-btn btn-delivery" onclick="sendToWinForms('checkoutType', { type: 'delivery' })">Bezorging (F8)</button>
-                    <button class="action-btn btn-discount" onclick="sendToWinForms('addPromo')">Korting</button>
-                    <button class="action-btn btn-pay" onclick="sendToWinForms('payOnline')">Online Betalen</button>
-                `;
+                if (item.amount > 1) {
+                    item.amount -= 1;
+                    if (item.action !== 'I') item.action = 'U';
+                } else {
+                    // Item dropped completely below single representation index boundary
+                    if (item.orderDetailId !== 0) {
+                        item.action = 'D'; // Soft flag delete for remote storage updates
+                    } else {
+                        currentCart = currentCart.filter(i => i.lineId !== lineId);
+                    }
+                }
             }
+            renderCartUI();
+            syncCartToHost();
         }
 
-        window.addEventListener('DOMContentLoaded', () => { setTimeout(() => { sendToWinForms('ready'); }, 200); });
+        function setDeliveryType(type) {
+            currentDeliveryType = type;
+            document.getElementById("typeDelivery").classList.toggle("active", type === 'delivery');
+            document.getElementById("typeTakeaway").classList.toggle("active", type === 'takeaway');
+            sendHostMessage({ action: "set_delivery_type", type: type });
+        }
+
+        function updateCommentState() {
+            // Maps the comment field directly back onto the active orchestrator context via notification action
+            sendHostMessage({ action: "sync_comment", value: document.getElementById("txtComment").value });
+        }
+
+        function syncCartToHost() {
+            sendHostMessage({ action: "sync_cart", cart: currentCart });
+        }
+
+        function notifyAction(actionId) {
+            sendHostMessage({ action: "trigger_action", id: actionId });
+        }
+
+        function scrollCategories(offset) {
+            document.getElementById("categoryContainer").scrollBy({ top: offset, behavior: 'smooth' });
+        }
     </script>
 </body>
 </html>
