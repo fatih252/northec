@@ -88,11 +88,21 @@ $(document).ready(function () {
     loadPlanner();
 
     // Optioneel: herbereken slider bij resize van venster
-    $(window).on('resize', function () {
+let windowWidth = $(window).width();
+
+$(window).on('resize', function () {
+    let newWidth = $(window).width();
+    
+    // Voer de reset alleen uit als de breedte daadwerkelijk is veranderd (bijv. telefoon kantelen)
+    // Negeer hoogteverschillen veroorzaakt door het verdwijnen van de adresbalk op mobiel
+    if (newWidth !== windowWidth) {
+        windowWidth = newWidth; // Update de opgeslagen breedte
+        
         currentPos = 0;
         if (trackUI.agendaTrack()) trackUI.agendaTrack().style.transform = `translateX(0px)`;
         updateNavButtons();
-    });
+    }
+});
 });
 
 // --- 3. DATA OPHALEN ---
