@@ -3,26 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Northec Touch POS - Dark Mode</title>
+    <title>Northec Touch POS</title>
     <style>
-        /* --- DARK THEME COLOR PALETTE --- */
         :root {
-            --bg-color: #111827;         /* Deep background */
-            --surface-color: #1F2937;    /* Elevated panels & cards */
+            --bg-color: #111827; 
+            --surface-color: #1F2937;
             --primary-color: #3B82F6; 
             --primary-active: #2563EB;
             --success-color: #10B981; 
             --success-active: #059669;
             --warning-color: #F59E0B;
             --warning-active: #D97706;
-            --text-main: #F9FAFB;        /* High contrast white text */
-            --text-muted: #9CA3AF;       /* Soft gray text */
-            --border-color: #374151;     /* Subtle dark borders */
+            --text-main: #F9FAFB; 
+            --text-muted: #9CA3AF; 
+            --border-color: #374151; 
             --danger-color: #EF4444;
             --danger-active: #DC2626;
         }
 
-        /* STRICTLY NO ROUNDED CORNERS */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -34,176 +32,112 @@
             border-radius: 0 !important; 
         }
 
-        body {
-            background-color: var(--bg-color);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            color: var(--text-main);
-        }
-
+        body { background-color: var(--bg-color); height: 100vh; overflow: hidden; display: flex; color: var(--text-main); }
         .pos-layout { display: flex; width: 100%; height: 100vh; }
         
-        /* --- ZONE 1: VERTICAL CATEGORIES --- */
-        .category-zone { 
-            width: 240px; 
-            background-color: var(--surface-color); 
-            border-right: 2px solid var(--border-color); 
-            display: flex; 
-            flex-direction: column; 
-            overflow-y: auto; 
-            scrollbar-width: none; 
-        }
+        /* --- MAIN UI ZONES --- */
+        .category-zone { width: 240px; background-color: var(--surface-color); border-right: 2px solid var(--border-color); display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none; }
         .category-zone::-webkit-scrollbar { display: none; }
-
-        .category-pill {
-            padding: 30px 15px; 
-            background-color: var(--surface-color); 
-            color: var(--text-main);
-            font-size: 18px; 
-            font-weight: 800; 
-            border-bottom: 2px solid var(--border-color); 
-            border-left: 6px solid transparent; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            line-height: 1.2;
-            word-wrap: break-word;
-        }
+        .category-pill { padding: 30px 15px; background-color: var(--surface-color); color: var(--text-main); font-size: 18px; font-weight: 800; border-bottom: 2px solid var(--border-color); border-left: 6px solid transparent; cursor: pointer; display: flex; align-items: center; line-height: 1.2; word-wrap: break-word; }
         .category-pill:active { background-color: var(--border-color); }
-        .category-pill.active { 
-            background-color: var(--bg-color); 
-            color: var(--primary-color); 
-            border-left-color: var(--primary-color); 
-        }
+        .category-pill.active { background-color: var(--bg-color); color: var(--primary-color); border-left-color: var(--primary-color); }
 
-        /* --- ZONE 2: PRODUCTS GRID --- */
-        .products-zone { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-            background-color: var(--bg-color);
-        }
-        
-        .products-area { 
-            flex: 1; 
-            padding: 20px; 
-            overflow-y: auto; 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-            gap: 15px; 
-            align-content: start; 
-        }
-        
-        .product-card {
-            background-color: var(--surface-color); padding: 20px 15px; display: flex; flex-direction: column;
-            justify-content: space-between; height: 140px; cursor: pointer; border: 2px solid var(--border-color); position: relative; overflow: hidden;
-        }
+        .products-zone { flex: 1; display: flex; flex-direction: column; overflow: hidden; background-color: var(--bg-color); }
+        .products-area { flex: 1; padding: 20px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; align-content: start; }
+        .product-card { background-color: var(--surface-color); padding: 20px 15px; display: flex; flex-direction: column; justify-content: space-between; height: 140px; cursor: pointer; border: 2px solid var(--border-color); position: relative; overflow: hidden; }
         .product-card:active { border-color: var(--primary-color); background-color: var(--border-color); }
-        
         .product-name { font-size: 17px; font-weight: 800; line-height: 1.2; word-wrap: break-word; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .product-price { font-size: 18px; font-weight: 700; color: var(--text-main); margin-top: auto; text-align: right; }
         .color-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 8px; }
 
-        /* --- ZONE 3: CHECKOUT CART --- */
-        .checkout-zone {
-            width: 450px; 
-            background-color: var(--surface-color);
-            border-left: 2px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            z-index: 10;
-        }
-
-        /* Top Header with Close Button */
-        .cart-header { 
-            padding: 15px 20px; 
-            border-bottom: 2px solid var(--border-color); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background-color: var(--bg-color); 
-        }
+        .checkout-zone { width: 450px; background-color: var(--surface-color); border-left: 2px solid var(--border-color); display: flex; flex-direction: column; z-index: 10; }
+        .cart-header { padding: 15px 20px; border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-color); }
         .header-title-block { display: flex; align-items: baseline; gap: 10px; }
         .cart-header-title { font-size: 22px; font-weight: 800; }
-        
-        .btn-close-app {
-            background-color: var(--danger-color);
-            color: white;
-            border: none;
-            padding: 12px 18px;
-            font-size: 16px;
-            font-weight: 900;
-            cursor: pointer;
-            text-transform: uppercase;
-        }
+        .btn-close-app { background-color: var(--danger-color); color: white; border: none; padding: 12px 18px; font-size: 16px; font-weight: 900; cursor: pointer; text-transform: uppercase; }
         .btn-close-app:active { background-color: var(--danger-active); }
 
         .cart-items { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; background-color: var(--bg-color); }
-        
         .cart-item { background-color: var(--surface-color); border: 2px solid var(--border-color); padding: 15px; display: flex; flex-direction: column; gap: 12px; }
         .cart-item-top { display: flex; justify-content: space-between; align-items: flex-start; }
-        
         .cart-title { font-size: 22px; font-weight: 900; color: var(--text-main); line-height: 1.2; }
         .cart-details { font-size: 15px; color: var(--text-muted); white-space: pre-line; line-height: 1.5; margin-top: 5px; font-weight: 600; }
         .cart-price { font-weight: 800; font-size: 20px; }
         
         .cart-controls { display: flex; align-items: center; justify-content: flex-end; gap: 15px; margin-top: 5px; border-top: 1px dashed var(--border-color); padding-top: 10px; }
-        
         .qty-btn { width: 60px; height: 60px; border: none; font-size: 30px; font-weight: bold; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; background-color: var(--primary-color); }
         .qty-btn:active { background-color: var(--primary-active); }
         .qty-btn.minus { background-color: var(--danger-color); }
         .qty-btn.minus:active { background-color: var(--danger-active); }
         .qty-display { font-size: 24px; font-weight: 900; min-width: 40px; text-align: center; color: var(--text-main); }
 
-        /* --- CHECKOUT CONTROLS --- */
         .checkout-panel { padding: 15px; border-top: 2px solid var(--border-color); background-color: var(--surface-color); display: flex; flex-direction: column; gap: 15px; }
-        
         .type-toggle { display: flex; background-color: var(--bg-color); border: 2px solid var(--border-color); }
         .toggle-btn { flex: 1; padding: 18px 5px; text-align: center; font-size: 16px; font-weight: 800; color: var(--text-muted); cursor: pointer; border-right: 1px solid var(--border-color); }
         .toggle-btn:last-child { border-right: none; }
         .toggle-btn.active { background-color: var(--primary-color); color: white; }
-
-        .comment-input { 
-            width: 100%; height: 70px; border: 2px solid var(--border-color); padding: 12px; font-size: 16px; font-weight: 600; 
-            resize: none; background-color: var(--bg-color); color: var(--text-main); 
-        }
-        .comment-input::placeholder { color: var(--text-muted); }
+        .comment-input { width: 100%; height: 70px; border: 2px solid var(--border-color); padding: 12px; font-size: 16px; font-weight: 600; resize: none; background-color: var(--bg-color); color: var(--text-main); }
         .comment-input:focus { outline: none; border-color: var(--primary-color); }
-
         .totals-row { display: flex; justify-content: space-between; align-items: center; font-size: 28px; font-weight: 900; color: var(--text-main); padding: 5px 0; }
-
         .action-matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        
         .btn-action { width: 100%; border: none; cursor: pointer; color: white; font-weight: 900; text-transform: uppercase; padding: 25px; font-size: 20px; }
         .btn-action:active { opacity: 0.8; }
-        
         .btn-action.pay { background-color: var(--success-color); }
         .btn-action.pay:active { background-color: var(--success-active); }
-        
         .btn-inchecken { background-color: var(--primary-color); }
         .btn-inchecken:active { background-color: var(--primary-active); }
-        
         .btn-uitchecken { background-color: var(--warning-color); }
         .btn-uitchecken:active { background-color: var(--warning-active); }
+
+        /* --- MODAL OVERLAY (SPA Modifier Design) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(17, 24, 39, 0.90);
+            z-index: 9999; display: none; align-items: center; justify-content: center;
+        }
+        .modal-content { width: 95%; height: 95%; background-color: var(--bg-color); border: 2px solid var(--border-color); display: flex; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        
+        .modal-sidebar { width: 300px; background-color: var(--surface-color); border-right: 2px solid var(--border-color); display: flex; flex-direction: column; }
+        .prefix-container { display: flex; flex-direction: column; border-bottom: 2px solid var(--border-color); }
+        .prefix-btn { padding: 25px 15px; font-size: 22px; font-weight: 900; text-align: center; cursor: pointer; border-bottom: 1px solid var(--border-color); color: var(--text-muted); background-color: var(--bg-color); transition: all 0.1s; }
+        .prefix-btn.plus.active { background-color: var(--success-color); color: white; }
+        .prefix-btn.minus.active { background-color: var(--danger-color); color: white; }
+        .prefix-btn.enkel.active { background-color: var(--warning-color); color: white; }
+        .types-list { flex: 1; overflow-y: auto; scrollbar-width: none; }
+        .types-list::-webkit-scrollbar { display: none; }
+        .type-btn { padding: 25px 15px; font-size: 18px; font-weight: 800; border-bottom: 1px solid var(--border-color); border-left: 6px solid transparent; cursor: pointer; color: var(--text-main); }
+        .type-btn:active { background-color: var(--border-color); }
+        .type-btn.active { background-color: var(--bg-color); color: var(--primary-color); border-left-color: var(--primary-color); }
+        
+        .modal-main { flex: 1; display: flex; flex-direction: column; background-color: var(--bg-color); }
+        .mod-header-bar { padding: 20px; background-color: var(--surface-color); border-bottom: 2px solid var(--border-color); display: flex; justify-content: center; }
+        .mod-product-title { font-size: 28px; font-weight: 900; color: var(--text-main); }
+        .modifiers-grid { flex: 1; padding: 20px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; align-content: start; }
+        .mod-card { background-color: var(--surface-color); border: 2px solid var(--border-color); padding: 20px 15px; height: 120px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
+        .mod-card:active { background-color: var(--border-color); border-color: var(--primary-color); }
+        .mod-name { font-size: 18px; font-weight: 800; line-height: 1.2; }
+        .mod-price { font-size: 16px; font-weight: 700; color: var(--text-muted); text-align: right; }
+        
+        .modal-cart { width: 400px; background-color: var(--surface-color); border-left: 2px solid var(--border-color); display: flex; flex-direction: column; }
+        .mod-cart-items { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: var(--bg-color); }
+        .mod-cart-item { background-color: var(--surface-color); border: 2px solid var(--border-color); padding: 15px; display: flex; align-items: center; justify-content: space-between; }
+        .mod-cart-item.success .mod-item-name { color: var(--success-color); }
+        .mod-cart-item.danger .mod-item-name { color: var(--danger-color); text-decoration: line-through; }
+        .mod-item-name { font-size: 18px; font-weight: 800; }
+        .mod-item-price { font-size: 16px; font-weight: 700; color: var(--text-muted); }
+        .btn-mod-remove { background-color: var(--danger-color); color: white; border: none; width: 45px; height: 45px; font-size: 22px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-mod-remove:active { background-color: var(--danger-active); }
 
     </style>
 </head>
 <body>
 
     <div class="pos-layout">
-        
-        <div class="category-zone" id="categoryContainer">
-            </div>
-
+        <div class="category-zone" id="categoryContainer"></div>
         <div class="products-zone">
-            <div class="products-area" id="productsContainer">
-                </div>
+            <div class="products-area" id="productsContainer"></div>
         </div>
-
         <div class="checkout-zone">
-            
             <div class="cart-header">
                 <div class="header-title-block">
                     <span class="cart-header-title">BESTELLING</span>
@@ -211,11 +145,8 @@
                 </div>
                 <button class="btn-close-app" onclick="notifyAction('btnCloseForm')">✖ SLUITEN</button>
             </div>
-
             <div class="cart-items" id="cartContainer"></div>
-
             <div class="checkout-panel">
-                
                 <div id="standardOptions">
                     <div class="type-toggle" id="masterToggleBlock">
                         <div class="toggle-btn active" id="btnDel" onclick="setOrderType('delivery')">BEZORGEN</div>
@@ -223,23 +154,50 @@
                         <div class="toggle-btn" id="btnTab" onclick="setOrderType('table')">TAFEL</div>
                     </div>
                 </div>
-
                 <textarea class="comment-input" id="txtComment" placeholder="Opmerking voor de keuken..." oninput="updateCommentState()"></textarea>
-
                 <div class="totals-row">
                     <span>TOTAAL</span>
                     <span id="lblTotPrice">€ 0.00</span>
                 </div>
-
                 <div id="standardSubmit">
                     <button class="btn-action pay" onclick="submitMasterOrder()">AFRONDEN & BETALEN</button>
                 </div>
-
                 <div id="tableModifyActions" class="action-matrix" style="display: none;">
                     <button class="btn-action btn-inchecken" onclick="notifyAction('btnUpdateOrder')">INCHECKEN</button>
                     <button class="btn-action btn-uitchecken" onclick="notifyAction('btnCloseOrder')">UITCHECKEN</button>
                 </div>
+            </div>
+        </div>
+    </div>
 
+    <div class="modal-overlay" id="modifierModal">
+        <div class="modal-content">
+            <div class="modal-sidebar">
+                <button onclick="closeModifierModal()" style="padding: 25px; background: var(--danger-color); color: white; border: none; border-bottom: 2px solid var(--border-color); font-size: 20px; font-weight: 900; width: 100%; cursor: pointer;">✖ ANNULEREN</button>
+                <div class="prefix-container">
+                    <div class="prefix-btn plus active" onclick="setPrefix('+')">+ EXTRA</div>
+                    <div class="prefix-btn minus" onclick="setPrefix('-')">- ZONDER</div>
+                    <div class="prefix-btn enkel" onclick="setPrefix('> enkel')">ENKEL</div>
+                </div>
+                <div class="types-list" id="modalTypesContainer"></div>
+            </div>
+            
+            <div class="modal-main">
+                <div class="mod-header-bar">
+                    <div class="mod-product-title" id="lblModalProductTitle">Laden...</div>
+                </div>
+                <div class="modifiers-grid" id="modalModifiersContainer"></div>
+            </div>
+
+            <div class="modal-cart">
+                <div class="mod-cart-items" id="modalSubCartContainer"></div>
+                <div class="checkout-panel" style="border-top: none;">
+                    <div class="totals-row">
+                        <span>TOTAAL</span>
+                        <span id="lblModalTotalPrice">€ 0.00</span>
+                    </div>
+                    <button class="btn-action pay" onclick="submitModal()">VOEG TOE</button>
+                </div>
             </div>
         </div>
     </div>
@@ -248,19 +206,17 @@
         let currentCart = [];
         let currentOrderType = 'delivery'; 
         let isTableMode = false;
+        let currentPrefix = '+';
 
         document.addEventListener("DOMContentLoaded", () => {
             sendHostMessage({ action: "ui_ready" });
         });
 
         function sendHostMessage(payload) {
-            if (window.chrome && window.chrome.webview) {
-                window.chrome.webview.postMessage(payload);
-            }
+            if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage(payload);
         }
 
-        // --- HOST TO JS BINDINGS ---
-        
+        // --- MAIN POS BINDINGS ---
         window.setPosMode = function(isExistingTable) {
             isTableMode = isExistingTable;
             if (isExistingTable) {
@@ -290,7 +246,6 @@
                 btn.className = "category-pill";
                 btn.id = "cat_" + cat.id;
                 btn.innerText = cat.name.toUpperCase();
-                
                 btn.onclick = () => {
                     document.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
@@ -340,7 +295,6 @@
             document.getElementById("lblTotPrice").innerText = "€ " + totalString;
         };
 
-        // --- CART UI & LOGIC ---
         function renderCartUI() {
             const container = document.getElementById("cartContainer");
             container.innerHTML = "";
@@ -358,7 +312,6 @@
 
                 const row = document.createElement("div");
                 row.className = "cart-item";
-                
                 row.innerHTML = `
                     <div class="cart-item-top">
                         <div style="flex: 1; padding-right: 10px;">
@@ -375,7 +328,6 @@
                 `;
                 container.appendChild(row);
             });
-
             document.getElementById("itemCount").innerText = `${activeItemCount} ITEMS`;
             container.scrollTop = container.scrollHeight;
         }
@@ -383,7 +335,6 @@
         function adjustQuantity(lineId, direction) {
             const item = currentCart.find(i => i.lineId === lineId);
             if (!item) return;
-
             if (direction > 0) {
                 item.amount += 1;
                 if (item.action !== 'I') item.action = 'U';
@@ -400,44 +351,98 @@
             syncCartToHost();
         }
 
-        // --- MASTER WORKFLOW ROUTING ---
         function setOrderType(type) {
             if (isTableMode) return; 
-            
             currentOrderType = type;
             document.getElementById("btnDel").classList.toggle("active", type === 'delivery');
             document.getElementById("btnTak").classList.toggle("active", type === 'takeaway');
             document.getElementById("btnTab").classList.toggle("active", type === 'table');
-            
             sendHostMessage({ action: "set_delivery_type", type: type });
         }
 
         function submitMasterOrder() {
-            if (currentOrderType === 'table') {
-                sendHostMessage({ action: "trigger_action", id: "btnTable" });
-            } else {
-                sendHostMessage({ action: "trigger_action", id: "btnSubmitOrder" });
-            }
+            if (currentOrderType === 'table') sendHostMessage({ action: "trigger_action", id: "btnTable" });
+            else sendHostMessage({ action: "trigger_action", id: "btnSubmitOrder" });
         }
 
-        function updateCommentState() {
-            sendHostMessage({ action: "sync_comment", value: document.getElementById("txtComment").value });
+        function updateCommentState() { sendHostMessage({ action: "sync_comment", value: document.getElementById("txtComment").value }); }
+        function syncCartToHost() { sendHostMessage({ action: "sync_cart", cart: currentCart }); }
+        function notifyAction(actionId) { sendHostMessage({ action: "trigger_action", id: actionId }); }
+
+        // --- MODAL SPA BINDINGS ---
+        window.openModifierModal = function() { document.getElementById('modifierModal').style.display = 'flex'; setPrefix('+'); };
+        window.closeModifierModal = function() { document.getElementById('modifierModal').style.display = 'none'; };
+        
+        window.initProduct = function(data) { document.getElementById('lblModalProductTitle').innerText = data.productName.toUpperCase(); };
+
+        window.renderModalTypes = function(types) {
+            const container = document.getElementById("modalTypesContainer");
+            container.innerHTML = "";
+            types.forEach(t => {
+                const btn = document.createElement("div");
+                btn.className = "type-btn";
+                btn.id = "type_" + t.id;
+                btn.innerText = t.name;
+                btn.onclick = () => {
+                    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    sendHostMessage({ action: "modal_load_type_items", typeId: t.id, isProductExtra: t.isProductExtra });
+                };
+                container.appendChild(btn);
+            });
+            if (types.length > 0) document.getElementById("type_" + types[0].id).click();
+        };
+
+        window.renderModalModifiers = function(items, isProductExtra) {
+            const container = document.getElementById("modalModifiersContainer");
+            container.innerHTML = "";
+            items.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "mod-card";
+                card.innerHTML = `<div class="mod-name">${item.name}</div><div class="mod-price">+ € ${item.price.toFixed(2)}</div>`;
+                card.onclick = () => {
+                    sendHostMessage({ action: "modal_add_modifier", isProductExtra: isProductExtra, prefix: currentPrefix, rawData: item.rawData });
+                };
+                container.appendChild(card);
+            });
+        };
+
+        window.renderSubCart = function(data) {
+            document.getElementById('lblModalTotalPrice').innerText = "€ " + data.total.toFixed(2);
+            const container = document.getElementById("modalSubCartContainer");
+            container.innerHTML = "";
+            data.items.forEach(item => {
+                const row = document.createElement("div");
+                row.className = `mod-cart-item ${item.color}`;
+                row.innerHTML = `
+                    <div><div class="mod-item-name">${item.displayName}</div><div class="mod-item-price">€ ${item.price.toFixed(2)}</div></div>
+                    <button class="btn-mod-remove" onclick="removeModifier(${item.uniqueId}, ${item.isProductExtra})">X</button>
+                `;
+                container.appendChild(row);
+            });
+            container.scrollTop = container.scrollHeight;
+        };
+
+        function setPrefix(prefix) {
+            currentPrefix = prefix;
+            document.querySelectorAll('.prefix-btn').forEach(b => b.classList.remove('active'));
+            if(prefix === '+') document.querySelector('.prefix-btn.plus').classList.add('active');
+            if(prefix === '-') document.querySelector('.prefix-btn.minus').classList.add('active');
+            if(prefix === '> enkel') document.querySelector('.prefix-btn.enkel').classList.add('active');
         }
 
-        function syncCartToHost() {
-            sendHostMessage({ action: "sync_cart", cart: currentCart });
-        }
+        function removeModifier(uniqueId, isProductExtra) { sendHostMessage({ action: "modal_remove_modifier", uniqueId: uniqueId, isProductExtra: isProductExtra }); }
+        function submitModal() { sendHostMessage({ action: "modal_submit" }); }
 
-        function notifyAction(actionId) {
-            sendHostMessage({ action: "trigger_action", id: actionId });
-        }
-
-        // Keyboard Shortcut Bindings
         window.addEventListener('keydown', function(e) {
-            if (e.key === 'F6') { e.preventDefault(); setOrderType('table'); }
-            if (e.key === 'F7') { e.preventDefault(); setOrderType('takeaway'); }
-            if (e.key === 'F8') { e.preventDefault(); setOrderType('delivery'); }
-            if (e.key === 'Escape') { e.preventDefault(); notifyAction('btnCloseForm'); }
+            if (document.getElementById('modifierModal').style.display === 'flex') {
+                if (e.key === 'Escape') { e.preventDefault(); closeModifierModal(); }
+            } else {
+                if (e.key === 'F6') { e.preventDefault(); setOrderType('table'); }
+                if (e.key === 'F7') { e.preventDefault(); setOrderType('takeaway'); }
+                if (e.key === 'F8') { e.preventDefault(); setOrderType('delivery'); }
+                if (e.key === 'Escape') { e.preventDefault(); notifyAction('btnCloseForm'); }
+            }
         });
     </script>
 </body>
