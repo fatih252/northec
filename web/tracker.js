@@ -1,70 +1,70 @@
 ﻿
 
 
-   var map;
-        var truckMarker;
-        var trackingInterval;
+var map;
+var truckMarker;
+var trackingInterval;
+let plannerBaseDate = new Date();
+// Pictogram definitie buiten de ready-functie is prima
+var truckIcon = L.divIcon({
+    html: '<div class="truck-pictogram"><i class="fas fa-truck-moving fa-3x text-primary"></i></div>',
+    className: 'custom-div-icon',
+    iconSize: [50, 50],
+    iconAnchor: [25, 25]
+});
 
-        // Pictogram definitie buiten de ready-functie is prima
-        var truckIcon = L.divIcon({
-            html: '<div class="truck-pictogram"><i class="fas fa-truck-moving fa-3x text-primary"></i></div>',
-            className: 'custom-div-icon',
-            iconSize: [50, 50],
-            iconAnchor: [25, 25]
-        });
+$(document).ready(function () {
+    // Reference the modal using jQuery
+    var $locationModal = $('#locationModal');
 
-        $(document).ready(function () {
-            // Reference the modal using jQuery
-            var $locationModal = $('#locationModal');
+    if ($locationModal.length) {
+        // Bootstrap 4 Event: shown.bs.modal
+        $locationModal.on('shown.bs.modal', function () {
+            if (!map) {
+                // Initialize the map
+                map = L.map('map').setView([51.2194, 4.4025], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
 
-            if ($locationModal.length) {
-                // Bootstrap 4 Event: shown.bs.modal
-                $locationModal.on('shown.bs.modal', function () {
-                    if (!map) {
-                        // Initialize the map
-                        map = L.map('map').setView([51.2194, 4.4025], 14);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '© OpenStreetMap contributors'
-                        }).addTo(map);
-
-                        truckMarker = L.marker([0, 0], { icon: truckIcon }).addTo(map);
-                    } else {
-                        // Leaflet needs this because the container was hidden (display: none)
-                        // Bootstrap 4 sometimes needs a slightly longer delay
-                        setTimeout(function () {
-                            map.invalidateSize();
-                        }, 200);
-                    }
-
-                    updateTruckPosition();
-                    if (trackingInterval) clearInterval(trackingInterval);
-                    trackingInterval = setInterval(updateTruckPosition, 10000);
-                });
-
-                // Bootstrap 4 Event: hidden.bs.modal
-                $locationModal.on('hidden.bs.modal', function () {
-                    if (trackingInterval) clearInterval(trackingInterval);
-                });
+                truckMarker = L.marker([0, 0], { icon: truckIcon }).addTo(map);
+            } else {
+                // Leaflet needs this because the container was hidden (display: none)
+                // Bootstrap 4 sometimes needs a slightly longer delay
+                setTimeout(function () {
+                    map.invalidateSize();
+                }, 200);
             }
+
+            updateTruckPosition();
+            if (trackingInterval) clearInterval(trackingInterval);
+            trackingInterval = setInterval(updateTruckPosition, 10000);
         });
 
-        function updateTruckPosition() {
-            fetch('/WebService.asmx/get_truck_location', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.d && map) {
-                        var lat = data.d.lat;
-                        var lng = data.d.lng;
-                        var newPos = [lat, lng];
-                        truckMarker.setLatLng(newPos);
-                        map.flyTo(newPos, 17, { animate: true, duration: 2.0 });
-                    }
-                })
-                .catch(err => console.error('Fout bij ophalen locatie:', err));
-        }
+        // Bootstrap 4 Event: hidden.bs.modal
+        $locationModal.on('hidden.bs.modal', function () {
+            if (trackingInterval) clearInterval(trackingInterval);
+        });
+    }
+});
+
+function updateTruckPosition() {
+    fetch('/WebService.asmx/get_truck_location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.d && map) {
+                var lat = data.d.lat;
+                var lng = data.d.lng;
+                var newPos = [lat, lng];
+                truckMarker.setLatLng(newPos);
+                map.flyTo(newPos, 17, { animate: true, duration: 2.0 });
+            }
+        })
+        .catch(err => console.error('Fout bij ophalen locatie:', err));
+}
 
 // --- 1. GLOBALE VARIABELEN & SELECTORS ---
 let currentPos = 0;
@@ -88,21 +88,21 @@ $(document).ready(function () {
     loadPlanner();
 
     // Optioneel: herbereken slider bij resize van venster
-let windowWidth = $(window).width();
+    let windowWidth = $(window).width();
 
-$(window).on('resize', function () {
-    let newWidth = $(window).width();
-    
-    // Voer de reset alleen uit als de breedte daadwerkelijk is veranderd (bijv. telefoon kantelen)
-    // Negeer hoogteverschillen veroorzaakt door het verdwijnen van de adresbalk op mobiel
-    if (newWidth !== windowWidth) {
-        windowWidth = newWidth; // Update de opgeslagen breedte
-        
-        currentPos = 0;
-        if (trackUI.agendaTrack()) trackUI.agendaTrack().style.transform = `translateX(0px)`;
-        updateNavButtons();
-    }
-});
+    $(window).on('resize', function () {
+        let newWidth = $(window).width();
+
+        // Voer de reset alleen uit als de breedte daadwerkelijk is veranderd (bijv. telefoon kantelen)
+        // Negeer hoogteverschillen veroorzaakt door het verdwijnen van de adresbalk op mobiel
+        if (newWidth !== windowWidth) {
+            windowWidth = newWidth; // Update de opgeslagen breedte
+
+            currentPos = 0;
+            if (trackUI.agendaTrack()) trackUI.agendaTrack().style.transform = `translateX(0px)`;
+            updateNavButtons();
+        }
+    });
 });
 
 // --- 3. DATA OPHALEN ---
@@ -134,11 +134,10 @@ function renderAgenda() {
     track.innerHTML = "";
 
     const now = new Date();
-    const todayAtMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-
+const startAtMidnight = new Date(plannerBaseDate.getFullYear(), plannerBaseDate.getMonth(), plannerBaseDate.getDate(), 0, 0, 0);
     // Genereer 5 dagen vanaf vandaag
     for (let i = 0; i < 5; i++) {
-        let d = new Date(todayAtMidnight);
+       let d = new Date(startAtMidnight); // Gebruik startAtMidnight hier
         d.setDate(d.getDate() + i);
 
         let dayIdx = d.getDay(); // 0 = Zon, 1 = Man...
@@ -263,4 +262,20 @@ function validateOrder(btn) {
     // Voorkom dubbel klikken
     $(btn).prop('disabled', true).val("Bezig met verwerken...");
     return true;
+}
+
+// NEW: Functie om naar een gekozen datum te springen
+function jumpToSelectedDate(dateString) {
+    if (!dateString) return;
+    
+    // Converteer YYYY-MM-DD naar een Date object
+    let parts = dateString.split('-');
+    plannerBaseDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    
+    // Reset de slider positie
+    currentPos = 0;
+    if (trackUI.agendaTrack()) trackUI.agendaTrack().style.transform = `translateX(0px)`;
+    
+    // Teken de agenda opnieuw vanaf de nieuwe datum
+    renderAgenda();
 }
