@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Northec Touch POS</title>
+    <title>Northec Touch POS - Dark Mode</title>
     <style>
+        /* --- DARK THEME COLOR PALETTE --- */
         :root {
-            --bg-color: #E5E7EB;
-            --surface-color: #FFFFFF;
-            --primary-color: #2563EB; 
-            --primary-active: #1D4ED8;
-            --success-color: #059669; 
-            --success-active: #047857;
+            --bg-color: #111827;         /* Deep background */
+            --surface-color: #1F2937;    /* Elevated panels & cards */
+            --primary-color: #3B82F6; 
+            --primary-active: #2563EB;
+            --success-color: #10B981; 
+            --success-active: #059669;
             --warning-color: #F59E0B;
             --warning-active: #D97706;
-            --text-main: #111827;
-            --text-muted: #4B5563;
-            --border-color: #D1D5DB;
-            --danger-color: #DC2626;
-            --danger-active: #B91C1C;
+            --text-main: #F9FAFB;        /* High contrast white text */
+            --text-muted: #9CA3AF;       /* Soft gray text */
+            --border-color: #374151;     /* Subtle dark borders */
+            --danger-color: #EF4444;
+            --danger-active: #DC2626;
         }
 
         /* STRICTLY NO ROUNDED CORNERS */
@@ -41,39 +42,35 @@
             color: var(--text-main);
         }
 
-        .pos-layout { 
-            display: flex; 
-            width: 100%; 
-            height: 100vh; 
-        }
-
+        .pos-layout { display: flex; width: 100%; height: 100vh; }
+        
         /* --- ZONE 1: VERTICAL CATEGORIES --- */
         .category-zone { 
-            width: 240px; /* Generous width for fat fingers */
+            width: 240px; 
             background-color: var(--surface-color); 
             border-right: 2px solid var(--border-color); 
             display: flex; 
             flex-direction: column; 
             overflow-y: auto; 
-            scrollbar-width: none; /* Hide scrollbar for touch */
+            scrollbar-width: none; 
         }
         .category-zone::-webkit-scrollbar { display: none; }
 
         .category-pill {
-            padding: 30px 15px; /* Massive hit targets */
+            padding: 30px 15px; 
             background-color: var(--surface-color); 
             color: var(--text-main);
             font-size: 18px; 
             font-weight: 800; 
             border-bottom: 2px solid var(--border-color); 
-            border-left: 6px solid transparent; /* Active indicator */
+            border-left: 6px solid transparent; 
             cursor: pointer; 
             display: flex; 
             align-items: center; 
             line-height: 1.2;
             word-wrap: break-word;
         }
-        .category-pill:active { background-color: var(--bg-color); }
+        .category-pill:active { background-color: var(--border-color); }
         .category-pill.active { 
             background-color: var(--bg-color); 
             color: var(--primary-color); 
@@ -103,7 +100,7 @@
             background-color: var(--surface-color); padding: 20px 15px; display: flex; flex-direction: column;
             justify-content: space-between; height: 140px; cursor: pointer; border: 2px solid var(--border-color); position: relative; overflow: hidden;
         }
-        .product-card:active { border-color: var(--primary-color); background-color: #F9FAFB; }
+        .product-card:active { border-color: var(--primary-color); background-color: var(--border-color); }
         
         .product-name { font-size: 17px; font-weight: 800; line-height: 1.2; word-wrap: break-word; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .product-price { font-size: 18px; font-weight: 700; color: var(--text-main); margin-top: auto; text-align: right; }
@@ -119,8 +116,31 @@
             z-index: 10;
         }
 
-        .cart-header { padding: 20px; border-bottom: 2px solid var(--border-color); font-size: 22px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-color); }
-        .cart-items { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; background-color: #F9FAFB; }
+        /* Top Header with Close Button */
+        .cart-header { 
+            padding: 15px 20px; 
+            border-bottom: 2px solid var(--border-color); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background-color: var(--bg-color); 
+        }
+        .header-title-block { display: flex; align-items: baseline; gap: 10px; }
+        .cart-header-title { font-size: 22px; font-weight: 800; }
+        
+        .btn-close-app {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            font-size: 16px;
+            font-weight: 900;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .btn-close-app:active { background-color: var(--danger-active); }
+
+        .cart-items { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; background-color: var(--bg-color); }
         
         .cart-item { background-color: var(--surface-color); border: 2px solid var(--border-color); padding: 15px; display: flex; flex-direction: column; gap: 12px; }
         .cart-item-top { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -135,7 +155,7 @@
         .qty-btn:active { background-color: var(--primary-active); }
         .qty-btn.minus { background-color: var(--danger-color); }
         .qty-btn.minus:active { background-color: var(--danger-active); }
-        .qty-display { font-size: 24px; font-weight: 900; min-width: 40px; text-align: center; }
+        .qty-display { font-size: 24px; font-weight: 900; min-width: 40px; text-align: center; color: var(--text-main); }
 
         /* --- CHECKOUT CONTROLS --- */
         .checkout-panel { padding: 15px; border-top: 2px solid var(--border-color); background-color: var(--surface-color); display: flex; flex-direction: column; gap: 15px; }
@@ -145,8 +165,12 @@
         .toggle-btn:last-child { border-right: none; }
         .toggle-btn.active { background-color: var(--primary-color); color: white; }
 
-        .comment-input { width: 100%; height: 70px; border: 2px solid var(--border-color); padding: 12px; font-size: 16px; font-weight: 600; resize: none; background-color: #F9FAFB; }
-        .comment-input:focus { outline: none; border-color: var(--text-main); }
+        .comment-input { 
+            width: 100%; height: 70px; border: 2px solid var(--border-color); padding: 12px; font-size: 16px; font-weight: 600; 
+            resize: none; background-color: var(--bg-color); color: var(--text-main); 
+        }
+        .comment-input::placeholder { color: var(--text-muted); }
+        .comment-input:focus { outline: none; border-color: var(--primary-color); }
 
         .totals-row { display: flex; justify-content: space-between; align-items: center; font-size: 28px; font-weight: 900; color: var(--text-main); padding: 5px 0; }
 
@@ -179,9 +203,13 @@
         </div>
 
         <div class="checkout-zone">
+            
             <div class="cart-header">
-                <span>BESTELLING</span>
-                <span style="font-size: 16px; color: var(--text-muted);" id="itemCount">0 ITEMS</span>
+                <div class="header-title-block">
+                    <span class="cart-header-title">BESTELLING</span>
+                    <span style="font-size: 16px; color: var(--text-muted);" id="itemCount">0 ITEMS</span>
+                </div>
+                <button class="btn-close-app" onclick="notifyAction('btnCloseForm')">✖ SLUITEN</button>
             </div>
 
             <div class="cart-items" id="cartContainer"></div>
@@ -409,6 +437,7 @@
             if (e.key === 'F6') { e.preventDefault(); setOrderType('table'); }
             if (e.key === 'F7') { e.preventDefault(); setOrderType('takeaway'); }
             if (e.key === 'F8') { e.preventDefault(); setOrderType('delivery'); }
+            if (e.key === 'Escape') { e.preventDefault(); notifyAction('btnCloseForm'); }
         });
     </script>
 </body>
