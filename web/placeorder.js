@@ -172,7 +172,7 @@ function updateOrderButtonState() {
     else if (!selectedTime || selectedTime === "") {
         // Blokkeer de knop als er geen tijd is gekozen
         $btn.val("Kies eerst een tijd").prop('disabled', true);
-        $btn.css({ 'background-color': '#ffc107', 'color': 'black' }); // Waarschuwingsgeel
+        $btn.css({ 'background-color': '#ddd', 'color': 'black' }); // Waarschuwingsgeel
     }
     else {
         // Activeer de knop pas als alles klopt
