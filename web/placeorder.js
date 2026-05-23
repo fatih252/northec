@@ -224,3 +224,111 @@ function ClientSideClick(myButton) {
 
     return true;
 }
+
+
+// --- GLOBALE VARIABELEN ---
+let plannerBaseDate = new Date();
+const monthNames = ["JAN", "FEB", "MRT", "APR", "MEI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEC"];
+
+$(document).ready(function () {
+    // Hide picker if user clicks outside of it
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('#datePickerTrigger, #customPickerPopup').length) {
+            $('#customPickerPopup').hide();
+        }
+    });
+
+    // Initialize the UI text on load
+    updatePickerTriggerText();
+    buildPickerGrids();
+});
+
+// --- CUSTOM PICKER LOGIC ---
+
+function toggleCustomPicker() {
+    $('#customPickerPopup').toggle();
+    buildPickerGrids(); // Rebuild to ensure the 'active' classes match plannerBaseDate
+}
+
+function updatePickerTriggerText() {
+    $('#displayMonthName').text(monthNames[plannerBaseDate.getMonth()]);
+    $('#displayYear').text(plannerBaseDate.getFullYear());
+}
+
+function buildPickerGrids() {
+    const $yearGrid = $('#yearGrid');
+    const $monthGrid = $('#monthGrid');
+    $yearGrid.empty();
+    $monthGrid.empty();
+
+    const currentYear = new Date().getFullYear();
+    const selectedYear = plannerBaseDate.getFullYear();
+    const selectedMonth = plannerBaseDate.getMonth();
+
+    // Bouw Jaren (Huidig jaar + 2 jaar in de toekomst)
+    for (let i = 0; i < 3; i++) {
+        let y = currentYear + i;
+        let isActive = (y === selectedYear) ? 'active' : '';
+        $yearGrid.append(`<div class="picker-item ${isActive}" onclick="selectPickerYear(${y})">${y}</div>`);
+    }
+
+    // Bouw Maanden
+    for (let m = 0; m < 12; m++) {
+        let isActive = (m === selectedMonth) ? 'active' : '';
+        
+        // Blokkeer maanden in het verleden (als het gekozen jaar het huidige jaar is)
+        let isPast = (selectedYear === currentYear && m < new Date().getMonth());
+        
+        if (isPast) {
+            $monthGrid.append(`<div class="picker-item" style="opacity: 0.4; cursor: not-allowed;">${monthNames[m]}</div>`);
+        } else {
+            $monthGrid.append(`<div class="picker-item ${isActive}" onclick="selectPickerMonth(${m})">${monthNames[m]}</div>`);
+        }
+    }
+}
+
+function selectPickerYear(year) {
+    plannerBaseDate.setFullYear(year);
+    
+    // Voorkom dat ze in het verleden belanden als ze het jaar terugzetten naar dit jaar
+    if (year === new Date().getFullYear() && plannerBaseDate.getMonth() < new Date().getMonth()) {
+        plannerBaseDate.setMonth(new Date().getMonth());
+    }
+    
+    buildPickerGrids(); 
+    applyPickerSelection();
+}
+
+function selectPickerMonth(monthIndex) {
+    plannerBaseDate.setMonth(monthIndex);
+    plannerBaseDate.setDate(1); // Reset de dag naar 1 om maand-oversprong (bijv. 31 feb) te voorkomen
+    
+    // Als de gekozen maand = huidige maand, zet de datum terug op vandaag
+    if (plannerBaseDate.getFullYear() === new Date().getFullYear() && monthIndex === new Date().getMonth()) {
+        plannerBaseDate = new Date(); 
+    }
+    
+    buildPickerGrids();
+    applyPickerSelection();
+    
+    // Sluit de popup automatisch nadat een maand is gekozen
+    $('#customPickerPopup').hide();
+}
+
+function applyPickerSelection() {
+    updatePickerTriggerText();
+    
+    // Reset de kalender view naar het begin
+    currentPos = 0;
+    const track = document.getElementById('agendaTrack');
+    if (track) track.style.transform = `translateX(0px)`;
+    
+    // Reset selecties
+    $('.slot-btn').removeClass('selected');
+    $("[id$='hfSelectedTime']").val('');
+    
+    // Roep je bestaande render functie aan
+    if (typeof renderAgenda === "function") {
+        renderAgenda();
+    }
+}
