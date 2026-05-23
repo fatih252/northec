@@ -87,14 +87,19 @@ const trackUI = {
 $(document).ready(function () {
     loadPlanner();
 
+    let today = new Date();
+    let dd = String(today.getDate()).padStart(2, '0');
+    let mm = String(today.getMonth() + 1).padStart(2, '0');
+    let yyyy = today.getFullYear();
+    let todayString = `${yyyy}-${mm}-${dd}`;
+
+    $('#jumpToDate').attr('min', todayString); // Blokkeer het verleden
+    $('#jumpToDate').val(todayString);         // Zet de default waarde naar vandaag
     // Optioneel: herbereken slider bij resize van venster
     let windowWidth = $(window).width();
 
     $(window).on('resize', function () {
         let newWidth = $(window).width();
-
-        // Voer de reset alleen uit als de breedte daadwerkelijk is veranderd (bijv. telefoon kantelen)
-        // Negeer hoogteverschillen veroorzaakt door het verdwijnen van de adresbalk op mobiel
         if (newWidth !== windowWidth) {
             windowWidth = newWidth; // Update de opgeslagen breedte
 
@@ -134,10 +139,10 @@ function renderAgenda() {
     track.innerHTML = "";
 
     const now = new Date();
-const startAtMidnight = new Date(plannerBaseDate.getFullYear(), plannerBaseDate.getMonth(), plannerBaseDate.getDate(), 0, 0, 0);
+    const startAtMidnight = new Date(plannerBaseDate.getFullYear(), plannerBaseDate.getMonth(), plannerBaseDate.getDate(), 0, 0, 0);
     // Genereer 5 dagen vanaf vandaag
     for (let i = 0; i < 5; i++) {
-       let d = new Date(startAtMidnight); // Gebruik startAtMidnight hier
+        let d = new Date(startAtMidnight); // Gebruik startAtMidnight hier
         d.setDate(d.getDate() + i);
 
         let dayIdx = d.getDay(); // 0 = Zon, 1 = Man...
@@ -179,15 +184,18 @@ const startAtMidnight = new Date(plannerBaseDate.getFullYear(), plannerBaseDate.
                 let statusClass = isBooked ? 'booked' : (isPast ? 'past' : 'available');
                 let isDisabled = isBooked || isPast;
 
-                // Formaat voor HiddenField: yyyy-MM-dd HH:mm
-                let dateValue = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()} ${h}:00`;
+                let slotMonth = String(d.getMonth() + 1).padStart(2, '0');
+                let slotDay = String(d.getDate()).padStart(2, '0');
+                let slotHour = String(h).padStart(2, '0');
+
+                let dateValue = `${d.getFullYear()}-${slotMonth}-${slotDay} ${slotHour}:00`;
 
                 html += `
-                    <button type="button" 
-                        class="slot-btn ${statusClass}" 
-                        ${isDisabled ? 'disabled' : `onclick="selectSlot(this, '${dateValue}')"`}>
-                        ${h}:00 ${isBooked ? '<i class="fas fa-lock ms-1"></i>' : ''}
-                    </button>`;
+    <button type="button" 
+        class="slot-btn ${statusClass}" 
+        ${isDisabled ? 'disabled' : `onclick="selectSlot(this, '${dateValue}')"`}>
+        ${slotHour}:00 ${isBooked ? '<i class="fas fa-lock ms-1"></i>' : ''}
+    </button>`;
             }
         }
         col.innerHTML = html;
@@ -267,15 +275,18 @@ function validateOrder(btn) {
 // NEW: Functie om naar een gekozen datum te springen
 function jumpToSelectedDate(dateString) {
     if (!dateString) return;
-    
+
     // Converteer YYYY-MM-DD naar een Date object
     let parts = dateString.split('-');
     plannerBaseDate = new Date(parts[0], parts[1] - 1, parts[2]);
-    
+
     // Reset de slider positie
     currentPos = 0;
     if (trackUI.agendaTrack()) trackUI.agendaTrack().style.transform = `translateX(0px)`;
-    
+
+    // 2. Wis de oude reservering als ze van datum veranderen
+    $('.slot-btn').removeClass('selected');
+    trackUI.hfSelectedTime().val('');
     // Teken de agenda opnieuw vanaf de nieuwe datum
     renderAgenda();
 }
