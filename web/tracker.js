@@ -221,6 +221,9 @@ function selectSlot(btn, timeString) {
 
     trackUI.hfSelectedTime().val(timeString);
     console.log("Gekozen tijdstip:", timeString);
+    if (typeof updateOrderButtonState === "function") {
+        updateOrderButtonState();
+    }
 }
 
 // Horizontale navigatie (slider)
