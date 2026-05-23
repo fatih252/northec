@@ -4,7 +4,7 @@
 var map;
 var truckMarker;
 var trackingInterval;
-let plannerBaseDate = new Date();
+var plannerBaseDate = window.plannerBaseDate || new Date();
 // Pictogram definitie buiten de ready-functie is prima
 var truckIcon = L.divIcon({
     html: '<div class="truck-pictogram"><i class="fas fa-truck-moving fa-3x text-primary"></i></div>',

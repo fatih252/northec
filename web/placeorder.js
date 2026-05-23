@@ -1,5 +1,5 @@
 ﻿// --- GLOBALE VARIABELEN ---
-let plannerBaseDate = new Date();
+var plannerBaseDate = window.plannerBaseDate || new Date();
 const monthNames = ["JAN", "FEB", "MRT", "APR", "MEI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEC"];
 
 // --- 1. SELECTORS (Zonder server-tags) ---
