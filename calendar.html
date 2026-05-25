@@ -197,6 +197,18 @@
                 allDaySlot: false,
                 height: '100%',
                 nowIndicator: true,
+                selectable: true,
+                selectMirror: true,
+                select: function(info) {
+                    if (window.chrome && window.chrome.webview) {
+                        window.chrome.webview.postMessage({
+                            action: 'createReservation',
+                            start: info.startStr,
+                            end: info.endStr
+                        });
+                    }
+                    calendar.unselect(); // Removes the highlight after clicking
+                },
 
                 // Trigger C# data fetch when user navigates dates
                 datesSet: function(info) {
