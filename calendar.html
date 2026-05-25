@@ -9,129 +9,160 @@
     <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/nl.global.min.js"></script>
 
     <style>
+        /* --- DARK THEME COLOR PALETTE --- */
         :root {
-            --bg-color: #111827;         /* Dark background */
-            --surface-color: #1F2937;    /* Elevated surface */
-            --primary-color: #630303;    /* PizzaApp Branding Dark Red */
-            --primary-active: #8c4a4a;   /* PizzaApp Branding Lighter Red */
-            --text-main: #F9FAFB;        /* High contrast text */
-            --text-muted: #9CA3AF;       /* Secondary text */
-            --border-color: #374151;     /* Dark grid lines */
-            --danger-color: #ff0000;     /* Blink color */
+            --bg-color: #111827; 
+            --surface-color: #1F2937;
+            --primary-color: #630303; 
+            --primary-active: #8c4a4a;
+            --success-color: #10B981;
+            --text-main: #F9FAFB; 
+            --text-muted: #9CA3AF; 
+            --border-color: #374151; 
+            --danger-color: #ff0000; 
         }
 
+        /* STRICTLY NO ROUNDED CORNERS */
         * {
-            box-sizing: border-box;
-            margin: 0;
+            box-sizing: border-box; 
+            margin: 0; 
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            user-select: none;
+            user-select: none; 
             -webkit-user-select: none;
-            border-radius: 0 !important; /* Zero rounded corners for industrial touch feel */
+            border-radius: 0 !important; 
         }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            height: 100vh; 
+            overflow: hidden; 
+            display: flex; 
         }
 
-        /* --- LAYOUT SPLIT --- */
-        .layout-container {
-            display: flex;
-            width: 100%;
-            height: 100%;
+        .layout-container { 
+            display: flex; 
+            width: 100%; 
+            height: 100%; 
         }
 
-        /* LEFT: Calendar Zone (70%) */
-        .calendar-zone {
-            flex: 7;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            background-color: var(--bg-color);
+        /* --- ZONES --- */
+        .calendar-zone { 
+            flex: 7; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            background-color: var(--bg-color); 
         }
-
+        
         #calendar { 
             flex: 1; 
             height: 100%; 
         }
-
-        /* RIGHT: Upcoming List Zone (30%) */
-        .list-zone {
-            flex: 3;
-            background-color: var(--surface-color);
-            border-left: 2px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .list-header {
-            padding: 20px;
-            background-color: var(--bg-color);
-            border-bottom: 2px solid var(--border-color);
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--text-main);
-            text-transform: uppercase;
-        }
-
-        .upcoming-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            scrollbar-width: none;
-        }
-        .upcoming-container::-webkit-scrollbar { display: none; }
-
-        /* --- LIST ITEM CARDS --- */
-        .list-card {
-            background-color: var(--bg-color);
-            border: 2px solid var(--border-color);
-            padding: 20px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            border-left: 8px solid var(--primary-color);
-            transition: background-color 0.1s;
-        }
-        .list-card:active { background-color: var(--border-color); }
         
-        .card-time { font-size: 18px; font-weight: 800; color: #F59E0B; } /* Warning Orange for visibility */
-        .card-name { font-size: 20px; font-weight: 800; color: var(--text-main); }
-        .card-address { font-size: 16px; font-weight: 600; color: var(--text-muted); }
+        .list-zone { 
+            flex: 3; 
+            background-color: var(--surface-color); 
+            border-left: 2px solid var(--border-color); 
+            display: flex; 
+            flex-direction: column; 
+        }
+        
+        .list-header { 
+            padding: 20px; 
+            background-color: var(--bg-color); 
+            border-bottom: 2px solid var(--border-color); 
+            font-size: 22px; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+        }
+        
+        .upcoming-container { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            scrollbar-width: none; 
+        }
+        
+        .upcoming-container::-webkit-scrollbar { 
+            display: none; 
+        }
 
-        /* --- BLINKING ANIMATION (For unprocessed items) --- */
+        /* --- LIST CARDS --- */
+        .list-card { 
+            background-color: var(--bg-color); 
+            border: 2px solid var(--border-color); 
+            padding: 20px; 
+            cursor: pointer; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            border-left: 8px solid var(--primary-color); 
+        }
+        
+        .list-card:active { 
+            background-color: var(--border-color); 
+        }
+        
+        .card-time { 
+            font-size: 18px; 
+            font-weight: 800; 
+            color: #F59E0B; 
+        }
+        
+        .card-name { 
+            font-size: 20px; 
+            font-weight: 800; 
+            color: var(--text-main); 
+        }
+        
+        .card-address { 
+            font-size: 16px; 
+            font-weight: 600; 
+            color: var(--text-muted); 
+        }
+
+        /* --- BLINKING ANIMATION --- */
         @keyframes blinker { 
-            0%   { opacity: 1; border-color: yellow; }
-            50%  { opacity: 0.5; border-color: var(--danger-color); }
-            100% { opacity: 1; border-color: yellow; }
-        }
-
-        .blink-event {
-            animation: blinker 1s linear infinite;
-            background-color: var(--danger-color) !important;
-            border: 2px solid yellow !important;
+            0% { opacity: 1; border-color: yellow; } 
+            50% { opacity: 0.5; border-color: var(--danger-color); } 
+            100% { opacity: 1; border-color: yellow; } 
         }
         
-        /* Apply blink to sidebar cards too */
-        .list-card.blink-event {
-            border-left: 8px solid yellow !important;
-            background-color: rgba(255, 0, 0, 0.1);
+        .blink-event { 
+            animation: blinker 1s linear infinite; 
+            background-color: var(--danger-color) !important; 
+            border: 2px solid yellow !important; 
+        }
+        
+        .list-card.blink-event { 
+            border-left: 8px solid yellow !important; 
+            background-color: rgba(255, 0, 0, 0.1); 
         }
 
-        /* --- FULLCALENDAR DARK MODE OVERRIDES --- */
-        .fc-theme-standard td, .fc-theme-standard th, .fc-theme-standard .fc-scrollgrid { border-color: var(--border-color) !important; }
-        .fc-col-header-cell-cushion, .fc-daygrid-day-number { color: var(--text-main); font-weight: bold; text-decoration: none; }
-        .fc-timegrid-slot-label-cushion { color: var(--text-muted); font-weight: bold; }
+        /* --- FULLCALENDAR OVERRIDES --- */
+        .fc-theme-standard td, 
+        .fc-theme-standard th, 
+        .fc-theme-standard .fc-scrollgrid { 
+            border-color: var(--border-color) !important; 
+        }
         
-        /* PizzaApp Branding voor de knoppen */
+        .fc-col-header-cell-cushion, 
+        .fc-daygrid-day-number { 
+            color: var(--text-main); 
+            font-weight: bold; 
+            text-decoration: none; 
+        }
+        
+        .fc-timegrid-slot-label-cushion { 
+            color: var(--text-muted); 
+            font-weight: bold; 
+        }
+        
         .fc-button-primary { 
             background-color: var(--primary-color) !important; 
             border-color: var(--primary-color) !important; 
@@ -140,27 +171,129 @@
             font-weight: bold; 
             padding: 10px 20px !important; 
         }
-        .fc-button-primary:hover, .fc-button-active { 
+        
+        .fc-button-primary:hover, 
+        .fc-button-active { 
             background-color: var(--primary-active) !important; 
             border-color: var(--primary-active) !important; 
         }
-        .fc-button-primary:disabled {
-            background-color: var(--primary-active) !important;
-            opacity: 0.6;
-        }
-
+        
         .fc-event { 
             background-color: var(--primary-color) !important; 
             border: none !important; 
             cursor: pointer; 
-            padding: 4px;
+            padding: 4px; 
         }
-        .fc-h-event .fc-event-main { color: white; font-weight: bold; }
-        .fc-v-event .fc-event-main { color: white; font-weight: bold; }
+        
+        .fc-h-event .fc-event-main, 
+        .fc-v-event .fc-event-main { 
+            color: white; 
+            font-weight: bold; 
+        }
+
+        /* --- HTML MODAL FOR CUSTOMER DETAILS --- */
+        .modal-overlay {
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(17, 24, 39, 0.90);
+            z-index: 9999; 
+            display: none; 
+            align-items: center; 
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: var(--surface-color); 
+            border: 2px solid var(--border-color);
+            width: 500px; 
+            display: flex; 
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+        
+        .modal-header { 
+            padding: 20px; 
+            font-size: 24px; 
+            font-weight: 900; 
+            background-color: var(--bg-color); 
+            border-bottom: 2px solid var(--border-color); 
+            text-align: center; 
+        }
+        
+        .modal-body { 
+            padding: 25px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+        }
+        
+        .input-group { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 5px; 
+        }
+        
+        .input-group label { 
+            font-size: 16px; 
+            font-weight: 700; 
+            color: var(--text-muted); 
+        }
+        
+        .input-group input { 
+            padding: 15px; 
+            font-size: 18px; 
+            font-weight: 600; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            border: 2px solid var(--border-color); 
+            outline: none;
+            /* Re-enable user selection inside inputs so they can type freely */
+            user-select: text; 
+            -webkit-user-select: text;
+        }
+        
+        .input-group input:focus { 
+            border-color: var(--primary-color); 
+        }
+        
+        .modal-footer { 
+            display: flex; 
+            border-top: 2px solid var(--border-color); 
+        }
+        
+        .btn-modal { 
+            flex: 1; 
+            padding: 20px; 
+            font-size: 18px; 
+            font-weight: 900; 
+            cursor: pointer; 
+            border: none; 
+            color: white; 
+            text-transform: uppercase; 
+        }
+        
+        .btn-cancel { 
+            background-color: #8B0000; 
+            border-right: 2px solid var(--border-color); 
+        }
+        
+        .btn-cancel:active { 
+            background-color: #660000; 
+        }
+        
+        .btn-submit { 
+            background-color: var(--success-color); 
+        }
+        
+        .btn-submit:active { 
+            background-color: #047857; 
+        }
     </style>
 </head>
 <body>
+
     <div class="layout-container">
+        
         <div class="calendar-zone">
             <div id='calendar'></div>
         </div>
@@ -168,13 +301,48 @@
         <div class="list-zone">
             <div class="list-header">Komende Reserveringen</div>
             <div class="upcoming-container" id="upcomingList">
-                <div style="color: var(--text-muted); text-align: center; margin-top: 20px;">Gegevens laden...</div>
+                <div style="color: var(--text-muted); text-align: center; margin-top: 20px;">Laden...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="customerModal">
+        <div class="modal-content">
+            <div class="modal-header">Klantgegevens Reservering</div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>Voornaam</label>
+                    <input type="text" id="custVoornaam" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label>Familienaam</label>
+                    <input type="text" id="custFamilienaam" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label>Straat + Nr</label>
+                    <input type="text" id="custStraat" autocomplete="off">
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <div class="input-group" style="flex: 1;">
+                        <label>Postcode</label>
+                        <input type="text" id="custPostcode" autocomplete="off">
+                    </div>
+                    <div class="input-group" style="flex: 2;">
+                        <label>Gemeente</label>
+                        <input type="text" id="custGemeente" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal btn-cancel" onclick="closeCustomerModal()">Annuleren</button>
+                <button class="btn-modal btn-submit" onclick="submitCustomerModal()">Doorgaan</button>
             </div>
         </div>
     </div>
 
     <script>
         let calendar;
+        let pendingReservation = null;
 
         // Prevent Right-Click
         document.addEventListener('contextmenu', event => event.preventDefault());
@@ -183,130 +351,165 @@
             var calendarEl = document.getElementById('calendar');
             
             calendar = new FullCalendar.Calendar(calendarEl, {
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                headerToolbar: { 
+                    left: 'prev,next today', 
+                    center: 'title', 
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay' 
                 },
                 initialView: 'timeGridWeek', 
                 locale: 'nl',
                 slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
                 eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-                slotMinTime: '08:00:00',
+                slotMinTime: '08:00:00', 
                 slotMaxTime: '22:00:00',
-                allDaySlot: false,
-                height: '100%',
+                allDaySlot: false, 
+                height: '100%', 
                 nowIndicator: true,
+                
+                // Allow empty slots to be clicked/dragged
                 selectable: true,
                 selectMirror: true,
+                
+                // 1. Hook the empty slot click to open our HTML Modal
                 select: function(info) {
-                    if (window.chrome && window.chrome.webview) {
-                        window.chrome.webview.postMessage({
-                            action: 'createReservation',
-                            start: info.startStr,
-                            end: info.endStr
-                        });
-                    }
-                    calendar.unselect(); // Removes the highlight after clicking
+                    pendingReservation = { start: info.startStr, end: info.endStr };
+                    openCustomerModal();
+                    calendar.unselect();
                 },
 
-                // Trigger C# data fetch when user navigates dates
+                // 2. Fetch new data when navigating between weeks/months
                 datesSet: function(info) {
-                    const range = {
-                        action: 'fetchData',
-                        start: info.startStr,
-                        end: info.endStr
-                    };
-                    if (window.chrome && window.chrome.webview) {
-                        window.chrome.webview.postMessage(range);
-                    }
+                    sendHostMessage({ 
+                        action: 'fetchData', 
+                        start: info.startStr, 
+                        end: info.endStr 
+                    });
                 },
 
-                // Apply blinking class if unprocessed
+                // 3. Make unprocessed events blink red
                 eventClassNames: function(arg) {
                     if (arg.event.extendedProps.processed == 0 || arg.event.extendedProps.processed === false) {
-                        return [ 'blink-event' ];
+                        return ['blink-event'];
                     }
                     return [];
                 },
 
-                // Open order details on click
+                // 4. Click an existing event to open the Order Details
                 eventClick: function(info) {
-                    const orderData = {
+                    sendHostMessage({
                         action: 'openOrder',
                         order_id: info.event.id || info.event.extendedProps.order_id,
                         processed: info.event.extendedProps.processed
-                    };
-                    if (window.chrome && window.chrome.webview) {
-                        window.chrome.webview.postMessage(orderData);
-                    }
+                    });
                 },
                 events: []
             });
+            
             calendar.render();
         });
 
-        // 1. Refresh Calendar Events
-        function updateEvents(jsonData) {
+        // Communication Bridge to C#
+        function sendHostMessage(payload) {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(payload);
+            }
+        }
+
+        // --- CALENDAR DATA BINDINGS (Called from C#) ---
+
+        window.updateEvents = function(jsonData) {
             if (calendar) {
                 calendar.removeAllEvents();
-                // We add the events directly. The eventClassNames hook handles the blinking.
                 jsonData.forEach(item => {
                     calendar.addEvent({
-                        id: item.order_id,
+                        id: item.order_id, 
                         title: item.title + '\n' + item.description,
-                        start: item.start,
+                        start: item.start, 
                         end: item.end,
-                        extendedProps: {
-                            order_id: item.order_id,
-                            processed: item.processed
+                        extendedProps: { 
+                            order_id: item.order_id, 
+                            processed: item.processed 
                         }
                     });
                 });
             }
         }
 
-        // 2. Refresh Upcoming Sidebar List
         window.updateUpcomingList = function(listData) {
             const container = document.getElementById('upcomingList');
             container.innerHTML = '';
-
+            
             if (listData.length === 0) {
                 container.innerHTML = '<div style="color: var(--text-muted); text-align: center; margin-top: 20px;">Geen toekomstige reserveringen.</div>';
                 return;
             }
-
+            
             listData.forEach(item => {
-                // Formatteer datum netjes (bijv. "12 Dec 14:30")
-                let dateObj = new Date(item.start);
-                let dateStr = dateObj.toLocaleDateString('nl-NL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-
+                let dateStr = new Date(item.start).toLocaleDateString('nl-NL', { 
+                    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' 
+                });
+                
                 const card = document.createElement('div');
-                
-                // Voeg blink animatie toe aan onverwerkte kaarten
                 card.className = (item.processed == 0 || item.processed === false) ? 'list-card blink-event' : 'list-card';
-                
-                // Let op: in je C# Query mappen we customer_address op title en customer_name op description
                 card.innerHTML = `
                     <div class="card-time">${dateStr}</div>
                     <div class="card-name">${item.description}</div>
                     <div class="card-address">${item.title}</div>
                 `;
-
-                // Sidebar click triggers the exact same logic as a Calendar click
-                card.onclick = function() {
-                    if (window.chrome && window.chrome.webview) {
-                        window.chrome.webview.postMessage({
-                            action: 'openOrder',
-                            order_id: item.order_id,
-                            processed: item.processed
-                        });
-                    }
+                
+                // Clicking a list card does the same thing as clicking a calendar block
+                card.onclick = () => {
+                    sendHostMessage({ 
+                        action: 'openOrder', 
+                        order_id: item.order_id, 
+                        processed: item.processed 
+                    });
                 };
-
+                
                 container.appendChild(card);
             });
         };
+
+        // --- HTML MODAL LOGIC ---
+
+        function openCustomerModal() {
+            // Clear previous inputs
+            document.getElementById('custVoornaam').value = '';
+            document.getElementById('custFamilienaam').value = '';
+            document.getElementById('custStraat').value = '';
+            document.getElementById('custPostcode').value = '';
+            document.getElementById('custGemeente').value = '';
+            
+            // Show modal and focus first field
+            document.getElementById('customerModal').style.display = 'flex';
+            document.getElementById('custVoornaam').focus();
+        }
+
+        function closeCustomerModal() {
+            document.getElementById('customerModal').style.display = 'none';
+            pendingReservation = null;
+        }
+
+        function submitCustomerModal() {
+            if(!pendingReservation) return;
+
+            // Package the data and send it to C#
+            sendHostMessage({
+                action: 'createReservationWithDetails',
+                start: pendingReservation.start,
+                end: pendingReservation.end,
+                customer: {
+                    first_name: document.getElementById('custVoornaam').value.trim(),
+                    last_name: document.getElementById('custFamilienaam').value.trim(),
+                    street: document.getElementById('custStraat').value.trim(),
+                    hous_no: '', 
+                    city: document.getElementById('custGemeente').value.trim(),
+                    postal_code: document.getElementById('custPostcode').value.trim()
+                }
+            });
+            
+            closeCustomerModal();
+        }
     </script>
 </body>
 </html>
