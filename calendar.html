@@ -2,58 +2,193 @@
 <html lang="nl">
 <head>
     <meta charset='utf-8' />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Northec POS - Reserveringen</title>
+    
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
-        <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/nl.global.min.js"></script>
-    <style>
-        html, body { 
-            margin: 0; padding: 0; height: 100%; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            overflow: hidden; background-color: white;
-        }
-        #calendar { height: 100vh; padding: 10px; box-sizing: border-box; }
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/nl.global.min.js"></script>
 
+    <style>
+        :root {
+            --bg-color: #111827;         /* Dark background */
+            --surface-color: #1F2937;    /* Elevated surface */
+            --primary-color: #630303;    /* PizzaApp Branding Dark Red */
+            --primary-active: #8c4a4a;   /* PizzaApp Branding Lighter Red */
+            --text-main: #F9FAFB;        /* High contrast text */
+            --text-muted: #9CA3AF;       /* Secondary text */
+            --border-color: #374151;     /* Dark grid lines */
+            --danger-color: #ff0000;     /* Blink color */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            border-radius: 0 !important; /* Zero rounded corners for industrial touch feel */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* --- LAYOUT SPLIT --- */
+        .layout-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* LEFT: Calendar Zone (70%) */
+        .calendar-zone {
+            flex: 7;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-color);
+        }
+
+        #calendar { 
+            flex: 1; 
+            height: 100%; 
+        }
+
+        /* RIGHT: Upcoming List Zone (30%) */
+        .list-zone {
+            flex: 3;
+            background-color: var(--surface-color);
+            border-left: 2px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .list-header {
+            padding: 20px;
+            background-color: var(--bg-color);
+            border-bottom: 2px solid var(--border-color);
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-main);
+            text-transform: uppercase;
+        }
+
+        .upcoming-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scrollbar-width: none;
+        }
+        .upcoming-container::-webkit-scrollbar { display: none; }
+
+        /* --- LIST ITEM CARDS --- */
+        .list-card {
+            background-color: var(--bg-color);
+            border: 2px solid var(--border-color);
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-left: 8px solid var(--primary-color);
+            transition: background-color 0.1s;
+        }
+        .list-card:active { background-color: var(--border-color); }
+        
+        .card-time { font-size: 18px; font-weight: 800; color: #F59E0B; } /* Warning Orange for visibility */
+        .card-name { font-size: 20px; font-weight: 800; color: var(--text-main); }
+        .card-address { font-size: 16px; font-weight: 600; color: var(--text-muted); }
+
+        /* --- BLINKING ANIMATION (For unprocessed items) --- */
+        @keyframes blinker { 
+            0%   { opacity: 1; border-color: yellow; }
+            50%  { opacity: 0.5; border-color: var(--danger-color); }
+            100% { opacity: 1; border-color: yellow; }
+        }
+
+        .blink-event {
+            animation: blinker 1s linear infinite;
+            background-color: var(--danger-color) !important;
+            border: 2px solid yellow !important;
+        }
+        
+        /* Apply blink to sidebar cards too */
+        .list-card.blink-event {
+            border-left: 8px solid yellow !important;
+            background-color: rgba(255, 0, 0, 0.1);
+        }
+
+        /* --- FULLCALENDAR DARK MODE OVERRIDES --- */
+        .fc-theme-standard td, .fc-theme-standard th, .fc-theme-standard .fc-scrollgrid { border-color: var(--border-color) !important; }
+        .fc-col-header-cell-cushion, .fc-daygrid-day-number { color: var(--text-main); font-weight: bold; text-decoration: none; }
+        .fc-timegrid-slot-label-cushion { color: var(--text-muted); font-weight: bold; }
+        
         /* PizzaApp Branding voor de knoppen */
-        .fc-button-primary {
-            background-color: #630303 !important;
-            border-color: #630303 !important;
+        .fc-button-primary { 
+            background-color: var(--primary-color) !important; 
+            border-color: var(--primary-color) !important; 
+            color: var(--text-main) !important; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            padding: 10px 20px !important; 
+        }
+        .fc-button-primary:hover, .fc-button-active { 
+            background-color: var(--primary-active) !important; 
+            border-color: var(--primary-active) !important; 
         }
         .fc-button-primary:disabled {
-            background-color: #8c4a4a !important;
+            background-color: var(--primary-active) !important;
+            opacity: 0.6;
         }
 
         .fc-event { 
-            background-color: #630303 !important; 
+            background-color: var(--primary-color) !important; 
             border: none !important; 
             cursor: pointer; 
-            padding: 2px;
+            padding: 4px;
         }
-
-        @keyframes blinker { 50% { opacity: 0.3; } }
-        .blink-event {
-            animation: blinker 1s linear infinite;
-            background-color: #ff0000 !important;
-            border: 2px solid yellow !important;
-        }
+        .fc-h-event .fc-event-main { color: white; font-weight: bold; }
+        .fc-v-event .fc-event-main { color: white; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div id='calendar'></div>
+    <div class="layout-container">
+        <div class="calendar-zone">
+            <div id='calendar'></div>
+        </div>
+
+        <div class="list-zone">
+            <div class="list-header">Komende Reserveringen</div>
+            <div class="upcoming-container" id="upcomingList">
+                <div style="color: var(--text-muted); text-align: center; margin-top: 20px;">Gegevens laden...</div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let calendar;
 
+        // Prevent Right-Click
         document.addEventListener('contextmenu', event => event.preventDefault());
 
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('calendar');
             
             calendar = new FullCalendar.Calendar(calendarEl, {
-                // Toon navigatie en weergave-opties
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
-                initialView: 'timeGridWeek', // Begin nu met een maandoverzicht
+                initialView: 'timeGridWeek', 
                 locale: 'nl',
                 slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
                 eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
@@ -63,7 +198,7 @@
                 height: '100%',
                 nowIndicator: true,
 
-                // Event afgevuurd wanneer de gebruiker navigeert (volgende maand/week)
+                // Trigger C# data fetch when user navigates dates
                 datesSet: function(info) {
                     const range = {
                         action: 'fetchData',
@@ -75,6 +210,7 @@
                     }
                 },
 
+                // Apply blinking class if unprocessed
                 eventClassNames: function(arg) {
                     if (arg.event.extendedProps.processed == 0 || arg.event.extendedProps.processed === false) {
                         return [ 'blink-event' ];
@@ -82,10 +218,10 @@
                     return [];
                 },
 
+                // Open order details on click
                 eventClick: function(info) {
                     const orderData = {
                         action: 'openOrder',
-                        title: info.event.title,
                         order_id: info.event.id || info.event.extendedProps.order_id,
                         processed: info.event.extendedProps.processed
                     };
@@ -98,13 +234,67 @@
             calendar.render();
         });
 
+        // 1. Refresh Calendar Events
         function updateEvents(jsonData) {
             if (calendar) {
                 calendar.removeAllEvents();
-                calendar.addEventSource(jsonData);
+                // We add the events directly. The eventClassNames hook handles the blinking.
+                jsonData.forEach(item => {
+                    calendar.addEvent({
+                        id: item.order_id,
+                        title: item.title + '\n' + item.description,
+                        start: item.start,
+                        end: item.end,
+                        extendedProps: {
+                            order_id: item.order_id,
+                            processed: item.processed
+                        }
+                    });
+                });
             }
         }
+
+        // 2. Refresh Upcoming Sidebar List
+        window.updateUpcomingList = function(listData) {
+            const container = document.getElementById('upcomingList');
+            container.innerHTML = '';
+
+            if (listData.length === 0) {
+                container.innerHTML = '<div style="color: var(--text-muted); text-align: center; margin-top: 20px;">Geen toekomstige reserveringen.</div>';
+                return;
+            }
+
+            listData.forEach(item => {
+                // Formatteer datum netjes (bijv. "12 Dec 14:30")
+                let dateObj = new Date(item.start);
+                let dateStr = dateObj.toLocaleDateString('nl-NL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+                const card = document.createElement('div');
+                
+                // Voeg blink animatie toe aan onverwerkte kaarten
+                card.className = (item.processed == 0 || item.processed === false) ? 'list-card blink-event' : 'list-card';
+                
+                // Let op: in je C# Query mappen we customer_address op title en customer_name op description
+                card.innerHTML = `
+                    <div class="card-time">${dateStr}</div>
+                    <div class="card-name">${item.description}</div>
+                    <div class="card-address">${item.title}</div>
+                `;
+
+                // Sidebar click triggers the exact same logic as a Calendar click
+                card.onclick = function() {
+                    if (window.chrome && window.chrome.webview) {
+                        window.chrome.webview.postMessage({
+                            action: 'openOrder',
+                            order_id: item.order_id,
+                            processed: item.processed
+                        });
+                    }
+                };
+
+                container.appendChild(card);
+            });
+        };
     </script>
 </body>
-
 </html>
