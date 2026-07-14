@@ -132,6 +132,10 @@
         startInput.min = todayStr;
         endInput.min = todayStr;
 
+        // Luister naar handmatige wijzigingen in de tekstvakken
+        startInput.addEventListener('change', checkInputs);
+        endInput.addEventListener('change', checkInputs);
+
         calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: 'dayGridMonth',
             locale: 'nl',
@@ -140,27 +144,40 @@
             validRange: { start: todayStr },
             
             // --- TOUCHSCREEN OPTIMALISATIES ---
-            longPressDelay: 0,        // Reageert direct op aanraking in plaats van 1 sec te moeten wachten
-            selectLongPressDelay: 0,  // Verwijdert de vertraging specifiek voor datums selecteren
-            selectMirror: true,       // Toont direct een visuele selectie-balk tijdens het slepen op touch
+            longPressDelay: 0,
+            selectLongPressDelay: 0,
+            selectMirror: true,
 
             select: function(info) {
                 startInput.value = info.startStr;
-                let d = new Date(info.end); d.setDate(d.getDate() - 1);
-                const endDateStr = d.toISOString().split('T')[0];
-                endInput.value = endDateStr;
                 
-                // --- Suggestie Test Logica ---
-                generateBannerSuggestion(info.startStr, endDateStr);
+                // info.endStr is bij FullCalendar automatisch de dag NÁ de selectie.
+                // Dit is dus perfect voor je "Weer open op" veld!
+                endInput.value = info.endStr;
                 
-                toggleButtons(true);
+                checkInputs();
             }
         });
         calendar.render();
     });
 
-    function generateBannerSuggestion(start, end) {
-        const msg = `Let op: Winkel gesloten van ${start} t/m ${end}.`;
+    // Controleer of we de knoppen en banner mogen tonen
+    function checkInputs() {
+        if (startInput.value && endInput.value) {
+            generateBannerSuggestion(startInput.value, endInput.value);
+            toggleButtons(true);
+        } else {
+            toggleButtons(false);
+        }
+    }
+
+    function generateBannerSuggestion(start, openDate) {
+        // Om te tonen "t/m [datum]", trekken we 1 dag af van de 'openDate'
+        let d = new Date(openDate);
+        d.setDate(d.getDate() - 1);
+        const tillDateStr = d.toISOString().split('T')[0];
+
+        const msg = `Let op: Winkel gesloten van ${start} t/m ${tillDateStr}.`;
         bannerInput.value = msg;
         bannerGroup.style.display = 'block';
         document.getElementById('bannerHint').style.display = 'block';
@@ -179,13 +196,15 @@
     };
 
     btnConfirm.onclick = () => {
-        if (new Date(endInput.value) < new Date(startInput.value)) {
-            alert("Einddatum is ongeldig."); return;
+        // Validatie: "Weer open op" moet na "Sluiten vanaf" vallen
+        if (new Date(endInput.value) <= new Date(startInput.value)) {
+            alert("De 'Weer open op' datum is ongeldig. Deze moet na de startdatum vallen."); 
+            return;
         }
 
         window.chrome.webview.postMessage({ 
             startDate: startInput.value, 
-            endDate: endInput.value,
+            endDate: endInput.value, // Let op: C# krijgt nu de 'weer open'-datum binnen!
             bannerText: bannerInput.value, 
             shopId: 101 
         });
