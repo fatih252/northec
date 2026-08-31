@@ -525,9 +525,10 @@
                     sendHostMessage({ action: "edit_cart_item", lineId: item.lineId });
                 };
 
-                /* Check for Promotions / Discount */
-                const isPromoActive = item.discount || (item.originalPrice && item.lineTotal < item.originalPrice);
-                const originalTotal = (item.originalPrice ? item.originalPrice : item.value) * item.amount;
+                /* Promo/Discount calculation logic */
+                const baseVal = item.originalPrice ? item.originalPrice : (item.value ? item.value : item.pos_value);
+                const isPromoActive = item.discount || (item.lineTotal < baseVal);
+                const originalTotal = baseVal * item.amount;
                 const currentTotal = item.lineTotal * item.amount;
 
                 row.innerHTML = `
@@ -535,7 +536,7 @@
                         <div style="flex: 1; padding-right: 10px;">
                             <div class="cart-title">${item.mainProductName ? '['+item.mainProductName.toUpperCase()+'] ' : ''}${item.name}</div>
                             ${subDetails ? `<div class="cart-details">${subDetails.trim()}</div>` : ''}
-                            ${item.discount ? `<span class="promo-badge">${item.discount.type.toUpperCase()} KORTING</span>` : ''}
+                            ${item.discount ? `<span class="promo-badge">${item.discount.type ? item.discount.type.toUpperCase() : ''} KORTING</span>` : (isPromoActive ? `<span class="promo-badge">PROMO</span>` : '')}
                         </div>
                         <div class="price-block">
                             ${isPromoActive ? `<div class="cart-original-price">€ ${originalTotal.toFixed(2)}</div>` : ''}
@@ -611,49 +612,58 @@
             closePriceModal();
         }
 
-        /* --- CUSTOMER CHECKOUT MODAL LOGIC --- */
+        /* --- CUSTOMER CHECKOUT MODAL LOGIC (Null-Safe Guarded) --- */
         window.openCustomerModal = function(data) {
+            data = data || {};
             deliveryZonesList = data.zones || [];
             const select = document.getElementById('custZoneSelect');
-            select.innerHTML = '';
-            deliveryZonesList.forEach(z => {
-                const opt = document.createElement('option');
-                opt.value = z.postalcode;
-                opt.innerText = `${z.name} (${z.postalcode})`;
-                select.appendChild(opt);
-            });
+            if (select) {
+                select.innerHTML = '';
+                deliveryZonesList.forEach(z => {
+                    const opt = document.createElement('option');
+                    opt.value = z.postalcode || '';
+                    opt.innerText = `${z.name || ''} (${z.postalcode || ''})`;
+                    select.appendChild(opt);
+                });
+            }
 
             const payGrid = document.getElementById('paymentMethodsGrid');
-            payGrid.innerHTML = '';
-            (data.paymentMethods || []).forEach(pm => {
-                const btn = document.createElement('div');
-                btn.className = `pay-method-btn ${pm.id === selectedPaymentMethodId ? 'active' : ''}`;
-                btn.innerText = pm.name;
-                btn.onclick = () => {
-                    selectedPaymentMethodId = pm.id;
-                    document.querySelectorAll('.pay-method-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                };
-                payGrid.appendChild(btn);
-            });
+            if (payGrid) {
+                payGrid.innerHTML = '';
+                const pMethods = data.paymentMethods || [];
+                if (pMethods.length > 0 && !selectedPaymentMethodId) {
+                    selectedPaymentMethodId = pMethods[0].id;
+                }
+                pMethods.forEach(pm => {
+                    const btn = document.createElement('div');
+                    btn.className = `pay-method-btn ${pm.id === selectedPaymentMethodId ? 'active' : ''}`;
+                    btn.innerText = pm.name || 'Contant';
+                    btn.onclick = () => {
+                        selectedPaymentMethodId = pm.id;
+                        document.querySelectorAll('.pay-method-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    };
+                    payGrid.appendChild(btn);
+                });
+            }
 
-            // Adjust form inputs based on Order Type
             const isTakeaway = currentOrderType === 'takeaway';
-            document.getElementById('addressRow1').style.display = isTakeaway ? 'none' : 'flex';
-            document.getElementById('addressRow2').style.display = isTakeaway ? 'none' : 'flex';
-            document.getElementById('addressRow3').style.display = isTakeaway ? 'none' : 'flex';
+            if (document.getElementById('addressRow1')) document.getElementById('addressRow1').style.display = isTakeaway ? 'none' : 'flex';
+            if (document.getElementById('addressRow2')) document.getElementById('addressRow2').style.display = isTakeaway ? 'none' : 'flex';
+            if (document.getElementById('addressRow3')) document.getElementById('addressRow3').style.display = isTakeaway ? 'none' : 'flex';
 
-            document.getElementById('customerModal').style.display = 'flex';
+            const modal = document.getElementById('customerModal');
+            if (modal) modal.style.display = 'flex';
         };
 
         window.populateClientData = function(client) {
             if (client) {
-                document.getElementById('custPhone').value = client.phone_no || '';
-                document.getElementById('custFirstName').value = client.first_name || '';
-                document.getElementById('custLastName').value = client.last_name || '';
-                document.getElementById('custStreet').value = client.street || '';
-                document.getElementById('custHouseNr').value = client.hous_no || '';
-                if (client.postal_code) document.getElementById('custZoneSelect').value = client.postal_code;
+                if (document.getElementById('custPhone')) document.getElementById('custPhone').value = client.phone_no || '';
+                if (document.getElementById('custFirstName')) document.getElementById('custFirstName').value = client.first_name || '';
+                if (document.getElementById('custLastName')) document.getElementById('custLastName').value = client.last_name || '';
+                if (document.getElementById('custStreet')) document.getElementById('custStreet').value = client.street || '';
+                if (document.getElementById('custHouseNr')) document.getElementById('custHouseNr').value = client.hous_no || '';
+                if (client.postal_code && document.getElementById('custZoneSelect')) document.getElementById('custZoneSelect').value = client.postal_code;
             }
         };
 
@@ -675,10 +685,10 @@
                 lastName: document.getElementById('custLastName').value,
                 street: document.getElementById('custStreet').value,
                 houseNr: document.getElementById('custHouseNr').value,
-                postalCode: document.getElementById('custZoneSelect').value,
+                postalCode: document.getElementById('custZoneSelect') ? document.getElementById('custZoneSelect').value : '',
                 paymentMethodId: selectedPaymentMethodId,
-                posPrint: document.getElementById('chkPosPrint').checked,
-                kitchenPrint: document.getElementById('chkKitchenPrint').checked
+                posPrint: document.getElementById('chkPosPrint') ? document.getElementById('chkPosPrint').checked : true,
+                kitchenPrint: document.getElementById('chkKitchenPrint') ? document.getElementById('chkKitchenPrint').checked : true
             };
             sendHostMessage({ action: "customer_submit", data: payload });
             closeCustomerModal();
@@ -713,7 +723,9 @@
         }
 
         function submitMasterOrder() {
-            if (currentCart.filter(i => i.action !== 'D').length === 0) return;
+            const activeItems = currentCart.filter(i => i.action !== 'D');
+            if (activeItems.length === 0) return;
+            
             if (currentOrderType === 'table') sendHostMessage({ action: "trigger_action", id: "btnTable" });
             else sendHostMessage({ action: "open_customer_checkout" });
         }
@@ -784,7 +796,7 @@
             if(prefix === '> enkel') document.querySelector('.prefix-btn.enkel').classList.add('active');
         }
 
-        function removeModifier(uniqueId, isProductExtra) { sendHostMessage({ action: "modal_remove_modifier", uniqueId: uniqueId, isProductExtra: isProductExtra }); }
+        function removeModifier(uniqueId, isProductExtra) { sendHostMessage({ action: "remove_modifier", uniqueId: uniqueId, isProductExtra: isProductExtra }); }
         function submitModal() { sendHostMessage({ action: "modal_submit" }); }
 
         window.addEventListener('keydown', function(e) {
