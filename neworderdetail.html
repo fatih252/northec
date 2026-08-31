@@ -88,7 +88,7 @@
         .price-block { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
         .cart-price { font-weight: 800; font-size: 20px; padding: 2px 6px; border-radius: 4px; border: 1px dashed transparent; }
         .cart-price:hover { background-color: rgba(59, 130, 246, 0.2); border-color: var(--primary-color); }
-        .cart-original-price { font-size: 14px; color: var(--danger-color); text-decoration: line-through; font-weight: 700; margin-bottom: -2px; }
+        .cart-original-price { font-size: 15px; color: var(--danger-color); text-decoration: line-through; font-weight: 800; margin-bottom: 2px; }
         .promo-badge { background-color: var(--warning-color); color: #000; font-size: 11px; font-weight: 900; padding: 2px 6px; text-transform: uppercase; margin-top: 4px; display: inline-block; }
 
         .cart-controls { display: flex; align-items: center; justify-content: flex-end; gap: 15px; margin-top: 5px; border-top: 1px dashed var(--border-color); padding-top: 10px; }
@@ -525,10 +525,11 @@
                     sendHostMessage({ action: "edit_cart_item", lineId: item.lineId });
                 };
 
-                /* Promo/Discount calculation logic */
-                const baseVal = item.originalPrice ? item.originalPrice : (item.value ? item.value : item.pos_value);
-                const isPromoActive = item.discount || (item.lineTotal < baseVal);
-                const originalTotal = baseVal * item.amount;
+                /* Promo/Discount Calculation Logic matching Legacy UC Cart */
+                const baseUnitPrice = item.value && item.value > 0 ? item.value : (item.originalPrice ? item.originalPrice : item.pos_value);
+                const isDiscounted = (item.lineTotal < baseUnitPrice - 0.001);
+                
+                const originalTotal = baseUnitPrice * item.amount;
                 const currentTotal = item.lineTotal * item.amount;
 
                 row.innerHTML = `
@@ -536,11 +537,11 @@
                         <div style="flex: 1; padding-right: 10px;">
                             <div class="cart-title">${item.mainProductName ? '['+item.mainProductName.toUpperCase()+'] ' : ''}${item.name}</div>
                             ${subDetails ? `<div class="cart-details">${subDetails.trim()}</div>` : ''}
-                            ${item.discount ? `<span class="promo-badge">${item.discount.type ? item.discount.type.toUpperCase() : ''} KORTING</span>` : (isPromoActive ? `<span class="promo-badge">PROMO</span>` : '')}
+                            ${item.discount ? `<span class="promo-badge">${item.discount.type ? item.discount.type.toUpperCase() : ''} KORTING</span>` : (isDiscounted ? `<span class="promo-badge">PROMO</span>` : '')}
                         </div>
                         <div class="price-block">
-                            ${isPromoActive ? `<div class="cart-original-price">€ ${originalTotal.toFixed(2)}</div>` : ''}
-                            <div class="cart-price" ondblclick="event.stopPropagation(); overridePrice('${item.lineId}', ${item.lineTotal})">€ ${currentTotal.toFixed(2)}</div>
+                            ${isDiscounted ? `<div class="cart-original-price">€ ${originalTotal.toFixed(2)}</div>` : ''}
+                            <div class="cart-price" style="${isDiscounted ? 'color: var(--danger-color); font-weight: 900;' : ''}" ondblclick="event.stopPropagation(); overridePrice('${item.lineId}', ${item.lineTotal})">€ ${currentTotal.toFixed(2)}</div>
                         </div>
                     </div>
                     <div class="cart-controls">
@@ -612,9 +613,14 @@
             closePriceModal();
         }
 
-        /* --- CUSTOMER CHECKOUT MODAL LOGIC (Null-Safe Guarded) --- */
-        window.openCustomerModal = function(data) {
+        /* --- CUSTOMER CHECKOUT MODAL LOGIC --- */
+        window.openCustomerModal = function(dataPayload) {
+            let data = dataPayload;
+            if (typeof dataPayload === 'string') {
+                try { data = JSON.parse(dataPayload); } catch(e) { console.error("JSON parse error:", e); data = {}; }
+            }
             data = data || {};
+
             deliveryZonesList = data.zones || [];
             const select = document.getElementById('custZoneSelect');
             if (select) {
