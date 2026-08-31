@@ -201,7 +201,7 @@
 
         /* --- CUSTOMER CHECKOUT MODAL --- */
         .customer-card {
-            width: 650px;
+            width: 680px;
             background-color: var(--surface-color);
             border: 2px solid var(--border-color);
             padding: 24px;
@@ -226,22 +226,36 @@
         }
         .form-input:focus { border-color: var(--primary-color); }
         .form-input:read-only { opacity: 0.6; cursor: not-allowed; }
-        .payment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+        /* Large Payment Method Buttons */
+        .payment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .pay-method-btn {
-            height: 65px;
+            height: 85px; 
             background-color: var(--bg-color);
             border: 2px solid var(--border-color);
             color: var(--text-main);
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 900;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
             text-transform: uppercase;
+            padding: 8px;
+            transition: all 0.1s ease;
         }
-        .pay-method-btn.active { background-color: var(--primary-color); border-color: var(--primary-color); }
+        .pay-method-btn.active { 
+            background-color: var(--primary-color); 
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+        }
+        .pay-method-img {
+            max-height: 60px;
+            max-width: 90%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
         .print-options { display: flex; gap: 20px; margin-top: 5px; }
         .checkbox-label { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 800; cursor: pointer; }
         .checkbox-label input { width: 22px; height: 22px; accent-color: var(--primary-color); }
@@ -616,7 +630,7 @@
             closePriceModal();
         }
 
-        /* --- CUSTOMER CHECKOUT MODAL LOGIC WITH STREET API --- */
+        /* --- CUSTOMER CHECKOUT MODAL LOGIC WITH RESOURCE IMAGES --- */
         window.openCustomerModal = function(dataPayload) {
             let data = dataPayload;
             if (typeof dataPayload === 'string') {
@@ -646,7 +660,11 @@
                 pMethods.forEach(pm => {
                     const btn = document.createElement('div');
                     btn.className = `pay-method-btn ${pm.id === selectedPaymentMethodId ? 'active' : ''}`;
-                    btn.innerHTML = `${pm.icon || '💳'} ${pm.name || 'Contant'}`;
+                    if (pm.image) {
+                        btn.innerHTML = `<img src="${pm.image}" alt="${pm.name}" class="pay-method-img" />`;
+                    } else {
+                        btn.innerText = pm.name || 'Contant';
+                    }
                     btn.onclick = () => {
                         selectedPaymentMethodId = pm.id;
                         document.querySelectorAll('.pay-method-btn').forEach(b => b.classList.remove('active'));
