@@ -43,7 +43,6 @@
 
         .products-zone { flex: 1; display: flex; flex-direction: column; overflow: hidden; background-color: var(--bg-color); }
         
-        /* Dynamic Height Clamped Uniform Grid */
         .products-area { 
             flex: 1; 
             padding: 20px; 
@@ -227,7 +226,6 @@
         .form-input:focus { border-color: var(--primary-color); }
         .form-input:read-only { opacity: 0.6; cursor: not-allowed; }
 
-        /* Combination Payment Method Buttons (Image + Text) */
         .payment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .pay-method-btn {
             height: 85px; 
@@ -265,6 +263,58 @@
         .print-options { display: flex; gap: 20px; margin-top: 5px; }
         .checkbox-label { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 800; cursor: pointer; }
         .checkbox-label input { width: 22px; height: 22px; accent-color: var(--primary-color); }
+
+        /* --- TABLE PICKER MODAL --- */
+        .table-picker-card {
+            width: 750px;
+            max-height: 85vh;
+            background-color: var(--surface-color);
+            border: 2px solid var(--border-color);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+        }
+        .table-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+            max-height: 45vh;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .table-card {
+            height: 80px;
+            background-color: var(--success-color);
+            border: 2px solid var(--success-active);
+            color: white;
+            font-size: 18px;
+            font-weight: 900;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            text-align: center;
+            padding: 6px;
+        }
+        .table-card:active { transform: scale(0.97); }
+        .table-card.occupied {
+            background-color: var(--danger-color);
+            border-color: var(--danger-active);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .table-status-badge {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            background: rgba(0,0,0,0.4);
+            padding: 2px 6px;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -425,6 +475,27 @@
         </div>
     </div>
 
+    <!-- TABLE PICKER MODAL -->
+    <div class="modal-overlay" id="tableModal">
+        <div class="table-picker-card">
+            <div class="price-header">TAFEL SELECTEREN</div>
+            
+            <div class="form-group">
+                <label class="form-label">Betaalmethode</label>
+                <div class="payment-grid" id="tablePaymentGrid"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Beschikbare Tafels</label>
+                <div class="table-grid" id="tableGrid"></div>
+            </div>
+
+            <div class="price-actions">
+                <button class="btn-action" style="background: var(--border-color);" onclick="closeTableModal()">ANNULEREN</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentCart = [];
         let currentOrderType = 'delivery'; 
@@ -435,8 +506,9 @@
         let editingLineId = null;
         let isNewNumInput = true;
 
-        /* Customer Modal State */
+        /* Customer & Table Modal State */
         let selectedPaymentMethodId = 1;
+        let selectedTablePaymentMethodId = 1;
         let deliveryZonesList = [];
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -636,7 +708,7 @@
             closePriceModal();
         }
 
-        /* --- CUSTOMER CHECKOUT MODAL (BOTH IMAGE AND NAME RENDERED) --- */
+        /* --- CUSTOMER CHECKOUT MODAL LOGIC --- */
         window.openCustomerModal = function(dataPayload) {
             let data = dataPayload;
             if (typeof dataPayload === 'string') {
@@ -683,7 +755,6 @@
                 });
             }
 
-            /* Legacy Rules: Field Visibility */
             const isTakeaway = currentOrderType === 'takeaway';
             const isTable = currentOrderType === 'table';
 
@@ -692,14 +763,12 @@
             document.getElementById('addressRow2').style.display = (isTakeaway || isTable) ? 'none' : 'flex';
             document.getElementById('addressRow3').style.display = (isTakeaway || isTable) ? 'none' : 'flex';
 
-            /* Phone Readonly Guard */
             const phoneInput = document.getElementById('custPhone');
             if (phoneInput) {
                 phoneInput.readOnly = !!data.phoneReadOnly;
                 if (data.phoneNr) phoneInput.value = data.phoneNr;
             }
 
-            /* Pre-fill Takeaway Shop Address */
             if (isTakeaway && data.shopStreet) {
                 document.getElementById('custStreet').value = data.shopStreet || '';
                 document.getElementById('custHouseNr').value = data.shopHouseNr || '';
@@ -793,6 +862,72 @@
             closeCustomerModal();
         }
 
+        /* --- TABLE PICKER MODAL LOGIC --- */
+        window.openTableModal = function(dataPayload) {
+            let data = dataPayload;
+            if (typeof dataPayload === 'string') {
+                try { data = JSON.parse(dataPayload); } catch(e) { data = {}; }
+            }
+            data = data || {};
+
+            const payGrid = document.getElementById('tablePaymentGrid');
+            if (payGrid) {
+                payGrid.innerHTML = '';
+                const pMethods = data.paymentMethods || [];
+                selectedTablePaymentMethodId = data.defaultPaymentId || (pMethods.length > 0 ? pMethods[0].id : 1);
+
+                pMethods.forEach(pm => {
+                    const btn = document.createElement('div');
+                    btn.className = `pay-method-btn ${pm.id === selectedTablePaymentMethodId ? 'active' : ''}`;
+                    let html = '';
+                    if (pm.image) {
+                        html += `<img src="${pm.image}" alt="${pm.name}" class="pay-method-img" />`;
+                    }
+                    html += `<span class="pay-method-name">${pm.name || 'Contant'}</span>`;
+                    btn.innerHTML = html;
+                    btn.onclick = () => {
+                        selectedTablePaymentMethodId = pm.id;
+                        document.querySelectorAll('#tablePaymentGrid .pay-method-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    };
+                    payGrid.appendChild(btn);
+                });
+            }
+
+            const tableGrid = document.getElementById('tableGrid');
+            if (tableGrid) {
+                tableGrid.innerHTML = '';
+                const tables = data.tables || [];
+                tables.forEach(t => {
+                    const card = document.createElement('div');
+                    card.className = `table-card ${t.isOccupied ? 'occupied' : ''}`;
+                    card.innerHTML = `
+                        <div>${t.name}</div>
+                        ${t.isOccupied ? '<div class="table-status-badge">BEZET</div>' : ''}
+                    `;
+                    card.onclick = () => {
+                        if (t.isOccupied) {
+                            alert("Tafel is reeds in gebruik");
+                            return;
+                        }
+                        sendHostMessage({
+                            action: "table_submit",
+                            tableId: t.id,
+                            paymentMethodId: selectedTablePaymentMethodId
+                        });
+                        closeTableModal();
+                    };
+                    tableGrid.appendChild(card);
+                });
+            }
+
+            document.getElementById('tableModal').style.display = 'flex';
+        };
+
+        function closeTableModal() {
+            document.getElementById('tableModal').style.display = 'none';
+        }
+
         function adjustQuantity(lineId, direction) {
             const item = currentCart.find(i => i.lineId === lineId);
             if (!item) return;
@@ -825,7 +960,7 @@
             const activeItems = currentCart.filter(i => i.action !== 'D');
             if (activeItems.length === 0) return;
             
-            if (currentOrderType === 'table') sendHostMessage({ action: "trigger_action", id: "btnTable" });
+            if (currentOrderType === 'table') sendHostMessage({ action: "open_table_picker" });
             else sendHostMessage({ action: "open_customer_checkout" });
         }
 
@@ -899,7 +1034,9 @@
         function submitModal() { sendHostMessage({ action: "modal_submit" }); }
 
         window.addEventListener('keydown', function(e) {
-            if (document.getElementById('customerModal').style.display === 'flex') {
+            if (document.getElementById('tableModal').style.display === 'flex') {
+                if (e.key === 'Escape') { e.preventDefault(); closeTableModal(); }
+            } else if (document.getElementById('customerModal').style.display === 'flex') {
                 if (e.key === 'Escape') { e.preventDefault(); closeCustomerModal(); }
                 if (e.key === 'F8') { e.preventDefault(); confirmCustomerCheckout(); }
             } else if (document.getElementById('priceModal').style.display === 'flex') {
