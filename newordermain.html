@@ -18,6 +18,10 @@
             --border-color: #374151; 
             --danger-color: #EF4444;
             --danger-active: #DC2626;
+
+            /* Configurable Font Sizes (Defaults) */
+            --category-font-size: 18px;
+            --product-font-size: 17px;
         }
 
         * {
@@ -37,7 +41,20 @@
         /* --- MAIN POS LAYOUT ZONES --- */
         .category-zone { width: 240px; background-color: var(--surface-color); border-right: 2px solid var(--border-color); display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none; }
         .category-zone::-webkit-scrollbar { display: none; }
-        .category-pill { padding: 25px 15px; background-color: var(--surface-color); color: var(--text-main); font-size: 18px; font-weight: 800; border-bottom: 2px solid var(--border-color); border-left: 6px solid transparent; cursor: pointer; display: flex; align-items: center; line-height: 1.2; word-wrap: break-word; }
+        .category-pill { 
+            padding: 25px 15px; 
+            background-color: var(--surface-color); 
+            color: var(--text-main); 
+            font-size: var(--category-font-size); 
+            font-weight: 800; 
+            border-bottom: 2px solid var(--border-color); 
+            border-left: 6px solid transparent; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            line-height: 1.2; 
+            word-wrap: break-word; 
+        }
         .category-pill:active { background-color: var(--border-color); }
         .category-pill.active { background-color: var(--bg-color); color: var(--primary-color); border-left-color: var(--primary-color); }
 
@@ -66,9 +83,19 @@
             overflow: hidden; 
         }
         .product-card:active { border-color: var(--primary-color); background-color: var(--border-color); }
-        .product-name { font-size: 17px; font-weight: 800; line-height: 1.2; word-wrap: break-word; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .product-name { 
+            font-size: var(--product-font-size); 
+            font-weight: 800; 
+            line-height: 1.2; 
+            word-wrap: break-word; 
+            display: -webkit-box; 
+            -webkit-line-clamp: 3; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden; 
+        }
         .product-price { font-size: 18px; font-weight: 700; color: var(--text-main); margin-top: auto; text-align: right; }
-        .color-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 8px; }
+        
+        .color-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 12px; }
 
         .checkout-zone { width: 450px; background-color: var(--surface-color); border-left: 2px solid var(--border-color); display: flex; flex-direction: column; z-index: 10; height: 100%; }
         .cart-header { padding: 15px 20px; border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-color); flex-shrink: 0; }
@@ -89,7 +116,6 @@
         .cart-original-price { font-size: 15px; color: var(--danger-color); text-decoration: line-through; font-weight: 800; margin-bottom: 2px; }
         .promo-badge { background-color: var(--warning-color); color: #000; font-size: 11px; font-weight: 900; padding: 2px 6px; text-transform: uppercase; margin-top: 4px; display: inline-block; }
 
-        /* Legacy value_editable Inline Input Style */
         .cart-price-input {
             width: 95px;
             height: 40px;
@@ -539,6 +565,16 @@
         function sendHostMessage(payload) {
             if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage(payload);
         }
+
+        /* Dynamic Font Size Setter */
+        window.applyFontSettings = function(categorySize, productSize) {
+            if (categorySize && categorySize > 0) {
+                document.documentElement.style.setProperty('--category-font-size', categorySize + 'px');
+            }
+            if (productSize && productSize > 0) {
+                document.documentElement.style.setProperty('--product-font-size', productSize + 'px');
+            }
+        };
 
         window.setPosMode = function(isExistingTable) {
             isTableMode = isExistingTable;
