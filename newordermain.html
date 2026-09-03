@@ -48,7 +48,7 @@
             font-size: var(--category-font-size); 
             font-weight: 800; 
             border-bottom: 2px solid var(--border-color); 
-            border-left: 8px solid var(--primary-color); 
+            border-left: 16px solid var(--primary-color); /* Doubled left accent stripe from 8px to 16px */
             cursor: pointer; 
             display: flex; 
             align-items: center; 
@@ -94,7 +94,9 @@
             overflow: hidden; 
         }
         .product-price { font-size: 18px; font-weight: 700; color: var(--text-main); margin-top: auto; text-align: right; }
-        .color-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 12px; }
+        
+        /* Product Accent Bar (Doubled height from 12px to 24px) */
+        .color-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; }
 
         .checkout-zone { width: 450px; background-color: var(--surface-color); border-left: 2px solid var(--border-color); display: flex; flex-direction: column; z-index: 10; height: 100%; }
         .cart-header { padding: 15px 20px; border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-color); flex-shrink: 0; }
@@ -115,7 +117,6 @@
         .cart-original-price { font-size: 15px; color: var(--danger-color); text-decoration: line-through; font-weight: 800; margin-bottom: 2px; }
         .promo-badge { background-color: var(--warning-color); color: #000; font-size: 11px; font-weight: 900; padding: 2px 6px; text-transform: uppercase; margin-top: 4px; display: inline-block; }
 
-        /* Expanded Legacy value_editable Input */
         .cart-price-input {
             width: 130px;
             height: 42px;
@@ -1142,6 +1143,7 @@
             if(prefix === '> enkel') document.querySelector('.prefix-btn.enkel').classList.add('active');
         }
 
+        /* Fixed bridge action name to match C# handler */
         function removeModifier(uniqueId, isProductExtra) { 
             sendHostMessage({ action: "modal_remove_modifier", uniqueId: uniqueId, isProductExtra: isProductExtra }); 
         }
