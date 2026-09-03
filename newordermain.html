@@ -34,7 +34,7 @@
         body { background-color: var(--bg-color); height: 100vh; overflow: hidden; display: flex; color: var(--text-main); }
         .pos-layout { display: flex; width: 100%; height: 100vh; }
         
-        /* --- MAIN POS LAYOUT --- */
+        /* --- MAIN POS LAYOUT ZONES --- */
         .category-zone { width: 240px; background-color: var(--surface-color); border-right: 2px solid var(--border-color); display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none; }
         .category-zone::-webkit-scrollbar { display: none; }
         .category-pill { padding: 25px 15px; background-color: var(--surface-color); color: var(--text-main); font-size: 18px; font-weight: 800; border-bottom: 2px solid var(--border-color); border-left: 6px solid transparent; cursor: pointer; display: flex; align-items: center; line-height: 1.2; word-wrap: break-word; }
@@ -89,6 +89,24 @@
         .cart-original-price { font-size: 15px; color: var(--danger-color); text-decoration: line-through; font-weight: 800; margin-bottom: 2px; }
         .promo-badge { background-color: var(--warning-color); color: #000; font-size: 11px; font-weight: 900; padding: 2px 6px; text-transform: uppercase; margin-top: 4px; display: inline-block; }
 
+        /* Legacy value_editable Inline Input Style */
+        .cart-price-input {
+            width: 95px;
+            height: 40px;
+            background-color: var(--bg-color);
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-size: 18px;
+            font-weight: 900;
+            text-align: right;
+            padding: 4px 8px;
+            outline: none;
+        }
+        .cart-price-input:focus {
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+
         .cart-controls { display: flex; align-items: center; justify-content: flex-end; gap: 15px; margin-top: 5px; border-top: 1px dashed var(--border-color); padding-top: 10px; }
         .qty-btn { width: 55px; height: 55px; border: none; font-size: 28px; font-weight: bold; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; background-color: var(--primary-color); }
         .qty-btn:active { background-color: var(--primary-active); }
@@ -139,7 +157,6 @@
         .mod-header-bar { padding: 20px; background-color: var(--surface-color); border-bottom: 2px solid var(--border-color); display: flex; justify-content: center; }
         .mod-product-title { font-size: 28px; font-weight: 900; color: var(--text-main); }
         
-        /* Uniform Clamped Modifier Grid */
         .modifiers-grid { 
             flex: 1; 
             padding: 20px; 
@@ -620,16 +637,33 @@
                 row.className = "cart-item";
                 
                 row.ondblclick = (e) => {
-                    if (e.target.classList.contains('qty-btn') || e.target.classList.contains('cart-price')) return;
+                    if (e.target.classList.contains('qty-btn') || e.target.classList.contains('cart-price') || e.target.classList.contains('cart-price-input')) return;
                     sendHostMessage({ action: "edit_cart_item", lineId: item.lineId });
                 };
 
-                /* Promo/Discount Calculation Logic */
                 const baseUnitPrice = item.originalPrice ? item.originalPrice : (item.value ? item.value : item.pos_value);
                 const isDiscounted = (item.lineTotal < baseUnitPrice - 0.001);
                 
                 const originalTotal = baseUnitPrice * item.amount;
                 const currentTotal = item.lineTotal * item.amount;
+                const isEditable = item.value_editable || item.valueEditable;
+
+                /* Render Editable Input for value_editable products */
+                let priceDisplayHtml = '';
+                if (isEditable) {
+                    priceDisplayHtml = `
+                        <input type="number" step="0.01" class="cart-price-input" 
+                               value="${item.lineTotal.toFixed(2)}" 
+                               onclick="event.stopPropagation()"
+                               onfocus="this.select()"
+                               onchange="onCartPriceInputChange('${item.lineId}', this.value)" />
+                    `;
+                } else {
+                    priceDisplayHtml = `
+                        ${isDiscounted ? `<div class="cart-original-price">€ ${originalTotal.toFixed(2)}</div>` : ''}
+                        <div class="cart-price" style="${isDiscounted ? 'color: var(--danger-color); font-weight: 900;' : ''}" ondblclick="event.stopPropagation(); overridePrice('${item.lineId}', ${item.lineTotal})">€ ${currentTotal.toFixed(2)}</div>
+                    `;
+                }
 
                 row.innerHTML = `
                     <div class="cart-item-top">
@@ -639,8 +673,7 @@
                             ${item.discount ? `<span class="promo-badge">${item.discount.type ? item.discount.type.toUpperCase() : ''} KORTING</span>` : (isDiscounted ? `<span class="promo-badge">PROMO</span>` : '')}
                         </div>
                         <div class="price-block">
-                            ${isDiscounted ? `<div class="cart-original-price">€ ${originalTotal.toFixed(2)}</div>` : ''}
-                            <div class="cart-price" style="${isDiscounted ? 'color: var(--danger-color); font-weight: 900;' : ''}" ondblclick="event.stopPropagation(); overridePrice('${item.lineId}', ${item.lineTotal})">€ ${currentTotal.toFixed(2)}</div>
+                            ${priceDisplayHtml}
                         </div>
                     </div>
                     <div class="cart-controls">
@@ -660,6 +693,20 @@
             document.getElementById("btnUitchecken").disabled = !hasItems;
 
             container.scrollTop = container.scrollHeight;
+        }
+
+        function onCartPriceInputChange(lineId, newPriceVal) {
+            const val = parseFloat(newPriceVal);
+            if (!isNaN(val) && val >= 0) {
+                const item = currentCart.find(i => i.lineId === lineId);
+                if (item) {
+                    item.lineTotal = val;
+                    item.priceModified = true;
+                    if (item.action !== 'I' && item.orderDetailId !== 0) item.action = 'U';
+                    renderCartUI();
+                    syncCartToHost();
+                }
+            }
         }
 
         /* --- PRICE OVERRIDE NUMPAD LOGIC --- */
