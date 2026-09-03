@@ -19,7 +19,7 @@
             --danger-color: #EF4444;
             --danger-active: #DC2626;
 
-            /* Configurable Font Sizes (Defaults) */
+            /* Configurable Font Sizes */
             --category-font-size: 18px;
             --product-font-size: 17px;
         }
@@ -95,6 +95,7 @@
         }
         .product-price { font-size: 18px; font-weight: 700; color: var(--text-main); margin-top: auto; text-align: right; }
         
+        /* Thicker Product Accent Bar */
         .color-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 12px; }
 
         .checkout-zone { width: 450px; background-color: var(--surface-color); border-left: 2px solid var(--border-color); display: flex; flex-direction: column; z-index: 10; height: 100%; }
@@ -116,6 +117,7 @@
         .cart-original-price { font-size: 15px; color: var(--danger-color); text-decoration: line-through; font-weight: 800; margin-bottom: 2px; }
         .promo-badge { background-color: var(--warning-color); color: #000; font-size: 11px; font-weight: 900; padding: 2px 6px; text-transform: uppercase; margin-top: 4px; display: inline-block; }
 
+        /* Legacy value_editable Inline Input Style */
         .cart-price-input {
             width: 95px;
             height: 40px;
@@ -1135,7 +1137,11 @@
             if(prefix === '> enkel') document.querySelector('.prefix-btn.enkel').classList.add('active');
         }
 
-        function removeModifier(uniqueId, isProductExtra) { sendHostMessage({ action: "remove_modifier", uniqueId: uniqueId, isProductExtra: isProductExtra }); }
+        /* Fixed bridge action name to match C# handler */
+        function removeModifier(uniqueId, isProductExtra) { 
+            sendHostMessage({ action: "modal_remove_modifier", uniqueId: uniqueId, isProductExtra: isProductExtra }); 
+        }
+        
         function submitModal() { sendHostMessage({ action: "modal_submit" }); }
 
         window.addEventListener('keydown', function(e) {
