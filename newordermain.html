@@ -19,7 +19,7 @@
             --danger-color: #EF4444;
             --danger-active: #DC2626;
 
-            /* Dynamic Font Sizes (Passed as px) */
+            /* Configurable Font Sizes (px) */
             --category-font-size: 18px;
             --product-font-size: 17px;
         }
@@ -48,7 +48,7 @@
             font-size: var(--category-font-size); 
             font-weight: 800; 
             border-bottom: 2px solid var(--border-color); 
-            border-left: 16px solid var(--primary-color); /* Double-width category color stripe */
+            border-left: 16px solid var(--primary-color); 
             cursor: pointer; 
             display: flex; 
             align-items: center; 
@@ -73,7 +73,7 @@
         
         .product-card { 
             background-color: var(--surface-color); 
-            padding: 14px 14px 34px 14px; /* Bottom padding prevents text overlap with accent bar */
+            padding: 14px 14px 34px 14px; 
             display: flex; 
             flex-direction: column; 
             justify-content: space-between; 
@@ -95,13 +95,13 @@
             overflow: hidden; 
         }
         .product-price { 
-            font-size: 22px; /* High-readability touchscreen price */
+            font-size: 22px; 
             font-weight: 900; 
             color: var(--text-main); 
             margin-top: auto; 
             text-align: right; 
         }
-        .color-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; } /* Double-width product accent bar */
+        .color-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; }
 
         /* --- CHECKOUT CART ZONE --- */
         .checkout-zone { width: 450px; background-color: var(--surface-color); border-left: 2px solid var(--border-color); display: flex; flex-direction: column; z-index: 10; height: 100%; }
@@ -123,7 +123,6 @@
         .cart-original-price { font-size: 16px; color: var(--danger-color); text-decoration: line-through; font-weight: 800; margin-bottom: 2px; }
         .promo-badge { background-color: var(--warning-color); color: #000; font-size: 11px; font-weight: 900; padding: 2px 6px; text-transform: uppercase; margin-top: 4px; display: inline-block; }
 
-        /* Legacy Editable Price Input */
         .cart-price-input {
             width: 140px;
             height: 48px;
@@ -141,12 +140,28 @@
             color: var(--success-color);
         }
 
-        .cart-controls { display: flex; align-items: center; justify-content: flex-end; gap: 15px; margin-top: 5px; border-top: 1px dashed var(--border-color); padding-top: 10px; }
+        .cart-controls { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 5px; border-top: 1px dashed var(--border-color); padding-top: 10px; }
         .qty-btn { width: 55px; height: 55px; border: none; font-size: 28px; font-weight: bold; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; background-color: var(--primary-color); }
         .qty-btn:active { background-color: var(--primary-active); }
         .qty-btn.minus { background-color: var(--danger-color); }
         .qty-btn.minus:active { background-color: var(--danger-active); }
         .qty-display { font-size: 22px; font-weight: 900; min-width: 35px; text-align: center; color: var(--text-main); }
+
+        .cart-comment-btn {
+            width: 55px;
+            height: 55px;
+            border: none;
+            font-size: 22px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--surface-color);
+            border: 2px solid var(--border-color);
+        }
+        .cart-comment-btn:active { background-color: var(--border-color); }
+        .cart-comment-btn.has-comment { background-color: var(--warning-color); color: #000; border-color: var(--warning-color); }
 
         .checkout-panel { padding: 15px; border-top: 2px solid var(--border-color); background-color: var(--surface-color); display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; }
         .type-toggle { display: flex; background-color: var(--bg-color); border: 2px solid var(--border-color); }
@@ -155,6 +170,32 @@
         .toggle-btn.active { background-color: var(--primary-color); color: white; }
         .comment-input { width: 100%; height: 60px; border: 2px solid var(--border-color); padding: 10px; font-size: 15px; font-weight: 600; resize: none; background-color: var(--bg-color); color: var(--text-main); }
         .comment-input:focus { outline: none; border-color: var(--primary-color); }
+
+        .control-row { display: flex; gap: 10px; margin-top: 2px; }
+        .time-select {
+            flex: 1;
+            height: 52px;
+            background-color: var(--bg-color);
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 22px;
+            font-weight: 900;
+            padding: 0 10px;
+            outline: none;
+        }
+        .btn-korting {
+            flex: 1;
+            height: 52px;
+            background-color: #C07D3E;
+            color: white;
+            border: none;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .btn-korting:active { opacity: 0.85; }
+
         .totals-row { display: flex; justify-content: space-between; align-items: center; font-size: 28px; font-weight: 900; color: var(--text-main); padding: 2px 0; }
         .action-matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-action { width: 100%; border: none; cursor: pointer; color: white; font-weight: 900; text-transform: uppercase; padding: 22px; font-size: 18px; transition: opacity 0.15s ease; }
@@ -366,6 +407,25 @@
             opacity: 0.7;
         }
         .table-status-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; background: rgba(0,0,0,0.4); padding: 2px 6px; margin-top: 4px; }
+
+        /* PROMO MODAL TOGGLES */
+        .promo-toggle-group { display: flex; gap: 10px; }
+        .promo-toggle-btn {
+            flex: 1;
+            padding: 16px;
+            background-color: var(--bg-color);
+            border: 2px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 15px;
+            font-weight: 800;
+            text-align: center;
+            cursor: pointer;
+        }
+        .promo-toggle-btn.active {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -393,6 +453,18 @@
                     </div>
                 </div>
                 <textarea class="comment-input" id="txtComment" placeholder="Opmerking voor de keuken..." oninput="updateCommentState()"></textarea>
+                
+                <div class="control-row">
+                    <select class="time-select" id="selDelTime" onchange="onTimeSelectChange(this.value)">
+                        <option value="ZSM" selected>ZSM</option>
+                        <option value="+15m">+15 Min</option>
+                        <option value="+30m">+30 Min</option>
+                        <option value="+45m">+45 Min</option>
+                        <option value="+60m">+60 Min</option>
+                    </select>
+                    <button class="btn-korting" id="btnKorting" onclick="openPromoModal()">KORTING</button>
+                </div>
+
                 <div class="totals-row">
                     <span>TOTAAL</span>
                     <span id="lblTotPrice">€ 0.00</span>
@@ -441,6 +513,48 @@
         </div>
     </div>
 
+    <!-- PRODUCT ITEM COMMENT MODAL -->
+    <div class="modal-overlay" id="itemCommentModal">
+        <div class="price-modal-card" style="width: 450px;">
+            <div class="price-header">PRODUCT OPMERKING</div>
+            <textarea id="txtItemComment" class="comment-input" style="height: 100px; font-size: 18px;" placeholder="Bijv. Geen ui, extra saus..."></textarea>
+            <div class="price-actions" style="display: flex; gap: 10px;">
+                <button class="btn-action" style="background: var(--border-color);" onclick="closeItemCommentModal()">ANNULEREN</button>
+                <button class="btn-action pay" onclick="saveItemComment()">OPSLAAN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROMO / KORTING MODAL -->
+    <div class="modal-overlay" id="promoModal">
+        <div class="price-modal-card" style="width: 420px;">
+            <div class="price-header">KORTING TOEPASSEN</div>
+            <div class="promo-toggle-group">
+                <div class="promo-toggle-btn active" id="btnPromoFixed" onclick="setPromoMode('FIXED')">VASTE BEDRAG (€)</div>
+                <div class="promo-toggle-btn" id="btnPromoPerc" onclick="setPromoMode('PERC')">PERCENTAGE (%)</div>
+            </div>
+            <input type="text" class="price-display" id="txtPromoValue" readonly value="0.00" />
+            <div class="numpad-grid">
+                <button class="num-btn" onclick="appendPromoNum('1')">1</button>
+                <button class="num-btn" onclick="appendPromoNum('2')">2</button>
+                <button class="num-btn" onclick="appendPromoNum('3')">3</button>
+                <button class="num-btn" onclick="appendPromoNum('4')">4</button>
+                <button class="num-btn" onclick="appendPromoNum('5')">5</button>
+                <button class="num-btn" onclick="appendPromoNum('6')">6</button>
+                <button class="num-btn" onclick="appendPromoNum('7')">7</button>
+                <button class="num-btn" onclick="appendPromoNum('8')">8</button>
+                <button class="num-btn" onclick="appendPromoNum('9')">9</button>
+                <button class="num-btn" onclick="appendPromoNum('.')">.</button>
+                <button class="num-btn" onclick="appendPromoNum('0')">0</button>
+                <button class="num-btn danger" onclick="clearPromoNum()">⌫</button>
+            </div>
+            <div class="price-actions" style="display: flex; gap: 10px;">
+                <button class="btn-action" style="background: var(--danger-color);" onclick="resetPromo()">RESET</button>
+                <button class="btn-action pay" onclick="confirmPromo()">OPSLAAN</button>
+            </div>
+        </div>
+    </div>
+
     <!-- PRICE OVERRIDE NUMPAD MODAL -->
     <div class="modal-overlay" id="priceModal">
         <div class="price-modal-card">
@@ -460,7 +574,7 @@
                 <button class="num-btn" onclick="appendNum('0')">0</button>
                 <button class="num-btn danger" onclick="clearNum()">⌫</button>
             </div>
-            <div class="price-actions">
+            <div class="price-actions" style="display: flex; gap: 10px;">
                 <button class="btn-action" style="background: var(--border-color);" onclick="closePriceModal()">ANNULEREN</button>
                 <button class="btn-action pay" onclick="confirmPriceOverride()">OPSLAAN</button>
             </div>
@@ -519,7 +633,7 @@
                 <label class="checkbox-label"><input type="checkbox" id="chkKitchenPrint" checked /> Keukenbon Printen</label>
             </div>
 
-            <div class="price-actions">
+            <div class="price-actions" style="display: flex; gap: 10px;">
                 <button class="btn-action" style="background: var(--border-color);" onclick="closeCustomerModal()">ANNULEREN</button>
                 <button class="btn-action pay" id="btnConfirmCustomer" onclick="confirmCustomerCheckout()">AFRONDEN (F8)</button>
             </div>
@@ -562,6 +676,13 @@
         let selectedPaymentMethodId = 1;
         let selectedTablePaymentMethodId = 1;
         let deliveryZonesList = [];
+
+        /* Item Comment State */
+        let activeCommentLineId = null;
+
+        /* Promo Modal State */
+        let activePromoType = 'FIXED';
+        let isNewPromoNum = true;
 
         document.addEventListener("DOMContentLoaded", () => {
             sendHostMessage({ action: "ui_ready" });
@@ -680,9 +801,8 @@
                 const row = document.createElement("div");
                 row.className = "cart-item";
                 
-                // Prevent opening modifier modal when clicking controls or price block
                 row.ondblclick = (e) => {
-                    if (e.target.classList.contains('qty-btn') || e.target.closest('.price-block')) return;
+                    if (e.target.classList.contains('qty-btn') || e.target.classList.contains('cart-comment-btn') || e.target.closest('.price-block')) return;
                     sendHostMessage({ action: "edit_cart_item", lineId: item.lineId });
                 };
 
@@ -713,6 +833,8 @@
                     `;
                 }
 
+                const hasItemComment = !!item.comment;
+
                 row.innerHTML = `
                     <div class="cart-item-top">
                         <div style="flex: 1; padding-right: 10px;">
@@ -728,6 +850,7 @@
                         <button class="qty-btn minus" onclick="event.stopPropagation(); adjustQuantity('${item.lineId}', -1)">-</button>
                         <span class="qty-display">${item.amount}</span>
                         <button class="qty-btn" onclick="event.stopPropagation(); adjustQuantity('${item.lineId}', 1)">+</button>
+                        <button class="cart-comment-btn ${hasItemComment ? 'has-comment' : ''}" onclick="event.stopPropagation(); openItemCommentModal('${item.lineId}')">💬</button>
                     </div>
                 `;
                 container.appendChild(row);
@@ -755,6 +878,84 @@
                     syncCartToHost();
                 }
             }
+        }
+
+        /* --- ITEM COMMENT MODAL LOGIC --- */
+        function openItemCommentModal(lineId) {
+            activeCommentLineId = lineId;
+            const item = currentCart.find(i => i.lineId === lineId);
+            document.getElementById('txtItemComment').value = item && item.comment ? item.comment : '';
+            document.getElementById('itemCommentModal').style.display = 'flex';
+        }
+
+        function closeItemCommentModal() {
+            document.getElementById('itemCommentModal').style.display = 'none';
+            activeCommentLineId = null;
+        }
+
+        function saveItemComment() {
+            if (!activeCommentLineId) return;
+            const item = currentCart.find(i => i.lineId === activeCommentLineId);
+            if (item) {
+                item.comment = document.getElementById('txtItemComment').value.trim();
+                if (item.action !== 'I' && item.orderDetailId !== 0) item.action = 'U';
+                renderCartUI();
+                syncCartToHost();
+            }
+            closeItemCommentModal();
+        }
+
+        /* --- TIME SELECT & PROMO LOGIC --- */
+        function onTimeSelectChange(val) {
+            sendHostMessage({ action: "set_desired_del_time", value: val });
+        }
+
+        function openPromoModal() {
+            isNewPromoNum = true;
+            document.getElementById('txtPromoValue').value = '0.00';
+            document.getElementById('promoModal').style.display = 'flex';
+        }
+
+        function closePromoModal() {
+            document.getElementById('promoModal').style.display = 'none';
+        }
+
+        function setPromoMode(mode) {
+            activePromoType = mode;
+            document.getElementById('btnPromoFixed').classList.toggle('active', mode === 'FIXED');
+            document.getElementById('btnPromoPerc').classList.toggle('active', mode === 'PERC');
+        }
+
+        function appendPromoNum(num) {
+            const display = document.getElementById('txtPromoValue');
+            if (isNewPromoNum) {
+                display.value = num === '.' ? '0.' : num;
+                isNewPromoNum = false;
+            } else {
+                if (num === '.' && display.value.includes('.')) return;
+                display.value += num;
+            }
+        }
+
+        function clearPromoNum() {
+            const display = document.getElementById('txtPromoValue');
+            if (display.value.length > 1) {
+                display.value = display.value.slice(0, -1);
+            } else {
+                display.value = '0.00';
+                isNewPromoNum = true;
+            }
+        }
+
+        function resetPromo() {
+            sendHostMessage({ action: "apply_promo", promoType: "", promoValue: 0 });
+            closePromoModal();
+        }
+
+        function confirmPromo() {
+            const val = parseFloat(document.getElementById('txtPromoValue').value) || 0;
+            sendHostMessage({ action: "apply_promo", promoType: activePromoType, promoValue: val });
+            closePromoModal();
         }
 
         function overridePrice(lineId, currentPrice) {
@@ -1150,7 +1351,13 @@
         function submitModal() { sendHostMessage({ action: "modal_submit" }); }
 
         window.addEventListener('keydown', function(e) {
-            if (document.getElementById('tableModal').style.display === 'flex') {
+            if (document.getElementById('promoModal').style.display === 'flex') {
+                if (e.key === 'Escape') { e.preventDefault(); closePromoModal(); }
+                if (e.key === 'Enter') { e.preventDefault(); confirmPromo(); }
+            } else if (document.getElementById('itemCommentModal').style.display === 'flex') {
+                if (e.key === 'Escape') { e.preventDefault(); closeItemCommentModal(); }
+                if (e.key === 'Enter') { e.preventDefault(); saveItemComment(); }
+            } else if (document.getElementById('tableModal').style.display === 'flex') {
                 if (e.key === 'Escape') { e.preventDefault(); closeTableModal(); }
             } else if (document.getElementById('customerModal').style.display === 'flex') {
                 if (e.key === 'Escape') { e.preventDefault(); closeCustomerModal(); }
