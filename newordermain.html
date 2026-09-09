@@ -1244,12 +1244,20 @@
             syncCartToHost();
         }
 
+        window.setOrderTypeUI = function(type) {
+            currentOrderType = type;
+            const btnDel = document.getElementById("btnDel");
+            const btnTak = document.getElementById("btnTak");
+            const btnTab = document.getElementById("btnTab");
+
+            if (btnDel) btnDel.classList.toggle("active", type === 'delivery');
+            if (btnTak) btnTak.classList.toggle("active", type === 'takeaway');
+            if (btnTab) btnTab.classList.toggle("active", type === 'table');
+        };
+
         function setOrderType(type) {
             if (isTableMode) return; 
-            currentOrderType = type;
-            document.getElementById("btnDel").classList.toggle("active", type === 'delivery');
-            document.getElementById("btnTak").classList.toggle("active", type === 'takeaway');
-            document.getElementById("btnTab").classList.toggle("active", type === 'table');
+            window.setOrderTypeUI(type);
             sendHostMessage({ action: "set_delivery_type", type: type });
         }
 
