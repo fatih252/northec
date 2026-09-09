@@ -115,7 +115,6 @@
         .cart-item { background-color: var(--surface-color); border: 2px solid var(--border-color); padding: 15px; display: flex; flex-direction: column; gap: 12px; cursor: pointer; position: relative; }
         .cart-item-top { display: flex; justify-content: space-between; align-items: flex-start; }
         
-        /* Modern Category Tag above product title */
         .cart-category-tag {
             font-size: 11px;
             font-weight: 900;
@@ -1075,19 +1074,16 @@
                 document.getElementById('addressRow1').style.display = 'none';
                 document.getElementById('addressRow2').style.display = 'none';
                 document.getElementById('addressRow3').style.display = 'none';
-            } else if (isTakeaway && visibleClientName) {
-                document.getElementById('phoneRow').style.display = 'none';
-                document.getElementById('addressRow1').style.display = 'flex';
-                document.getElementById('addressRow2').style.display = 'none';
-                document.getElementById('addressRow3').style.display = 'none';
             } else if (isTakeaway) {
-                document.getElementById('phoneRow').style.display = 'flex';
-                document.getElementById('addressRow1').style.display = 'none';
+                // If visibleClientName is false, hide even phonenumber for takeaway
+                document.getElementById('phoneRow').style.display = 'none';
+                document.getElementById('addressRow1').style.display = visibleClientName ? 'flex' : 'none';
                 document.getElementById('addressRow2').style.display = 'none';
                 document.getElementById('addressRow3').style.display = 'none';
             } else {
+                // Delivery mode: hide first/last name if visibleClientName is disabled
                 document.getElementById('phoneRow').style.display = 'flex';
-                document.getElementById('addressRow1').style.display = 'flex';
+                document.getElementById('addressRow1').style.display = visibleClientName ? 'flex' : 'none';
                 document.getElementById('addressRow2').style.display = 'flex';
                 document.getElementById('addressRow3').style.display = 'flex';
             }
