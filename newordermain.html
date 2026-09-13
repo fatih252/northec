@@ -734,7 +734,7 @@
             categories.forEach(cat => {
                 const btn = document.createElement("div");
                 btn.className = "category-pill";
-                btn.id = "cat_" + cat.id;
+                btn.id = "cat_" + cat.main_product_id;
                 btn.innerText = cat.name.toUpperCase();
 
                 const hexColor = (cat.color && cat.color !== "#000000") ? cat.color : "var(--primary-color)";
@@ -743,11 +743,11 @@
                 btn.onclick = () => {
                     document.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    sendHostMessage({ action: "get_products", mainProductId: parseInt(cat.id) });
+                    sendHostMessage({ action: "get_products", mainProductId: parseInt(cat.main_product_id) });
                 };
                 container.appendChild(btn);
             });
-            if (categories.length > 0) document.getElementById("cat_" + categories[0].id).click();
+            if (categories.length > 0) document.getElementById("cat_" + categories[0].main_product_id).click();
         };
 
         window.renderProducts = function(products) {
