@@ -462,7 +462,11 @@
                 added.forEach(i => {
                     const amt = i.amount ?? i.new_amount ?? 1;
                     const price = i.unit_price ?? i.unitPrice ?? 0;
-                    html += `<div class="change-item text-add">+ Toegevoegd: ${amt}x ${i.name} (€${Number(price).toFixed(2)})</div>`;
+                    let extraStr = '';
+                    if (i.extras && i.extras.length > 0) {
+                        extraStr = ` (${i.extras.join(', ')})`;
+                    }
+                    html += `<div class="change-item text-add">+ Toegevoegd: ${amt}x ${i.name}${extraStr} (€${Number(price).toFixed(2)})</div>`;
                 });
             }
 
@@ -480,6 +484,20 @@
                     const oldAmt = i.old_amount ?? i.oldAmount;
                     const newAmt = i.new_amount ?? i.newAmount;
                     html += `<div class="change-item">✏️ Aantal aangepast: ${i.name} (${oldAmt}x ➔ ${newAmt}x)</div>`;
+                });
+            }
+
+            const modChanges = delta.modifier_changes || delta.modifierChanges;
+            if (modChanges && modChanges.length > 0) {
+                modChanges.forEach(m => {
+                    const addEx = m.added_extras || m.addedExtras;
+                    if (addEx && addEx.length > 0) {
+                        addEx.forEach(x => html += `<div class="change-item text-add">+ Extra toegevoegd (${m.name}): ${x}</div>`);
+                    }
+                    const remEx = m.removed_extras || m.removedExtras;
+                    if (remEx && remEx.length > 0) {
+                        remEx.forEach(x => html += `<div class="change-item text-del">- Extra verwijderd (${m.name}): ${x}</div>`);
+                    }
                 });
             }
 
