@@ -2,17 +2,17 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Order Detail</title>
     <style>
         :root {
-            --bg-color: #f8fafc;
+            --bg-color: #f1f5f9;
             --card-bg: #ffffff;
             --primary: #973030;
             --primary-hover: #7a2626;
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --border: #e2e8f0;
+            --border: #cbd5e1;
             --accent: #2563eb;
             --danger: #dc2626;
             --success: #16a34a;
@@ -26,6 +26,8 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: var(--bg-color);
             color: var(--text-main);
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         body {
@@ -33,68 +35,77 @@
             flex-direction: column;
         }
 
+        /* --- Header --- */
         .header {
             background: var(--primary);
             color: white;
-            padding: 14px 20px;
+            padding: 16px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .header-title {
-            font-size: 18px;
+            font-size: 22px;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .badge {
-            font-size: 11px;
-            padding: 3px 8px;
+            font-size: 13px;
+            padding: 5px 12px;
             border-radius: 9999px;
-            background: rgba(255, 255, 255, 0.2);
-            font-weight: 600;
+            background: rgba(255, 255, 255, 0.25);
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
+        /* --- Touch Navigation Tabs --- */
         .tabs {
             display: flex;
             background: var(--card-bg);
-            border-bottom: 1px solid var(--border);
-            padding: 0 20px;
+            border-bottom: 2px solid var(--border);
+            padding: 0 16px;
             flex-shrink: 0;
+            gap: 8px;
         }
 
         .tab-btn {
-            padding: 12px 18px;
-            font-size: 14px;
-            font-weight: 600;
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 700;
             color: var(--text-muted);
             border: none;
             background: none;
             cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
+            border-bottom: 4px solid transparent;
+            touch-action: manipulation;
+            transition: all 0.15s ease-in-out;
         }
 
         .tab-btn.active {
             color: var(--primary);
             border-bottom-color: var(--primary);
+            background: #fdf2f2;
         }
 
+        /* --- Content Body --- */
         .content-container {
             flex: 1;
-            padding: 16px 20px;
+            padding: 20px;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .tab-panel {
             display: none;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 20px;
         }
 
         .tab-panel.active {
@@ -108,41 +119,44 @@
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
         }
 
         .card-title {
-            font-size: 15px;
+            font-size: 17px;
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 12px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
         }
 
         .info-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 13px;
+            align-items: center;
+            margin-bottom: 14px;
+            font-size: 15px;
         }
 
         .info-label {
             color: var(--text-muted);
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .info-value {
-            font-weight: 600;
+            font-weight: 700;
             text-align: right;
+            color: var(--text-main);
         }
 
+        /* --- Touch Time Adjustment Controls --- */
         .time-controls {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
             justify-content: flex-end;
         }
 
@@ -150,45 +164,62 @@
             background: var(--primary);
             color: white;
             border: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 4px;
-            font-weight: 700;
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            font-size: 22px;
+            font-weight: 800;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .time-btn:active {
+            transform: scale(0.92);
+            background: var(--primary-hover);
         }
 
         .select-input {
-            padding: 4px 8px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            font-size: 13px;
-            font-weight: 600;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            font-size: 15px;
+            font-weight: 700;
+            background: white;
+            min-height: 48px;
         }
 
         .receipt-list {
             list-style: none;
-            font-family: monospace;
-            font-size: 13px;
-            line-height: 1.5;
+            font-family: Consolas, Monaco, "Courier New", monospace;
+            font-size: 14px;
+            line-height: 1.6;
             white-space: pre-wrap;
-            background: #f1f5f9;
-            padding: 12px;
-            border-radius: 6px;
-            max-height: 280px;
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            max-height: 320px;
             overflow-y: auto;
+            user-select: text;
+            -webkit-user-select: text;
         }
 
+        /* --- Audit Log Timeline --- */
         .audit-timeline {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
         }
 
         .audit-card {
-            border-left: 4px solid var(--accent);
+            border-left: 5px solid var(--accent);
             background: #f8fafc;
-            padding: 12px;
-            border-radius: 0 6px 6px 0;
+            padding: 14px;
+            border-radius: 0 10px 10px 0;
             border-top: 1px solid var(--border);
             border-right: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
@@ -197,52 +228,64 @@
         .audit-meta {
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-muted);
-            margin-bottom: 6px;
-            font-weight: 600;
+            margin-bottom: 8px;
+            font-weight: 700;
         }
 
         .change-item {
-            font-size: 13px;
-            font-weight: 500;
-            margin-top: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 6px;
         }
 
         .text-add { color: var(--success); }
         .text-del { color: var(--danger); }
 
+        /* --- Touchscreen Footer Action Bar --- */
         .footer-actions {
             background: var(--card-bg);
-            border-top: 1px solid var(--border);
-            padding: 12px 20px;
+            border-top: 2px solid var(--border);
+            padding: 16px 20px;
             display: flex;
             justify-content: space-between;
-            gap: 10px;
+            gap: 12px;
             flex-shrink: 0;
         }
 
         .btn-group {
             display: flex;
-            gap: 8px;
+            gap: 12px;
         }
 
         .action-btn {
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 700;
+            min-height: 52px;
+            padding: 12px 22px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 800;
             border: none;
             cursor: pointer;
-            transition: all 0.15s;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        .action-btn:active {
+            transform: translateY(2px);
+            opacity: 0.9;
         }
 
         .btn-danger { background: #fee2e2; color: var(--danger); }
-        .btn-danger:hover { background: #fca5a5; }
+        .btn-danger:active { background: #fca5a5; }
         .btn-secondary { background: #e2e8f0; color: var(--text-main); }
-        .btn-secondary:hover { background: #cbd5e1; }
+        .btn-secondary:active { background: #cbd5e1; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-primary:active { background: var(--primary-hover); }
     </style>
 </head>
 <body>
@@ -268,8 +311,8 @@
                 <div class="info-row"><span class="info-label">Adres</span><span class="info-value" id="custAddress">-</span></div>
                 <div class="info-row"><span class="info-label">Stad / Postcode</span><span class="info-value" id="custCity">-</span></div>
                 <div class="info-row"><span class="info-label">Telefoon</span><span class="info-value" id="custPhone">-</span></div>
-                <div class="info-row" style="margin-top: 12px;"><span class="info-label">Opmerking</span></div>
-                <div id="custComment" style="font-size: 12px; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border); color: var(--text-muted); font-style: italic;">Geen opmerking</div>
+                <div class="info-row" style="margin-top: 14px;"><span class="info-label">Opmerking</span></div>
+                <div id="custComment" style="font-size: 13px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border); color: var(--text-muted); font-style: italic;">Geen opmerking</div>
             </div>
 
             <div class="card">
@@ -284,11 +327,11 @@
                 <div class="card-title">Levering Details</div>
                 <div class="info-row"><span class="info-label">Besteldatum</span><span class="info-value" id="orderDate">-</span></div>
                 <div class="info-row"><span class="info-label">Gewenste Bezorging</span><span class="info-value" id="desiredTime">-</span></div>
-                <div class="info-row" id="plannedTimeRow">
+                <div class="info-row" id="plannedTimeRow" style="margin-top: 10px;">
                     <span class="info-label">Geplande Bezorging</span>
                     <div class="time-controls">
                         <button class="time-btn" onclick="adjustTime(-15)">-</button>
-                        <span class="info-value" id="plannedTime">00:00</span>
+                        <span class="info-value" id="plannedTime" style="font-size: 18px; min-width: 60px;">00:00</span>
                         <button class="time-btn" onclick="adjustTime(15)">+</button>
                     </div>
                 </div>
@@ -300,17 +343,17 @@
                     <span class="info-label">Betaalmethode</span>
                     <select id="paymentSelect" class="select-input" onchange="changePaymentMethod(this.value)"></select>
                 </div>
-                <div class="card-title" style="margin-top: 16px; font-size: 13px;">Betalingen Log</div>
-                <div class="receipt-list" id="paymentHistoryText" style="height: 100px;">-</div>
+                <div class="card-title" style="margin-top: 20px; font-size: 15px;">Betalingen Log</div>
+                <div class="receipt-list" id="paymentHistoryText" style="height: 110px;">-</div>
             </div>
         </div>
 
-        <!-- Tab 3: Order Modifications Audit Trail -->
+        <!-- Tab 3: Audit Trail History -->
         <div id="tab-history" class="tab-panel single">
             <div class="card">
                 <div class="card-title">Wijzigingshistorie (Audit Trail)</div>
                 <div class="audit-timeline" id="auditTimeline">
-                    <div style="color: var(--text-muted); font-size: 13px;">Geen eerdere wijzigingen geregistreerd.</div>
+                    <div style="color: var(--text-muted); font-size: 14px;">Geen eerdere wijzigingen geregistreerd.</div>
                 </div>
             </div>
         </div>
@@ -372,7 +415,7 @@
                 const btn = document.getElementById('btnCancel');
                 btn.disabled = true; 
                 btn.innerText = "Geannuleerd"; 
-                btn.style.opacity = "0.6";
+                btn.style.opacity = "0.5";
                 document.getElementById('btnEdit').disabled = true;
             }
 
