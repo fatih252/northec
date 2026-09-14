@@ -1,1615 +1,423 @@
-using PizzaApp.Classes;
-using PizzaApp.Forms;
-using PizzaApp.Forms.Ordering;
-using PizzaApp.Objects;
-using Sentry;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Data;
-using Npgsql;
-using System.Drawing;
-using System.Drawing.Printing;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Table = PizzaApp.Classes.Table;
-
-namespace PizzaApp
-{
-    public partial class NewOrderWeb : Form, IOrderForm
-    {
-        public Guid? userId { get; set; }
-        public string phoneNumber { get; set; }
-        public DeliveryZone deliveryZone { get; set; }
-        public Client client { get; set; }
-        public int orderState { get; set; }
-        public Guid? orderId { get; set; }
-        public string comment { get; set; }
-        public bool modifyOrder { get; set; }
-        public Table table { get; set; }
-        public string desiredDelTime { get; set; } = "ZSM";
-
-        public List<Product> orderLine { get; set; } = new List<Product>();
-
-        private Microsoft.Web.WebView2.WinForms.WebView2 webView;
-        private string promoType = "";
-        private decimal promoValue = 0;
-        private int paymentMethodId;
-        private decimal stepAmount = 0.05M;
-        private string orderNumber;
-        private bool checkOutTable = false;
-        private Guid? g;
-
-        private string htmlContentToLoad = "";
-        private ProductModifierController modifierController = new ProductModifierController();
-        private static readonly ConcurrentDictionary<string, string> ImageBase64Cache = new ConcurrentDictionary<string, string>();
-
-        public NewOrderWeb()
-        {
-            InitializeComponent();
-            Global.takeawayFlag = false;
-            this.KeyPreview = true;
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.WindowState = FormWindowState.Maximized;
-
-            _ = this.Handle;
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Detail</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #973030;
+            --primary-hover: #7a2626;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent: #2563eb;
+            --danger: #dc2626;
+            --success: #16a34a;
         }
 
-        protected override CreateParams CreateParams
-        {
-            get
-            {
-                CreateParams handleParam = base.CreateParams;
-                handleParam.ExStyle |= 0x02000000;
-                return handleParam;
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            padding: 12px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .content-container {
+            flex: 1;
+            padding: 16px 20px;
+            overflow-y: auto;
+        }
+
+        .tab-panel {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .tab-panel.active {
+            display: grid;
+        }
+
+        .tab-panel.single {
+            grid-template-columns: 1fr;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .time-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .time-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .select-input {
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .receipt-list {
+            list-style: none;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 6px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .audit-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .audit-card {
+            border-left: 4px solid var(--accent);
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 0 6px 6px 0;
+            border-top: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .audit-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .change-item {
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .text-add { color: var(--success); }
+        .text-del { color: var(--danger); }
+
+        .footer-actions {
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-danger { background: #fee2e2; color: var(--danger); }
+        .btn-danger:hover { background: #fca5a5; }
+        .btn-secondary { background: #e2e8f0; color: var(--text-main); }
+        .btn-secondary:hover { background: #cbd5e1; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">
+            <span id="orderTitle">Bestelling</span>
+            <span class="badge" id="orderServiceBadge">Bezorging</span>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this, 'tab-summary')">Overzicht & Items</button>
+        <button class="tab-btn" onclick="switchTab(this, 'tab-delivery')">Levering & Betaling</button>
+        <button class="tab-btn" onclick="switchTab(this, 'tab-history')">Wijzigingshistorie</button>
+    </div>
+
+    <div class="content-container">
+        <!-- Tab 1: Overview & Items -->
+        <div id="tab-summary" class="tab-panel active">
+            <div class="card">
+                <div class="card-title">Klantgegevens</div>
+                <div class="info-row"><span class="info-label">Naam</span><span class="info-value" id="custName">-</span></div>
+                <div class="info-row"><span class="info-label">Adres</span><span class="info-value" id="custAddress">-</span></div>
+                <div class="info-row"><span class="info-label">Stad / Postcode</span><span class="info-value" id="custCity">-</span></div>
+                <div class="info-row"><span class="info-label">Telefoon</span><span class="info-value" id="custPhone">-</span></div>
+                <div class="info-row" style="margin-top: 12px;"><span class="info-label">Opmerking</span></div>
+                <div id="custComment" style="font-size: 12px; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border); color: var(--text-muted); font-style: italic;">Geen opmerking</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Bestelde Producten</div>
+                <div class="receipt-list" id="receiptText">Laden...</div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Delivery & Payments -->
+        <div id="tab-delivery" class="tab-panel">
+            <div class="card">
+                <div class="card-title">Levering Details</div>
+                <div class="info-row"><span class="info-label">Besteldatum</span><span class="info-value" id="orderDate">-</span></div>
+                <div class="info-row"><span class="info-label">Gewenste Bezorging</span><span class="info-value" id="desiredTime">-</span></div>
+                <div class="info-row" id="plannedTimeRow">
+                    <span class="info-label">Geplande Bezorging</span>
+                    <div class="time-controls">
+                        <button class="time-btn" onclick="adjustTime(-15)">-</button>
+                        <span class="info-value" id="plannedTime">00:00</span>
+                        <button class="time-btn" onclick="adjustTime(15)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Betaalstatus & Historie</div>
+                <div class="info-row">
+                    <span class="info-label">Betaalmethode</span>
+                    <select id="paymentSelect" class="select-input" onchange="changePaymentMethod(this.value)"></select>
+                </div>
+                <div class="card-title" style="margin-top: 16px; font-size: 13px;">Betalingen Log</div>
+                <div class="receipt-list" id="paymentHistoryText" style="height: 100px;">-</div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Order Modifications Audit Trail -->
+        <div id="tab-history" class="tab-panel single">
+            <div class="card">
+                <div class="card-title">Wijzigingshistorie (Audit Trail)</div>
+                <div class="audit-timeline" id="auditTimeline">
+                    <div style="color: var(--text-muted); font-size: 13px;">Geen eerdere wijzigingen geregistreerd.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-actions">
+        <button class="action-btn btn-danger" id="btnCancel" onclick="sendAction('cancel')">Annuleren</button>
+        <div class="btn-group">
+            <button class="action-btn btn-secondary" onclick="sendAction('print_pos')">Bon Print</button>
+            <button class="action-btn btn-secondary" onclick="sendAction('print_kitchen')">Keukenbon</button>
+            <button class="action-btn btn-primary" id="btnEdit" onclick="sendAction('edit_order')">Terugtrekken / Bewerken</button>
+            <button class="action-btn btn-secondary" onclick="sendAction('close')">Sluiten</button>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(btn, tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function sendAction(action, payload = {}) {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({ action: action, ...payload });
             }
         }
 
-        private async void NewOrderWeb_Load(object sender, EventArgs e)
-        {
-            try
-            {
-                if (orderLine == null) orderLine = new List<Product>();
-                if (orderState == 8 || orderState == 3 || orderState == 10) Global.orderId = orderId;
-
-                // Snapshot original quantities from DB when modifying an existing order
-                if (modifyOrder && orderLine.Count > 0)
-                {
-                    foreach (var p in orderLine)
-                    {
-                        if (p.originalAmount == 0)
-                        {
-                            p.originalAmount = p.amount;
-                        }
-                    }
-                }
-
-                Catalog.popExtras();
-                Catalog.popOptions();
-                Catalog.popProductOptions();
-                Catalog.popProductExtras();
-
-                this.Controls.Clear();
-
-                webView = new Microsoft.Web.WebView2.WinForms.WebView2 { Dock = DockStyle.Fill };
-                this.Controls.Add(webView);
-
-                htmlContentToLoad = HtmlCacheManager.GetHtmlContent("newordermain.html");
-                webView.CoreWebView2InitializationCompleted += WebView_CoreWebView2InitializationCompleted;
-                webView.WebMessageReceived += WebView_WebMessageReceived;
-                webView.NavigationCompleted += WebView_NavigationCompleted;
-
-                await WebViewManager.SetupWebView(webView);
-            }
-            catch (Exception ex)
-            {
-                SentrySdk.CaptureException(ex);
-                MessageBox.Show("Fout bij laden WebView2 container: " + ex.Message, "Kritieke Fout", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                this.Close();
-            }
+        function adjustTime(mins) {
+            const el = document.getElementById('plannedTime');
+            let [h, m] = el.innerText.split(':').map(Number);
+            if (isNaN(h)) return;
+            let date = new Date(); date.setHours(h, m + mins);
+            el.innerText = String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+            sendAction('update_planned_time', { newTime: el.innerText });
         }
 
-        private void WebView_CoreWebView2InitializationCompleted(object sender, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e)
-        {
-            if (e.IsSuccess)
-            {
-                if (!string.IsNullOrEmpty(htmlContentToLoad)) webView.CoreWebView2.NavigateToString(htmlContentToLoad);
-            }
-            else
-            {
-                MessageBox.Show("WebView2 kon niet worden geladen: " + e.InitializationException?.Message, "Fout", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                this.Close();
-            }
+        function changePaymentMethod(val) {
+            sendAction('change_payment_method', { paymentMethodId: parseInt(val) });
         }
 
-        private async void WebView_NavigationCompleted(object sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e)
-        {
-            if (e.IsSuccess) await SynchronizeLookupData();
-        }
+        function renderData(data) {
+            document.getElementById('orderTitle').innerText = data.title;
+            document.getElementById('orderServiceBadge').innerText = data.serviceName;
 
-        private async void WebView_WebMessageReceived(object sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
-        {
-            try
-            {
-                string jsonString = e.WebMessageAsJson;
-                using (JsonDocument doc = JsonDocument.Parse(jsonString))
-                {
-                    JsonElement root = doc.RootElement;
-                    string action = root.GetProperty("action").GetString();
+            document.getElementById('custName').innerText = data.clientName || '-';
+            document.getElementById('custAddress').innerText = data.clientAddress || '-';
+            document.getElementById('custCity').innerText = data.clientCity || '-';
+            document.getElementById('custPhone').innerText = data.clientPhone || '-';
+            document.getElementById('custComment').innerText = data.comment || 'Geen opmerking';
 
-                    switch (action)
-                    {
-                        case "ui_ready":
-                            await SynchronizeLookupData();
-                            break;
-                        case "get_products":
-                            await SynchronizeProductGrid(root.GetProperty("mainProductId").GetInt32());
-                            break;
-                        case "product_clicked":
-                            var jsonOpts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                            ProcessProductSelection(JsonSerializer.Deserialize<Product>(root.GetProperty("product").GetRawText(), jsonOpts));
-                            break;
-                        case "sync_cart":
-                            var cartOpts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            document.getElementById('receiptText').innerText = data.receiptText;
+            document.getElementById('orderDate').innerText = data.orderDate;
+            document.getElementById('desiredTime').innerText = data.desiredTime;
+            document.getElementById('plannedTime').innerText = data.plannedTime;
 
-                            // Build a lookup map of original DB amounts before overwriting orderLine
-                            var originalAmountMap = orderLine
-                                .Where(x => x.orderDetailId > 0)
-                                .ToDictionary(x => x.orderDetailId, x => x.originalAmount > 0 ? x.originalAmount : x.amount);
-
-                            var incomingCart = JsonSerializer.Deserialize<List<Product>>(root.GetProperty("cart").GetRawText(), cartOpts);
-
-                            foreach (var p in incomingCart)
-                            {
-                                if (p.pos_value > 0)
-                                {
-                                    p.originalPrice = Utils.Util.Round((decimal)p.pos_value, stepAmount);
-                                }
-
-                                if (string.IsNullOrEmpty(p.action))
-                                {
-                                    p.action = (!modifyOrder || p.orderDetailId == 0) ? "I" : "U";
-                                }
-
-                                // Restore the true original DB quantity for existing lines
-                                if (modifyOrder && p.orderDetailId > 0)
-                                {
-                                    if (originalAmountMap.TryGetValue(p.orderDetailId, out int origQty))
-                                    {
-                                        p.originalAmount = origQty;
-                                    }
-                                    else if (p.originalAmount == 0)
-                                    {
-                                        p.originalAmount = p.amount;
-                                    }
-                                }
-                            }
-
-                            orderLine = incomingCart;
-                            RecalculateOperationalPricing();
-                            break;
-                        case "sync_comment":
-                            comment = root.GetProperty("value").GetString();
-                            break;
-                        case "set_desired_del_time":
-                            desiredDelTime = root.GetProperty("value").GetString();
-                            break;
-                        case "apply_promo":
-                            promoType = root.GetProperty("promoType").GetString();
-                            promoValue = root.GetProperty("promoValue").GetDecimal();
-                            RecalculateOperationalPricing();
-                            break;
-                        case "set_delivery_type":
-                            UpdateOrderTypeState(root.GetProperty("type").GetString());
-                            break;
-                        case "trigger_action":
-                            ProcessWorkflowIntent(root.GetProperty("id").GetString());
-                            break;
-
-                        case "open_customer_checkout":
-                            OpenIntegratedCustomerModal();
-                            break;
-                        case "customer_lookup":
-                            string searchPhone = root.GetProperty("phone").GetString();
-                            PerformCustomerLookup(searchPhone);
-                            break;
-                        case "customer_submit":
-                            await HandleCustomerSubmit(root.GetProperty("data"));
-                            break;
-
-                        case "open_table_picker":
-                            OpenIntegratedTableModal();
-                            break;
-                        case "table_submit":
-                            int targetTableId = root.GetProperty("tableId").GetInt32();
-                            int chosenPaymentId = root.GetProperty("paymentMethodId").GetInt32();
-                            HandleTableSubmit(targetTableId, chosenPaymentId);
-                            break;
-
-                        case "edit_cart_item":
-                            string editLineId = root.GetProperty("lineId").GetString();
-                            await ReopenCartItemDetailInWebView(editLineId);
-                            break;
-
-                        case "modal_load_type_items":
-                            await PushTypeItemsToModal(root.GetProperty("typeId").GetInt32(), root.GetProperty("isProductExtra").GetBoolean());
-                            break;
-                        case "modal_add_modifier":
-                            modifierController.AddModifier(root);
-                            await webView.CoreWebView2.ExecuteScriptAsync($"window.renderSubCart({JsonSerializer.Serialize(modifierController.GetSubCartPayload())});");
-                            break;
-                        case "remove_modifier":
-                        case "modal_remove_modifier":
-                            modifierController.RemoveModifier(root);
-                            await webView.CoreWebView2.ExecuteScriptAsync($"window.renderSubCart({JsonSerializer.Serialize(modifierController.GetSubCartPayload())});");
-                            break;
-                        case "modal_submit":
-                            Product finalized = modifierController.FinalizeProduct();
-                            if (modifierController.IsEditing)
-                            {
-                                int index = orderLine.FindIndex(i => i.lineId == modifierController.EditingLineId);
-                                if (index >= 0)
-                                {
-                                    orderLine[index] = finalized;
-                                    if (orderLine[index].action != "I" && orderLine[index].orderDetailId != 0)
-                                    {
-                                        orderLine[index].action = "U";
-                                    }
-                                }
-                                RecalculateOperationalPricing();
-                            }
-                            else
-                            {
-                                PushProductToFrontend(finalized);
-                            }
-                            await webView.CoreWebView2.ExecuteScriptAsync("window.closeModifierModal();");
-                            break;
-                    }
-                }
-            }
-            catch (Npgsql.PostgresException ex) when (ex.SqlState == "23503")
-            {
-                MessageBox.Show("Een van de gekozen extra's is niet meer beschikbaar in de database. Ververs het menu en probeer opnieuw.", "Menu Niet Up-to-Date", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Fout bij verwerken WebView bericht: " + ex.Message, "Brug Fout", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                SentrySdk.CaptureException(ex);
-            }
-        }
-
-        private string GetResourceImageBase64(string resourceName)
-        {
-            if (string.IsNullOrEmpty(resourceName)) return null;
-            return ImageBase64Cache.GetOrAdd(resourceName, name =>
-            {
-                try
-                {
-                    object obj = Properties.Resources.ResourceManager.GetObject(name);
-                    if (obj is Image img)
-                    {
-                        using (MemoryStream ms = new MemoryStream())
-                        {
-                            img.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-                            return "data:image/png;base64," + Convert.ToBase64String(ms.ToArray());
-                        }
-                    }
-                }
-                catch { }
-                return null;
-            });
-        }
-
-        private void OpenIntegratedCustomerModal()
-        {
-            this.BeginInvoke((Action)(async () =>
-            {
-                try
-                {
-                    var zones = Global.GetDeliveryZones() ?? new List<DeliveryZone>();
-                    var rawPaymentMethods = Global.GetPaymentMethodsByShopId(Settings.shopId);
-
-                    List<object> paymentMethods;
-                    if (rawPaymentMethods != null && rawPaymentMethods.Count > 0)
-                    {
-                        paymentMethods = rawPaymentMethods.Select(pm => (object)new
-                        {
-                            id = pm.payment_method_id,
-                            name = pm.name,
-                            image = GetResourceImageBase64(pm.resource_name)
-                        }).ToList();
-                    }
-                    else
-                    {
-                        paymentMethods = new List<object> { new { id = 1, name = "Contant", image = GetResourceImageBase64("cash") } };
-                    }
-
-                    int defaultPaymentId = rawPaymentMethods?.FirstOrDefault(p => p.resource_name == "cash")?.payment_method_id ?? 1;
-
-                    string shopStreet = "";
-                    string shopHouseNr = "";
-                    var addr = Settings.shop?.addressLine1;
-                    if (!string.IsNullOrWhiteSpace(addr))
-                    {
-                        addr = addr.Trim();
-                        int lastSpace = addr.LastIndexOf(' ');
-                        if (lastSpace > 0)
-                        {
-                            shopStreet = addr.Substring(0, lastSpace).Trim();
-                            shopHouseNr = addr.Substring(lastSpace + 1).Trim();
-                        }
-                        else
-                        {
-                            shopStreet = addr;
-                        }
-                    }
-
-                    bool isPhoneReadOnly = !string.IsNullOrEmpty(phoneNumber) && phoneNumber != "P";
-
-                    bool visibleClientName = false;
-                    try { visibleClientName = Properties.Settings.Default.VisibleClientName; } catch { }
-
-                    var modalPayload = new
-                    {
-                        zones = zones.Select(z => new { name = z.name ?? "", postalcode = z.postalcode ?? "", isDefault = z.defaultZone }),
-                        paymentMethods = paymentMethods,
-                        defaultPaymentId = defaultPaymentId,
-                        phoneReadOnly = isPhoneReadOnly,
-                        phoneNr = phoneNumber ?? "",
-                        shopStreet = shopStreet,
-                        shopHouseNr = shopHouseNr,
-                        visibleClientName = visibleClientName
-                    };
-
-                    string rawJson = JsonSerializer.Serialize(modalPayload);
-                    string safeJsArg = JsonSerializer.Serialize(rawJson);
-
-                    if (webView != null && webView.CoreWebView2 != null)
-                    {
-                        await webView.CoreWebView2.ExecuteScriptAsync($"window.openCustomerModal({safeJsArg});");
-                    }
-
-                    if (isPhoneReadOnly)
-                    {
-                        PerformCustomerLookup(phoneNumber);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    SentrySdk.CaptureException(ex);
-                    MessageBox.Show("Fout bij openen klantenscherm: " + ex.Message, "Fout", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }));
-        }
-
-        private void OpenIntegratedTableModal()
-        {
-            this.BeginInvoke((Action)(async () =>
-            {
-                try
-                {
-                    List<Table> allTables = Global.PopulateTables() ?? new List<Table>();
-                    var rawPaymentMethods = Global.GetPaymentMethodsByShopId(Settings.shopId);
-
-                    List<object> paymentMethods;
-                    if (rawPaymentMethods != null && rawPaymentMethods.Count > 0)
-                    {
-                        paymentMethods = rawPaymentMethods.Select(pm => (object)new
-                        {
-                            id = pm.payment_method_id,
-                            name = pm.name,
-                            image = GetResourceImageBase64(pm.resource_name)
-                        }).ToList();
-                    }
-                    else
-                    {
-                        paymentMethods = new List<object> { new { id = 1, name = "Contant", image = GetResourceImageBase64("cash") } };
-                    }
-
-                    int defaultPaymentId = rawPaymentMethods?.FirstOrDefault(p => p.resource_name == "cash")?.payment_method_id ?? 1;
-
-                    var tablePayload = new
-                    {
-                        paymentMethods = paymentMethods,
-                        defaultPaymentId = defaultPaymentId,
-                        tables = allTables.Select(t => new {
-                            id = t.table_id,
-                            name = t.name,
-                            isOccupied = Global.GetTableActivness(t.table_id)
-                        }).ToList()
-                    };
-
-                    string rawJson = JsonSerializer.Serialize(tablePayload);
-                    string safeJsArg = JsonSerializer.Serialize(rawJson);
-
-                    if (webView != null && webView.CoreWebView2 != null)
-                    {
-                        await webView.CoreWebView2.ExecuteScriptAsync($"window.openTableModal({safeJsArg});");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    SentrySdk.CaptureException(ex);
-                    MessageBox.Show("Fout bij openen tafelscherm: " + ex.Message, "Fout", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }));
-        }
-
-        private void HandleTableSubmit(int tableId, int chosenPaymentMethodId)
-        {
-            this.BeginInvoke((Action)(async () =>
-            {
-                if (Global.GetTableActivness(tableId))
-                {
-                    MessageBox.Show("Tafel is reeds in gebruik", "Foutmelding", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                checkOutTable = true;
-                Global.takeawayFlag = false;
-                EvaluateDiscountsState();
-
-                table = Global.PopulateTables().FirstOrDefault(t => t.table_id == tableId);
-                paymentMethodId = chosenPaymentMethodId;
-
-                if (table != null)
-                {
-                    client = new Client("", "", "", "", "", "", "", null);
-                    phoneNumber = "";
-                    userId = null;
-                    orderState = 6;
-
-                    await CommitOrderRecord();
-                    EnforcePaymentInstrumentAllocation();
-
-                    var linesSnapshot = orderLine.ToList();
-                    Guid? targetIdSnapshot = orderId ?? g;
-                    string orderNumSnapshot = orderNumber;
-                    Table tableSnapshot = table;
-                    string commentSnapshot = comment;
-                    string delTimeSnapshot = desiredDelTime;
-                    Client clientSnapshot = client;
-
-                    _ = Task.Run(() => {
-                        ExecuteKitchenPrintSequence(linesSnapshot, targetIdSnapshot, orderNumSnapshot, tableSnapshot, commentSnapshot, delTimeSnapshot, clientSnapshot);
-                        if (Properties.Settings.Default.autoPrintTable)
-                        {
-                            RunReceiptPrintOutputSequence(orderState);
-                        }
-                    });
-
-                    orderLine.Clear();
-                    CloseFormContext();
-                }
-            }));
-        }
-
-        private void PerformCustomerLookup(string phone)
-        {
-            this.BeginInvoke((Action)(() =>
-            {
-                Client existing = Global.clientCheck(phone);
-                if (existing != null)
-                {
-                    client = existing;
-                    userId = existing.userId;
-                    _ = webView.CoreWebView2.ExecuteScriptAsync($"window.populateClientData({JsonSerializer.Serialize(existing)});");
-                }
-            }));
-        }
-
-        private async Task HandleCustomerSubmit(JsonElement data)
-        {
-            phoneNumber = data.GetProperty("phone").GetString() ?? "";
-            string firstName = data.GetProperty("firstName").GetString() ?? "";
-            string lastName = data.GetProperty("lastName").GetString() ?? "";
-            string street = data.GetProperty("street").GetString() ?? "";
-            string houseNr = data.GetProperty("houseNr").GetString() ?? "";
-            string postalCode = data.GetProperty("postalCode").GetString() ?? "";
-
-            paymentMethodId = data.GetProperty("paymentMethodId").GetInt32();
-            bool receiptPrint = data.GetProperty("posPrint").GetBoolean();
-            bool kitchenPrint = data.GetProperty("kitchenPrint").GetBoolean();
-
-            var zones = Global.GetDeliveryZones();
-            deliveryZone = zones?.FirstOrDefault(z => z.postalcode == postalCode) ?? new DeliveryZone { postalcode = postalCode, name = "" };
-
-            if (client == null)
-            {
-                bool hasEnteredDetails = !string.IsNullOrWhiteSpace(phoneNumber) || !string.IsNullOrWhiteSpace(firstName) || !string.IsNullOrWhiteSpace(lastName) || !string.IsNullOrWhiteSpace(street);
-
-                if (hasEnteredDetails)
-                {
-                    using (var con = DbFactory.CreateConnection())
-                    {
-                        Guid gNew = Guid.NewGuid();
-                        NpgsqlCommand insertSp = new NpgsqlCommand("sp_user_creation", con) { CommandType = CommandType.StoredProcedure };
-                        insertSp.Parameters.AddWithValue("@p_shop_id", Convert.ToInt32(Settings.shopId));
-                        insertSp.Parameters.AddWithValue("@p_user_id", gNew);
-                        insertSp.Parameters.AddWithValue("@p_first_name", firstName);
-                        insertSp.Parameters.AddWithValue("@p_last_name", lastName);
-                        insertSp.Parameters.AddWithValue("@p_street", street);
-                        insertSp.Parameters.AddWithValue("@p_hous_no", houseNr);
-                        insertSp.Parameters.AddWithValue("@p_postal_code", postalCode);
-                        insertSp.Parameters.AddWithValue("@p_application_code", Global.GetApplicationId());
-                        insertSp.Parameters.AddWithValue("@p_city", deliveryZone.name ?? "");
-                        insertSp.Parameters.AddWithValue("@p_phone_no", phoneNumber);
-                        insertSp.Parameters.AddWithValue("@p_email", "");
-                        insertSp.Parameters.AddWithValue("@p_type", "");
-
-                        await con.OpenAsync();
-                        await insertSp.ExecuteScalarAsync();
-                        userId = gNew;
-                    }
-                    client = new Client(firstName, lastName, street, houseNr, postalCode, deliveryZone.name, phoneNumber, userId);
-                }
-                else
-                {
-                    client = new Client("", "", "", "", "", "", "", null);
-                    userId = null;
-                }
-            }
-            else
-            {
-                bool hasEnteredDetails = !string.IsNullOrWhiteSpace(phoneNumber) || !string.IsNullOrWhiteSpace(firstName) || !string.IsNullOrWhiteSpace(lastName) || !string.IsNullOrWhiteSpace(street);
-
-                if (hasEnteredDetails)
-                {
-                    using (var con = DbFactory.CreateConnection())
-                    {
-                        string query = "UPDATE user_detail SET first_name = @first_name, last_name = @last_name, street = @street, hous_no = @hous_no, city = @city, postal_code=@postal_code WHERE user_id = @user_id AND shop_id = @shopId";
-                        NpgsqlCommand command = new NpgsqlCommand(query, con);
-                        command.Parameters.AddWithValue("@first_name", firstName);
-                        command.Parameters.AddWithValue("@last_name", lastName);
-                        command.Parameters.AddWithValue("@street", street);
-                        command.Parameters.AddWithValue("@hous_no", houseNr);
-                        command.Parameters.AddWithValue("@city", deliveryZone.name ?? "");
-                        command.Parameters.AddWithValue("@user_id", client.userId);
-                        command.Parameters.AddWithValue("@postal_code", postalCode);
-                        command.Parameters.AddWithValue("@shopId", Convert.ToInt32(Settings.shopId));
-
-                        await con.OpenAsync();
-                        await command.ExecuteNonQueryAsync();
-                    }
-                    userId = client.userId;
-                }
+            if (data.isCanceled) {
+                const btn = document.getElementById('btnCancel');
+                btn.disabled = true; 
+                btn.innerText = "Geannuleerd"; 
+                btn.style.opacity = "0.6";
+                document.getElementById('btnEdit').disabled = true;
             }
 
-            await CommitOrderRecord();
-            EnforcePaymentInstrumentAllocation();
-
-            // Snapshot all state variables before clearing and closing form
-            var linesSnapshot = orderLine.ToList();
-            Guid? targetIdSnapshot = orderId ?? g;
-            string orderNumSnapshot = orderNumber;
-            Table tableSnapshot = table;
-            string commentSnapshot = comment;
-            string delTimeSnapshot = desiredDelTime;
-            Client clientSnapshot = client;
-
-            _ = Task.Run(() => {
-                if (kitchenPrint)
-                {
-                    ExecuteKitchenPrintSequence(linesSnapshot, targetIdSnapshot, orderNumSnapshot, tableSnapshot, commentSnapshot, delTimeSnapshot, clientSnapshot);
-                }
-                if (receiptPrint)
-                {
-                    RunReceiptPrintOutputSequence(orderState);
-                }
+            const pSel = document.getElementById('paymentSelect');
+            pSel.innerHTML = '';
+            data.paymentMethods.forEach(pm => {
+                let opt = document.createElement('option');
+                opt.value = pm.id; 
+                opt.innerText = pm.name;
+                if (pm.id === data.selectedPaymentId) opt.selected = true;
+                pSel.appendChild(opt);
             });
 
-            orderLine.Clear();
-            CloseFormContext();
-        }
+            document.getElementById('paymentHistoryText').innerText = data.paymentHistoryText || 'Geen betalingen gevonden';
 
-        private async Task ReopenCartItemDetailInWebView(string lineId)
-        {
-            var itemToEdit = orderLine.FirstOrDefault(i => i.lineId == lineId);
-            if (itemToEdit == null) return;
-
-            Catalog.dsExtras.Tables[0].DefaultView.RowFilter = "main_product_id = " + itemToEdit.main_product_id;
-            Catalog.dsProductExtras.Tables[0].DefaultView.RowFilter = "product_id = " + itemToEdit.product_id;
-            int modifiersCount = Catalog.dsExtras.Tables[0].DefaultView.Count + Catalog.dsProductExtras.Tables[0].DefaultView.Count;
-
-            if (modifiersCount == 0) return;
-
-            modifierController.Initialize(itemToEdit, isEditing: true, lineId: lineId);
-
-            var initData = new { productName = itemToEdit.name, basePrice = itemToEdit.pos_value };
-            await webView.CoreWebView2.ExecuteScriptAsync($"window.initProduct({JsonSerializer.Serialize(initData)});");
-            await webView.CoreWebView2.ExecuteScriptAsync($"window.openModifierModal(true, '{lineId}');");
-            await SyncModalTypesToWeb(itemToEdit);
-        }
-
-        private DateTime RoundUp(DateTime dt, TimeSpan d)
-        {
-            return new DateTime(((dt.Ticks + d.Ticks - 1) / d.Ticks) * d.Ticks);
-        }
-
-        private List<DateTime> GetHoursForEvent(DateTime start, DateTime end)
-        {
-            DateTime today = DateTime.Today;
-            DateTime endOfMonth = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
-
-            var hours = new List<DateTime>();
-            var current = new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0);
-
-            if (end < current)
-            {
-                if (today != endOfMonth)
-                {
-                    var newEnd = new DateTime(end.Year, end.Month, end.Day + 1, end.Hour, end.Minute, 0);
-                    while (current < newEnd)
-                    {
-                        hours.Add(current);
-                        current = current.AddMinutes(30);
-                    }
-                }
-                else
-                {
-                    int endMonth = end.Month;
-                    if (endMonth == 12) endMonth = 1;
-                    var newEnd = new DateTime(end.Year, endMonth + 1, 1, end.Hour, end.Minute, 0);
-                    while (current < newEnd)
-                    {
-                        hours.Add(current);
-                        current = current.AddMinutes(30);
-                    }
-                }
-            }
-            else
-            {
-                while (current < end)
-                {
-                    hours.Add(current);
-                    current = current.AddMinutes(30);
-                }
-            }
-            return hours;
-        }
-
-        private List<string> GetDeliveryTimeSlots()
-        {
-            var timeSlots = new List<string> { "ZSM" };
-            try
-            {
-                var restaurantList = new RestaurantTimingList();
-                string openInfo = restaurantList.CheckIsOpen(DateTime.Now.DayOfWeek, DateTime.Now.ToShortTimeString());
-
-                if (Convert.ToString(openInfo.Split(';')[2]) != "NOORDER")
-                {
-                    if ((DateTime.Now.TimeOfDay < TimeSpan.Parse(openInfo.Split(';')[3])))
-                    {
-                        foreach (DateTime item in GetHoursForEvent(Convert.ToDateTime(openInfo.Split(';')[3]).AddMinutes(40), Convert.ToDateTime(openInfo.Split(';')[4])))
-                        {
-                            DateTime rounded = RoundUp(item, TimeSpan.FromMinutes(15));
-                            if (rounded != Convert.ToDateTime(openInfo.Split(';')[4]))
-                            {
-                                string slotStr = rounded.ToString("HH:mm");
-                                if (!timeSlots.Contains(slotStr)) timeSlots.Add(slotStr);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        foreach (DateTime item in GetHoursForEvent(DateTime.Now.AddMinutes(40), Convert.ToDateTime(openInfo.Split(';')[4])))
-                        {
-                            DateTime rounded = RoundUp(item, TimeSpan.FromMinutes(15));
-                            if (rounded != Convert.ToDateTime(openInfo.Split(';')[4]))
-                            {
-                                string slotStr = rounded.ToString("HH:mm");
-                                if (!timeSlots.Contains(slotStr)) timeSlots.Add(slotStr);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                SentrySdk.CaptureException(ex);
-            }
-            return timeSlots;
-        }
-
-        private async Task SynchronizeLookupData()
-        {
-            await webView.CoreWebView2.ExecuteScriptAsync($"window.renderCategories({JsonSerializer.Serialize(Catalog.GetActiveMainProducts())});");
-
-            int catFontSize = 18;
-            int prodFontSize = 17;
-            try { catFontSize = Convert.ToInt32(Properties.Settings.Default.CategoryFontSize); } catch { }
-            try { prodFontSize = Convert.ToInt32(Properties.Settings.Default.productFontSize); } catch { }
-
-            await webView.CoreWebView2.ExecuteScriptAsync($"window.applyFontSettings({catFontSize}, {prodFontSize});");
-
-            var timeSlots = GetDeliveryTimeSlots();
-            await webView.CoreWebView2.ExecuteScriptAsync($"window.renderTimeSlots({JsonSerializer.Serialize(timeSlots)});");
-
-            string initType = "delivery";
-
-            if (modifyOrder && orderId != null)
-            {
-                using (var con = DbFactory.CreateConnection())
-                {
-                    await con.OpenAsync();
-                    using (var cmd = new NpgsqlCommand("SELECT order_status_code, take_away, table_id FROM orders WHERE order_id = @orderId", con))
-                    {
-                        cmd.Parameters.Add("@orderId", NpgsqlTypes.NpgsqlDbType.Uuid).Value = orderId.Value;
-                        using (var reader = await cmd.ExecuteReaderAsync())
-                        {
-                            if (await reader.ReadAsync())
-                            {
-                                bool isTakeaway = reader["take_away"] != DBNull.Value && Convert.ToBoolean(reader["take_away"]);
-                                object tblObj = reader["table_id"];
-                                string statusCode = reader["order_status_code"]?.ToString();
-
-                                if (tblObj != DBNull.Value && Convert.ToInt32(tblObj) != 99999)
-                                {
-                                    initType = "table";
-                                    orderState = 6;
-                                    Global.takeawayFlag = false;
-                                }
-                                else if (isTakeaway || statusCode == "7")
-                                {
-                                    initType = "takeaway";
-                                    orderState = 7;
-                                    Global.takeawayFlag = true;
-                                }
-                                else
-                                {
-                                    initType = "delivery";
-                                    orderState = 2;
-                                    Global.takeawayFlag = false;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                bool isTableState = (orderState == 6 || orderState == 10 || orderState == 11) || (table != null && table.table_id != 99999);
-                if (orderState == 7 || Global.takeawayFlag)
-                {
-                    initType = "takeaway";
-                    orderState = 7;
-                }
-                else if (isTableState)
-                {
-                    initType = "table";
-                    orderState = 6;
-                }
-                else
-                {
-                    initType = "delivery";
-                    if (orderState == 0) orderState = 2;
-                }
-            }
-
-            await webView.CoreWebView2.ExecuteScriptAsync($"window.setOrderTypeUI('{initType}');");
-
-            bool isTableStateActive = (orderState == 6 || orderState == 10 || orderState == 11);
-            bool isExistingTable = isTableStateActive || (table != null && table.table_id != 99999 && modifyOrder);
-            await webView.CoreWebView2.ExecuteScriptAsync($"window.setPosMode({isExistingTable.ToString().ToLower()});");
-
-            bool isExternal = (orderState == 1 || orderState == 5 || orderState == 9 || orderState == 10);
-            if (isExternal) await webView.CoreWebView2.ExecuteScriptAsync("window.lockExternalOrder();");
-
-            if ((modifyOrder && orderId != null) || (orderLine != null && orderLine.Count > 0))
-            {
-                RecalculateOperationalPricing();
+            const timeline = document.getElementById('auditTimeline');
+            if (data.auditLogs && data.auditLogs.length > 0) {
+                timeline.innerHTML = data.auditLogs.map(log => `
+                    <div class="audit-card">
+                        <div class="audit-meta">
+                            <span>Revisie #${log.revision_number} (${log.change_type})</span>
+                            <span>${log.created_at}</span>
+                        </div>
+                        ${renderDeltaSummary(log.delta_data)}
+                    </div>
+                `).join('');
             }
         }
 
-        private async Task SynchronizeProductGrid(int mainProductId)
-        {
-            List<Product> products = await Catalog.GetActiveProductsAsync(mainProductId);
-            if (Properties.Settings.Default.productSorting == "abc") products = products.OrderBy(o => o.name).ToList();
-            else if (Properties.Settings.Default.productSorting == "123") products = products.OrderBy(o => o.sort_id).ToList();
-
-            var modernProductList = products.Select(p => new
-            {
-                p.product_id,
-                p.main_product_id,
-                mainProductName = p.mainProduct?.name ?? string.Empty,
-                p.name,
-                p.description,
-                p.pos_value,
-                p.value,
-                p.value_editable,
-                p.lineTotal,
-                p.lineId,
-                p.amount,
-                p.action,
-                color = Utils.Util.ArgbToHex(p.color)
-            }).ToList();
-
-            await webView.CoreWebView2.ExecuteScriptAsync($"window.renderProducts({JsonSerializer.Serialize(modernProductList)});");
-        }
-
-        private async void ProcessProductSelection(Product p)
-        {
-            Catalog.dsExtras.Tables[0].DefaultView.RowFilter = "main_product_id = " + p.main_product_id;
-            Catalog.dsProductExtras.Tables[0].DefaultView.RowFilter = "product_id = " + p.product_id;
-            int modifiers = Catalog.dsExtras.Tables[0].DefaultView.Count + Catalog.dsProductExtras.Tables[0].DefaultView.Count;
-
-            if (modifiers > 0)
-            {
-                modifierController.Initialize(p);
-
-                var initData = new { productName = p.name, basePrice = p.pos_value };
-                await webView.CoreWebView2.ExecuteScriptAsync($"window.initProduct({JsonSerializer.Serialize(initData)});");
-
-                await webView.CoreWebView2.ExecuteScriptAsync("window.openModifierModal(false);");
-                await SyncModalTypesToWeb(p);
-                return;
+        function renderDeltaSummary(delta) {
+            let html = '';
+            if (delta.added_items) {
+                delta.added_items.forEach(i => html += `<div class="change-item text-add">+ Toegevoegd: ${i.amount}x ${i.name} (€${i.unit_price})</div>`);
             }
-
-            decimal computedValue = (decimal)p.pos_value;
-            Discount discount = Global.DiscountControl(p.main_product_id, p.product_id);
-            if (discount != null)
-            {
-                if (discount.type.Equals("percentage")) computedValue -= (discount.value / 100) * computedValue;
-                if (discount.type.Equals("fixed")) computedValue = discount.value;
-                if (discount.type.Equals("minValue")) computedValue -= discount.value;
+            if (delta.removed_items) {
+                delta.removed_items.forEach(i => html += `<div class="change-item text-del">- Verwijderd: ${i.amount}x ${i.name}</div>`);
             }
-
-            p.amount = 1;
-            p.lineTotal = Utils.Util.Round(computedValue, stepAmount);
-            p.lineId = Convert.ToString(p.main_product_id) + Convert.ToString(p.product_id);
-            p.value = Utils.Util.Round((decimal)p.pos_value, stepAmount);
-            p.discount = discount;
-            p.originalPrice = Utils.Util.Round((decimal)p.pos_value, stepAmount);
-            p.action = "I";
-
-            PushProductToFrontend(p);
-        }
-
-        private async Task SyncModalTypesToWeb(Product p)
-        {
-            var typesList = new List<object>();
-            foreach (var item in Catalog.GetExtraTypes(p.main_product_id)) typesList.Add(new { id = item.extra_type_id, name = item.name.ToUpper(), isProductExtra = false });
-            foreach (var item in Catalog.GetProductExtraTypes(p.product_id)) typesList.Add(new { id = item.product_extra_line_id, name = item.name.ToUpper(), isProductExtra = true });
-
-            await webView.CoreWebView2.ExecuteScriptAsync($"window.renderModalTypes({JsonSerializer.Serialize(typesList)});");
-            await webView.CoreWebView2.ExecuteScriptAsync($"window.renderSubCart({JsonSerializer.Serialize(modifierController.GetSubCartPayload())});");
-        }
-
-        private async Task PushTypeItemsToModal(int typeId, bool isProductExtra)
-        {
-            var itemsList = new List<object>();
-            if (isProductExtra)
-            {
-                var pExtras = await Catalog.GetProductExtras(modifierController.ActiveProduct.product_id, typeId);
-                if (Properties.Settings.Default.extrasSorting == "abc") pExtras = pExtras.OrderBy(o => o.name).ToList();
-                foreach (var item in pExtras) itemsList.Add(new { id = item.product_extra_id, name = item.name, price = item.value, rawData = item });
+            if (delta.quantity_changes) {
+                delta.quantity_changes.forEach(i => html += `<div class="change-item">✏️ Aantal aangepast: ${i.name} (${i.old_amount}x ➔ ${i.new_amount}x)</div>`);
             }
-            else
-            {
-                var cExtras = await Catalog.GetExtras(modifierController.ActiveProduct.main_product_id, typeId);
-                if (Properties.Settings.Default.extrasSorting == "abc") cExtras = cExtras.OrderBy(o => o.name).ToList();
-                foreach (var item in cExtras) itemsList.Add(new { id = item.extra_id, name = item.name, price = item.value, rawData = item });
+            if (delta.header && delta.header.old_tot_price !== delta.header.new_tot_price) {
+                html += `<div class="change-item">💰 Totaalprijs aangepast: €${delta.header.old_tot_price} ➔ €${delta.header.new_tot_price}</div>`;
             }
-            await webView.CoreWebView2.ExecuteScriptAsync($"window.renderModalModifiers({JsonSerializer.Serialize(itemsList)}, {isProductExtra.ToString().ToLower()});");
+            return html || '<div class="change-item">Details bijgewerkt</div>';
         }
-
-        private async void PushProductToFrontend(Product p)
-        {
-            await webView.CoreWebView2.ExecuteScriptAsync($"window.addProductToCart({JsonSerializer.Serialize(p)});");
-            RecalculateOperationalPricing();
-        }
-
-        private void EnsureMainProductNames()
-        {
-            if (orderLine == null || orderLine.Count == 0) return;
-
-            var missing = orderLine.Where(p => string.IsNullOrWhiteSpace(p.mainProductName) && p.main_product_id > 0).ToList();
-            if (missing.Count == 0) return;
-
-            var ids = missing.Select(p => p.main_product_id).Distinct().ToList();
-            var nameMap = new Dictionary<int, string>();
-
-            try
-            {
-                using (var con = DbFactory.CreateConnection())
-                {
-                    con.Open();
-                    using (var cmd = new NpgsqlCommand("SELECT main_product_id, name FROM main_product WHERE main_product_id = ANY(@ids)", con))
-                    {
-                        cmd.Parameters.AddWithValue("@ids", ids.ToArray());
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                nameMap[reader.GetInt32(0)] = reader.GetString(1);
-                            }
-                        }
-                    }
-                }
-
-                foreach (var p in missing)
-                {
-                    if (nameMap.TryGetValue(p.main_product_id, out string catName))
-                    {
-                        p.mainProductName = catName;
-                    }
-                }
-            }
-            catch { }
-        }
-
-        private async void RecalculateOperationalPricing()
-        {
-            EnsureMainProductNames();
-            EvaluateDiscountsState();
-            decimal total = CalcTotPrice();
-
-            if (webView != null && webView.CoreWebView2 != null)
-            {
-                var serializedCart = orderLine.Where(x => x.action != "D").Select(p => {
-                    decimal extraTotal = (p.extraList?.Sum(e => e.value) ?? 0) + (p.productExtraList?.Sum(pe => pe.value) ?? 0);
-                    decimal baseOrig = p.pos_value > 0 ? (decimal)p.pos_value : (p.originalPrice > 0 ? p.originalPrice : 0);
-                    decimal fullOriginalUnitPrice = baseOrig + extraTotal;
-
-                    return new
-                    {
-                        p.product_id,
-                        p.main_product_id,
-                        p.name,
-                        p.mainProductName,
-                        p.description,
-                        p.pos_value,
-                        p.value,
-                        value_editable = p.value_editable,
-                        valueEditable = p.value_editable,
-                        p.lineTotal,
-                        p.lineId,
-                        p.amount,
-                        p.originalAmount,
-                        p.action,
-                        p.comment,
-                        originalPrice = fullOriginalUnitPrice,
-                        p.priceModified,
-                        p.orderDetailId,
-                        discount = p.discount != null ? new { type = p.discount.type, value = p.discount.value } : null,
-                        productOptionList = p.productOptionList,
-                        extraList = p.extraList,
-                        productExtraList = p.productExtraList
-                    };
-                }).ToList();
-
-                string cartJson = JsonSerializer.Serialize(serializedCart);
-                string commentEscaped = comment?.Replace("'", "\\'") ?? "";
-
-                await webView.CoreWebView2.ExecuteScriptAsync($"window.loadExistingOrder({cartJson}, '{commentEscaped}');");
-                await webView.CoreWebView2.ExecuteScriptAsync($"window.updateTotalsDisplay('{total.ToString("F")}');");
-            }
-        }
-
-        private void UpdateOrderTypeState(string type)
-        {
-            if (type == "takeaway")
-            {
-                Global.takeawayFlag = true;
-                orderState = 7;
-            }
-            else if (type == "table")
-            {
-                Global.takeawayFlag = false;
-                orderState = 6;
-            }
-            else // delivery
-            {
-                Global.takeawayFlag = false;
-                orderState = 2;
-            }
-            RecalculateOperationalPricing();
-        }
-
-        private async void ProcessWorkflowIntent(string intentId)
-        {
-            this.BeginInvoke((Action)(async () =>
-            {
-                try
-                {
-                    switch (intentId)
-                    {
-                        case "btnCloseForm":
-                            CloseFormContext();
-                            break;
-                        case "btnTable":
-                            OpenIntegratedTableModal();
-                            break;
-                        case "btnUpdateOrder":
-                            checkOutTable = false;
-                            RouteTableTransaction();
-
-                            var linesSnapshot = orderLine.ToList();
-                            Guid? targetIdSnapshot = orderId ?? g;
-                            string orderNumSnapshot = orderNumber;
-                            Table tableSnapshot = table;
-                            string commentSnapshot = comment;
-                            string delTimeSnapshot = desiredDelTime;
-                            Client clientSnapshot = client;
-
-                            _ = Task.Run(() => {
-                                ExecuteKitchenPrintSequence(linesSnapshot, targetIdSnapshot, orderNumSnapshot, tableSnapshot, commentSnapshot, delTimeSnapshot, clientSnapshot);
-                                if (Properties.Settings.Default.autoPrintTable)
-                                {
-                                    RunReceiptPrintOutputSequence(orderState);
-                                }
-                            });
-
-                            CloseFormContext();
-                            break;
-                        case "btnCloseOrder":
-                            ExecuteTableCheckOutSequence();
-                            break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    SentrySdk.CaptureException(ex);
-                    MessageBox.Show("Fout bij actie: " + ex.Message, "Fout", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }));
-        }
-
-        private decimal CalcTotPrice()
-        {
-            decimal total = 0;
-            int targetedItemsCount = orderLine.Where(p => p.discount == null && p.action != "D").Count();
-            if (targetedItemsCount > 0)
-            {
-                decimal partialPromo = promoValue / targetedItemsCount;
-                if (promoType.Equals("PERC")) orderLine.Where(p => p.discount == null && p.action != "D").ToList().ForEach(p => p.lineTotal = Utils.Util.Round((p.value - (promoValue / 100) * p.value), stepAmount));
-                if (promoType.Equals("FIXED")) orderLine.Where(p => p.discount == null && p.action != "D").ToList().ForEach(p => p.lineTotal = Math.Max(0, p.value - (partialPromo) / p.amount));
-            }
-            total = orderLine.Where(p => p.action != "D").Sum(item => (item.lineTotal * item.amount));
-            if (deliveryZone != null && orderState != 6 && orderState != 7) total += deliveryZone.deliveryCost;
-            return total;
-        }
-
-        private void EvaluateDiscountsState()
-        {
-            foreach (var item in orderLine.Where(i => i.action != "D"))
-            {
-                if (item.pos_value > 0)
-                {
-                    item.originalPrice = Utils.Util.Round((decimal)item.pos_value, stepAmount);
-                }
-
-                Discount d = Global.DiscountControl(item.main_product_id, item.product_id);
-                decimal extraTotal = item.extraList != null ? item.extraList.Sum(e => e.value) + item.productExtraList.Sum(pe => pe.value) : 0;
-                decimal basePrice = item.originalPrice;
-
-                if (d != null)
-                {
-                    item.discount = d;
-                    if (d.type.Equals("percentage")) item.lineTotal = Utils.Util.Round(((Properties.Settings.Default.promoCalculationMode ? (basePrice + extraTotal) : basePrice) - (d.value / 100) * (Properties.Settings.Default.promoCalculationMode ? (basePrice + extraTotal) : basePrice)) + (!Properties.Settings.Default.promoCalculationMode ? extraTotal : 0), stepAmount);
-                    if (d.type.Equals("fixed")) item.lineTotal = Utils.Util.Round(d.value + extraTotal, stepAmount);
-                    if (d.type.Equals("minValue")) item.lineTotal = Utils.Util.Round((basePrice - d.value) + extraTotal, stepAmount);
-                }
-                else
-                {
-                    item.lineTotal = item.priceModified ? item.lineTotal : Utils.Util.Round(basePrice + extraTotal, stepAmount);
-                    item.discount = null;
-                }
-            }
-        }
-
-        protected async Task CommitOrderRecord()
-        {
-            using (NpgsqlConnection conn = DbFactory.CreateConnection())
-            {
-                await conn.OpenAsync();
-                DateTime nowUnspecified = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
-                string statusCodeStr = (orderState == 7 ? 7 : orderState).ToString();
-
-                if (!modifyOrder)
-                {
-                    g = Guid.NewGuid();
-                    string sql = @"INSERT INTO orders 
-                        (order_id, shop_id, user_id, comment, confirmed, tot_price, desired_del_time, order_date, processed, order_status_code, take_away, display, payment_info, payment_method, is_paid, reduction, reduction_type, user_agent, order_state_id, payment_method_id, table_id, order_number, table_active) 
-                        VALUES (@orderId, @shopId, @userId, @comment, false, @tot_price, @desired_del_time, @orderDate, @processed, @orderStatusCode::varchar, @take_away, true, @paymentinfo, @paymentMethod, false, @reduction, @reduction_type, @user_agent, @orderStateId, @paymentMethodId, @tableId, @orderNumber, @tableActive)";
-
-                    NpgsqlCommand cmd = new NpgsqlCommand(sql, conn);
-                    cmd.Parameters.Add("@orderId", NpgsqlTypes.NpgsqlDbType.Uuid).Value = orderId != null ? (object)orderId : g;
-                    cmd.Parameters.Add("@shopId", NpgsqlTypes.NpgsqlDbType.Integer).Value = Convert.ToInt32(Settings.shopId);
-                    cmd.Parameters.Add("@userId", NpgsqlTypes.NpgsqlDbType.Uuid).Value = userId.HasValue ? (object)userId.Value : DBNull.Value;
-
-                    orderNumber = Global.GenerateUniqueOrderNumber();
-                    cmd.Parameters.Add("@orderNumber", NpgsqlTypes.NpgsqlDbType.Varchar).Value = orderNumber;
-                    cmd.Parameters.Add("@comment", NpgsqlTypes.NpgsqlDbType.Varchar).Value = comment ?? "";
-                    cmd.Parameters.Add("@tot_price", NpgsqlTypes.NpgsqlDbType.Numeric).Value = CalcTotPrice();
-                    cmd.Parameters.Add("@desired_del_time", NpgsqlTypes.NpgsqlDbType.Varchar).Value = string.IsNullOrEmpty(desiredDelTime) ? "ZSM" : desiredDelTime;
-                    cmd.Parameters.Add("@orderDate", NpgsqlTypes.NpgsqlDbType.Timestamp).Value = nowUnspecified;
-                    cmd.Parameters.Add("@processed", NpgsqlTypes.NpgsqlDbType.Boolean).Value = true;
-                    cmd.Parameters.Add("@orderStateId", NpgsqlTypes.NpgsqlDbType.Integer).Value = 1;
-                    cmd.Parameters.Add("@take_away", NpgsqlTypes.NpgsqlDbType.Boolean).Value = orderState == 7;
-                    cmd.Parameters.Add("@orderStatusCode", NpgsqlTypes.NpgsqlDbType.Varchar).Value = statusCodeStr;
-                    cmd.Parameters.Add("@paymentinfo", NpgsqlTypes.NpgsqlDbType.Varchar).Value = DBNull.Value;
-                    cmd.Parameters.Add("@paymentMethod", NpgsqlTypes.NpgsqlDbType.Varchar).Value = "paylocal";
-                    cmd.Parameters.Add("@paymentMethodId", NpgsqlTypes.NpgsqlDbType.Integer).Value = paymentMethodId != 0 ? paymentMethodId : 1;
-                    cmd.Parameters.Add("@user_agent", NpgsqlTypes.NpgsqlDbType.Varchar).Value = DBNull.Value;
-                    cmd.Parameters.Add("@reduction", NpgsqlTypes.NpgsqlDbType.Numeric).Value = promoValue;
-                    cmd.Parameters.Add("@reduction_type", NpgsqlTypes.NpgsqlDbType.Varchar).Value = promoType ?? "";
-
-                    cmd.Parameters.Add("@tableId", NpgsqlTypes.NpgsqlDbType.Integer).Value = (table != null && table.table_id != 99999) ? (object)table.table_id : DBNull.Value;
-                    cmd.Parameters.Add("@tableActive", NpgsqlTypes.NpgsqlDbType.Boolean).Value = (table != null && table.table_id != 99999) ? (object)!checkOutTable : DBNull.Value;
-
-                    await cmd.ExecuteNonQueryAsync();
-                }
-                else
-                {
-                    orderNumber = Global.GetOrderNumberByOrderId(orderId);
-                    if (checkOutTable) Global.SetTableInactive(orderId);
-
-                    string sql = @"UPDATE orders 
-                        SET user_id = @userId, comment = @comment, order_status_code = @orderStatusCode::varchar, take_away = @take_away, reduction = @reduction, table_id = @tableId, tot_price = @totPrice, payment_method_id = @paymentMethodId, reduction_type = @reductionType, table_active = @tableActive 
-                        WHERE order_id = @orderId";
-
-                    NpgsqlCommand cmd = new NpgsqlCommand(sql, conn);
-                    cmd.Parameters.Add("@orderId", NpgsqlTypes.NpgsqlDbType.Uuid).Value = orderId;
-                    cmd.Parameters.Add("@userId", NpgsqlTypes.NpgsqlDbType.Uuid).Value = userId.HasValue ? (object)userId.Value : DBNull.Value;
-                    cmd.Parameters.Add("@totPrice", NpgsqlTypes.NpgsqlDbType.Numeric).Value = CalcTotPrice();
-                    cmd.Parameters.Add("@comment", NpgsqlTypes.NpgsqlDbType.Varchar).Value = comment ?? "";
-                    cmd.Parameters.Add("@take_away", NpgsqlTypes.NpgsqlDbType.Boolean).Value = orderState == 7;
-                    cmd.Parameters.Add("@orderStatusCode", NpgsqlTypes.NpgsqlDbType.Varchar).Value = statusCodeStr;
-                    cmd.Parameters.Add("@reduction", NpgsqlTypes.NpgsqlDbType.Numeric).Value = promoValue;
-                    cmd.Parameters.Add("@reductionType", NpgsqlTypes.NpgsqlDbType.Varchar).Value = promoType ?? "";
-                    cmd.Parameters.Add("@tableId", NpgsqlTypes.NpgsqlDbType.Integer).Value = (table != null && table.table_id != 99999) ? (object)table.table_id : DBNull.Value;
-                    cmd.Parameters.Add("@tableActive", NpgsqlTypes.NpgsqlDbType.Boolean).Value = (table != null && table.table_id != 99999) ? (object)!checkOutTable : DBNull.Value;
-                    cmd.Parameters.Add("@paymentMethodId", NpgsqlTypes.NpgsqlDbType.Integer).Value = paymentMethodId != 0 ? paymentMethodId : 1;
-
-                    await cmd.ExecuteNonQueryAsync();
-
-                    // Record permanent audit log entry for this modification
-                    if (orderId.HasValue)
-                    {
-                        await RecordOrderAuditTrailAsync(conn, orderId.Value);
-                    }
-                }
-            }
-            await CommitOrderDetailsTransaction();
-        }
-
-        private async Task CommitOrderDetailsTransaction()
-        {
-            using (NpgsqlConnection conn = DbFactory.CreateConnection())
-            {
-                await conn.OpenAsync();
-
-                foreach (Product p in orderLine.Where(x => x.action != null))
-                {
-                    using (NpgsqlCommand sp = new NpgsqlCommand("db_user.sp_order_transaction_v3", conn) { CommandType = CommandType.StoredProcedure })
-                    {
-                        sp.Parameters.Add("p_order_id", NpgsqlTypes.NpgsqlDbType.Uuid).Value = orderId != null ? (object)orderId : g;
-                        sp.Parameters.Add("p_order_detail_id", NpgsqlTypes.NpgsqlDbType.Integer).Value = p.orderDetailId != 0 ? (object)p.orderDetailId : DBNull.Value;
-                        sp.Parameters.Add("p_product_id", NpgsqlTypes.NpgsqlDbType.Integer).Value = p.product_id;
-                        sp.Parameters.Add("p_comment", NpgsqlTypes.NpgsqlDbType.Varchar).Value = p.comment ?? "";
-                        sp.Parameters.Add("p_quantity", NpgsqlTypes.NpgsqlDbType.Integer).Value = p.amount;
-                        sp.Parameters.Add("p_value", NpgsqlTypes.NpgsqlDbType.Numeric).Value = p.lineTotal;
-                        sp.Parameters.Add("p_action", NpgsqlTypes.NpgsqlDbType.Varchar).Value = p.action;
-                        sp.Parameters.Add("p_order_flag", NpgsqlTypes.NpgsqlDbType.Boolean).Value = modifyOrder;
-                        sp.Parameters.Add("p_value_modified", NpgsqlTypes.NpgsqlDbType.Boolean).Value = p.priceModified;
-
-                        sp.Parameters.Add("p_discount_id", NpgsqlTypes.NpgsqlDbType.Integer).Value = p.discount != null ? (object)p.discount.week_discount_id : DBNull.Value;
-                        sp.Parameters.Add("p_price_id", NpgsqlTypes.NpgsqlDbType.Integer).Value = DBNull.Value;
-                        sp.Parameters.Add("p_order_line_id", NpgsqlTypes.NpgsqlDbType.Integer).Value = DBNull.Value;
-
-                        IntList3[] optionsArray = new IntList3[0];
-                        if (p.productOptionList != null && p.productOptionList.Count > 0)
-                        {
-                            optionsArray = p.productOptionList.Select(item => new IntList3
-                            {
-                                id = Convert.ToInt32(item.productOptionId),
-                                prefix = null,
-                                order_detail_extra_id = orderId != null ? (int?)item.order_detail_extra_id : null
-                            }).ToArray();
-                        }
-                        var poptionList = sp.Parameters.AddWithValue("p_product_option_list", optionsArray);
-                        poptionList.DataTypeName = "db_user.intlist3[]";
-
-                        Extra2[] extrasArray = new Extra2[0];
-                        if (p.extraList != null && p.extraList.Count > 0)
-                        {
-                            extrasArray = p.extraList.Select(item => new Extra2
-                            {
-                                id = item.extra_id > 0 ? item.extra_id : (item.main_product_extra_id > 0 ? Convert.ToInt32(item.main_product_extra_id) : Convert.ToInt32(item.id)),
-                                prefix = item.prefix,
-                                action = item.action,
-                                order_detail_extra_id = orderId != null ? (int?)item.order_detail_extra_id : null
-                            }).ToArray();
-                        }
-                        var pextraList = sp.Parameters.AddWithValue("p_extra_list", extrasArray);
-                        pextraList.DataTypeName = "db_user.extra2[]";
-
-                        Extra2[] productExtrasArray = new Extra2[0];
-                        if (p.productExtraList != null && p.productExtraList.Count > 0)
-                        {
-                            productExtrasArray = p.productExtraList.Select(item => new Extra2
-                            {
-                                id = item.product_extra_id > 0 ? item.product_extra_id : Convert.ToInt32(item.id),
-                                prefix = item.prefix,
-                                action = item.action,
-                                order_detail_extra_id = orderId != null ? (int?)item.order_detail_extra_id : null
-                            }).ToArray();
-                        }
-                        var pproductExtraList = sp.Parameters.AddWithValue("p_product_extra_list", productExtrasArray);
-                        pproductExtraList.DataTypeName = "db_user.extra2[]";
-
-                        await sp.ExecuteNonQueryAsync();
-                    }
-                }
-            }
-        }
-
-        private async Task RecordOrderAuditTrailAsync(NpgsqlConnection conn, Guid targetOrderId)
-        {
-            try
-            {
-                var addedItems = new List<object>();
-                var removedItems = new List<object>();
-                var quantityChanges = new List<object>();
-
-                // Identify new items added during edit
-                foreach (var item in orderLine.Where(p => p.orderDetailId == 0 || p.action == "I"))
-                {
-                    addedItems.Add(new { product_id = item.product_id, name = item.name, amount = item.amount, unit_price = item.lineTotal });
-                }
-
-                // Identify updated item quantities
-                foreach (var item in orderLine.Where(p => p.orderDetailId > 0 && p.action == "U"))
-                {
-                    if (item.amount != item.originalAmount)
-                    {
-                        quantityChanges.Add(new { order_detail_id = item.orderDetailId, product_id = item.product_id, name = item.name, old_amount = item.originalAmount, new_amount = item.amount, delta = item.amount - item.originalAmount });
-                    }
-                }
-
-                // Check if changes exist
-                if (addedItems.Count == 0 && removedItems.Count == 0 && quantityChanges.Count == 0) return;
-
-                var deltaData = new
-                {
-                    header = new { new_tot_price = CalcTotPrice(), new_comment = comment },
-                    added_items = addedItems,
-                    removed_items = removedItems,
-                    quantity_changes = quantityChanges
-                };
-
-                string jsonPayload = JsonSerializer.Serialize(deltaData);
-
-                // Fetch current MAX revision number for this order
-                string revSql = "SELECT COALESCE(MAX(revision_number), 0) + 1 FROM db_user.order_audit_log WHERE order_id = @orderId";
-                int nextRevision = 1;
-                using (var cmdRev = new NpgsqlCommand(revSql, conn))
-                {
-                    cmdRev.Parameters.AddWithValue("@orderId", targetOrderId);
-                    var res = await cmdRev.ExecuteScalarAsync();
-                    if (res != null) nextRevision = Convert.ToInt32(res);
-                }
-
-                // Insert Audit Log Entry
-                string insertSql = @"INSERT INTO db_user.order_audit_log (order_id, revision_number, change_type, delta_data) 
-                                     VALUES (@orderId, @revision, 'EDIT', @deltaData::jsonb)";
-
-                using (var cmdInsert = new NpgsqlCommand(insertSql, conn))
-                {
-                    cmdInsert.Parameters.AddWithValue("@orderId", targetOrderId);
-                    cmdInsert.Parameters.AddWithValue("@revision", nextRevision);
-                    cmdInsert.Parameters.AddWithValue("@deltaData", jsonPayload);
-                    await cmdInsert.ExecuteNonQueryAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                SentrySdk.CaptureException(ex);
-            }
-        }
-
-        private async void RouteTableTransaction()
-        {
-            Global.takeawayFlag = false;
-            EvaluateDiscountsState();
-            if (table != null)
-            {
-                client = new Client("", "", "", "", "", "", "", null);
-                phoneNumber = "";
-                userId = null;
-                orderState = 6;
-                await CommitOrderRecord();
-            }
-        }
-
-        private void ExecuteTableRoutingWorkflow()
-        {
-            checkOutTable = true;
-            Global.takeawayFlag = false;
-            EvaluateDiscountsState();
-            OpenIntegratedTableModal();
-        }
-
-        private void ExecuteTableCheckOutSequence()
-        {
-            checkOutTable = true;
-            orderState = 6;
-            OpenIntegratedCustomerModal();
-        }
-
-        private void EnforcePaymentInstrumentAllocation()
-        {
-            if (paymentMethodId == 4)
-            {
-                CashCard cc = new CashCard { orderId = orderId != null ? orderId : g, modifyFlag = orderId != null, total = CalcTotPrice() };
-                cc.ShowDialog();
-            }
-        }
-
-        private void ExecuteKitchenPrintSequence(
-            List<Product> snapshotLines = null, 
-            Guid? targetId = null, 
-            string targetOrderNum = null, 
-            Table targetTable = null,
-            string targetComment = null,
-            string targetDelTime = null,
-            Client targetClient = null)
-        {
-            try
-            {
-                List<Product> linesToPrint = snapshotLines ?? orderLine.ToList();
-                if (linesToPrint == null || linesToPrint.Count == 0) return;
-
-                Guid? printTargetId = targetId ?? orderId ?? g;
-                string currentOrderNum = targetOrderNum ?? orderNumber;
-                Table currentTable = targetTable ?? table;
-                string currentComment = targetComment ?? comment ?? "";
-                string currentDelTime = string.IsNullOrEmpty(targetDelTime ?? desiredDelTime) ? "ZSM" : (targetDelTime ?? desiredDelTime);
-                Client currentClient = targetClient ?? client;
-
-                DateTimeFormatInfo df = new DateTimeFormatInfo { MonthDayPattern = "MMMM" };
-                string strDate = DateTime.Now.ToString("dd MM yyyy  HH:mm", df);
-
-                string clientName = currentClient != null ? (currentClient.first_name + " " + currentClient.last_name).Trim() : "";
-                string clientAddr = currentClient != null ? (currentClient.street + " " + currentClient.hous_no).Trim() : "";
-                string clientCity = currentClient != null ? (currentClient.postal_code + " " + currentClient.city).Trim() : "";
-                string clientPhone = currentClient?.phone_no ?? "";
-
-                Global.RunKitchenPrint(
-                    linesToPrint, 
-                    currentComment, 
-                    clientName, 
-                    clientAddr, 
-                    clientCity, 
-                    clientPhone, 
-                    strDate, 
-                    currentDelTime, 
-                    printTargetId, 
-                    currentOrderNum, 
-                    currentTable, 
-                    Properties.Settings.Default.DeltaKitchenPrint,
-                    modifyOrder
-                );
-            }
-            catch (Exception ex)
-            {
-                SentrySdk.CaptureException(ex);
-            }
-        }
-
-        private void RunReceiptPrintOutputSequence(int serviceTypeId)
-        {
-            try
-            {
-                if (Properties.Settings.Default.DisableAutoPrint) return;
-                Classes.Print s = Settings.GetPrintSettings();
-                if (s == null) return;
-
-                var queue = new List<(string Name, int Copies)>();
-                if ((serviceTypeId == 1 || serviceTypeId == 2 || serviceTypeId == 5) && s.delivery != null) queue.AddRange(s.delivery.Select(x => (x.printer, x.printAmount)));
-                else if (serviceTypeId == 6 && s.table != null) queue.AddRange(s.table.Select(x => (x.printer, x.printAmount)));
-                else if (serviceTypeId == 7 && s.takeaway != null) queue.AddRange(s.takeaway.Select(x => (x.printer, x.printAmount)));
-
-                foreach (var printer in queue)
-                {
-                    for (int i = 0; i < printer.Copies; i++)
-                    {
-                        PrintDocument p = new PrintDocument();
-                        p.PrinterSettings.PrinterName = printer.Name;
-                        p.PrintPage += (sender, ev) =>
-                        {
-                            ev.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                            ev.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear;
-                            ev.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-
-                            DateTimeFormatInfo dateFormat = new DateTimeFormatInfo { MonthDayPattern = "MMMM" };
-                            string strDate = DateTime.Now.ToString("dd MM yyyy  HH:mm", dateFormat);
-                            string delTime = string.IsNullOrEmpty(desiredDelTime) ? "ZSM" : desiredDelTime;
-
-                            List<Product> lines = orderId != null ? Global.getOrderByOrderId(orderId) : Global.getOrderByOrderId(g);
-
-                            string clientName = client != null ? (client.first_name + " " + client.last_name).Trim() : "";
-                            string clientAddr = client != null ? (client.street + " " + client.hous_no).Trim() : "";
-                            string clientCity = client != null ? (client.postal_code + " " + client.city).Trim() : "";
-                            string clientPhone = client?.phone_no ?? "";
-
-                            Global.printReceipt(ev, lines, comment ?? "", clientName, clientAddr, clientCity, clientPhone, strDate, delTime, delTime, orderId ?? g, table, orderNumber);
-                        };
-                        p.Print();
-                    }
-                }
-            }
-            catch (Exception ex) { SentrySdk.CaptureException(ex); }
-        }
-
-        private void CloseFormContext()
-        {
-            this.Close();
-            var main = Application.OpenForms.OfType<Main>().FirstOrDefault();
-            main?.BringToFront();
-        }
-
-        private void NewOrderWeb_FormClosing(object sender, FormClosingEventArgs e) => orderLine.Clear();
-
-        private void NewOrderWeb_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            try
-            {
-                if (Properties.Settings.Default.TabletMode)
-                {
-                    this.Hide();
-                    TableLayout layout = new TableLayout { WindowState = FormWindowState.Normal, FormBorderStyle = FormBorderStyle.None };
-                    layout.WindowState = FormWindowState.Maximized;
-                    layout.ShowDialog();
-                    layout.BringToFront();
-                    layout.Activate();
-                    if (layout.Handle != IntPtr.Zero) { NewOrderMain.NativeMethods.SetForegroundWindow(layout.Handle); NewOrderMain.NativeMethods.SetFocus(layout.Handle); }
-                }
-                this.Dispose();
-            }
-            catch (Exception ex) { SentrySdk.CaptureException(ex); }
-        }
-    }
-
-    public class ProductModifierController
-    {
-        public Product ActiveProduct { get; private set; }
-        public bool IsEditing { get; private set; }
-        public string EditingLineId { get; private set; }
-
-        private List<Extra> extras = new List<Extra>();
-        private List<ProductExtra> productExtras = new List<ProductExtra>();
-        private List<ProductOption> options = new List<ProductOption>();
-        private decimal stepAmount = 0.05M;
-
-        public void Initialize(Product p, bool isEditing = false, string lineId = null)
-        {
-            ActiveProduct = p;
-            IsEditing = isEditing;
-            EditingLineId = lineId;
-
-            extras.Clear();
-            productExtras.Clear();
-            options.Clear();
-
-            if (isEditing)
-            {
-                int idCounter = 1;
-
-                if (p.extraList != null && p.extraList.Count > 0)
-                {
-                    string json = JsonSerializer.Serialize(p.extraList);
-                    extras = JsonSerializer.Deserialize<List<Extra>>(json) ?? new List<Extra>();
-
-                    foreach (var ex in extras)
-                    {
-                        if (ex.id == 0) ex.id = int.Parse(DateTime.Now.ToString("HHmmss")) + idCounter++;
-                    }
-                }
-
-                if (p.productExtraList != null && p.productExtraList.Count > 0)
-                {
-                    string json = JsonSerializer.Serialize(p.productExtraList);
-                    productExtras = JsonSerializer.Deserialize<List<ProductExtra>>(json) ?? new List<ProductExtra>();
-
-                    foreach (var pe in productExtras)
-                    {
-                        if (pe.id == 0) pe.id = int.Parse(DateTime.Now.ToString("HHmmss")) + idCounter++;
-                    }
-                }
-
-                if (p.productOptionList != null && p.productOptionList.Count > 0)
-                {
-                    string json = JsonSerializer.Serialize(p.productOptionList);
-                    options = JsonSerializer.Deserialize<List<ProductOption>>(json) ?? new List<ProductOption>();
-                }
-            }
-        }
-
-        public void AddModifier(JsonElement root)
-        {
-            bool isProductExtra = root.GetProperty("isProductExtra").GetBoolean();
-            string prefix = root.GetProperty("prefix").GetString();
-            var rawData = root.GetProperty("rawData");
-
-            if (isProductExtra)
-            {
-                ProductExtra pe = JsonSerializer.Deserialize<ProductExtra>(rawData.GetRawText());
-                int typeCount = productExtras.Count(item => item.product_extra_line_id == pe.product_extra_line_id);
-                pe.prefix = prefix;
-                if (prefix == "-" || prefix == "> enkel" || typeCount < pe.free_limit) pe.value = 0;
-
-                pe.action = "I";
-                pe.id = int.Parse(DateTime.Now.ToString("HHmmssfff")) + new Random().Next(100, 999);
-                productExtras.Add(pe);
-            }
-            else
-            {
-                Extra ex = JsonSerializer.Deserialize<Extra>(rawData.GetRawText());
-                int typeCount = extras.Count(item => item.extra_type_id == ex.extra_type_id);
-                ex.prefix = prefix;
-                if (prefix == "-" || prefix == "> enkel" || typeCount < ex.free_limit) ex.value = 0;
-
-                ex.action = "I";
-                ex.id = int.Parse(DateTime.Now.ToString("HHmmssfff")) + new Random().Next(100, 999);
-                extras.Add(ex);
-            }
-        }
-
-        public void RemoveModifier(JsonElement root)
-        {
-            int uniqueId = root.GetProperty("uniqueId").GetInt32();
-            bool isProductExtra = root.GetProperty("isProductExtra").GetBoolean();
-
-            if (isProductExtra) productExtras.RemoveAll(x => x.id == uniqueId);
-            else extras.RemoveAll(x => x.id == uniqueId);
-        }
-
-        public object GetSubCartPayload()
-        {
-            var cartItems = new List<object>();
-            foreach (var ex in extras) cartItems.Add(new { uniqueId = ex.id, isProductExtra = false, displayName = $"{ex.prefix} {ex.name}", price = ex.value, color = ex.prefix == "-" ? "danger" : (ex.prefix == "+" ? "success" : "neutral") });
-            foreach (var pe in productExtras) cartItems.Add(new { uniqueId = pe.id, isProductExtra = true, displayName = $"{pe.prefix} {pe.name}", price = pe.value, color = pe.prefix == "-" ? "danger" : (pe.prefix == "+" ? "success" : "neutral") });
-
-            decimal total = (decimal)ActiveProduct.pos_value + extras.Sum(i => i.value) + productExtras.Sum(i => i.value);
-            return new { total = total, items = cartItems };
-        }
-
-        public Product FinalizeProduct()
-        {
-            decimal originalValue = (decimal)ActiveProduct.pos_value;
-            decimal priceValue = originalValue;
-            Discount discount = Global.DiscountControl(ActiveProduct.main_product_id, ActiveProduct.product_id);
-
-            if (discount != null)
-            {
-                if (discount.type == "percentage") priceValue -= (discount.value / 100) * originalValue;
-                else if (discount.type == "fixed") priceValue = discount.value;
-                else if (discount.type == "minValue") priceValue -= discount.value;
-            }
-
-            decimal extraTotal = extras.Sum(i => i.value) + productExtras.Sum(i => i.value);
-
-            return new Product(ActiveProduct)
-            {
-                mainProductName = ActiveProduct.mainProductName,
-                amount = 1,
-                productExtraList = new List<ProductExtra>(productExtras),
-                extraList = new List<Extra>(extras),
-                productOptionList = new List<ProductOption>(options),
-                lineTotal = Utils.Util.Round(extraTotal + priceValue, stepAmount),
-                value = Utils.Util.Round(originalValue + extraTotal, stepAmount),
-                originalPrice = originalValue,
-                discount = discount,
-                action = IsEditing ? "U" : "I",
-                lineId = IsEditing ? EditingLineId : (ActiveProduct.main_product_id.ToString() + ActiveProduct.product_id.ToString() + string.Join(",", extras.Select(w => w.prefix + w.extra_id)) + string.Join(",", productExtras.Select(w => w.prefix + w.product_extra_id)))
-            };
-        }
-    }
-}
+    </script>
+</body>
+</html>
