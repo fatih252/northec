@@ -22,7 +22,7 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Eliminates outer scrollbar completely */
+            overflow: hidden; /* Eliminates outer window scrollbar */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: var(--bg-color);
             color: var(--text-main);
@@ -64,7 +64,7 @@
             text-transform: uppercase;
         }
 
-        /* --- Tabs --- */
+        /* --- Touch Navigation Tabs --- */
         .tabs {
             display: flex;
             background: var(--card-bg);
@@ -93,7 +93,7 @@
             background: #fdf2f2;
         }
 
-        /* --- Main Content Area (No Outer Scrollbar) --- */
+        /* --- Main Content Area --- */
         .content-container {
             flex: 1;
             padding: 16px;
@@ -167,13 +167,18 @@
             background: var(--primary);
             color: white;
             border: none;
-            width: 42px;
-            height: 42px;
+            width: 44px;
+            height: 44px;
             border-radius: 8px;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 800;
             cursor: pointer;
             touch-action: manipulation;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .time-btn:active {
+            transform: scale(0.94);
         }
 
         .select-input {
@@ -186,7 +191,7 @@
             min-height: 44px;
         }
 
-        /* --- Single Internal Scrollable Area for Receipt --- */
+        /* --- Internal Scrollable Text Container --- */
         .receipt-list {
             flex: 1;
             list-style: none;
@@ -217,7 +222,7 @@
         .audit-card {
             border-left: 5px solid var(--accent);
             background: #f8fafc;
-            padding: 12px;
+            padding: 14px;
             border-radius: 0 8px 8px 0;
             border-top: 1px solid var(--border);
             border-right: 1px solid var(--border);
@@ -234,7 +239,7 @@
         }
 
         .change-item {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             margin-top: 4px;
         }
@@ -242,7 +247,7 @@
         .text-add { color: var(--success); }
         .text-del { color: var(--danger); }
 
-        /* --- Touch Footer Action Bar --- */
+        /* --- Touch Action Bar Footer --- */
         .footer-actions {
             background: var(--card-bg);
             border-top: 2px solid var(--border);
@@ -271,7 +276,10 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
 
-        .action-btn:active { transform: translateY(1px); opacity: 0.9; }
+        .action-btn:active {
+            transform: translateY(1px);
+            opacity: 0.9;
+        }
 
         .btn-danger { background: #fee2e2; color: var(--danger); }
         .btn-secondary { background: #e2e8f0; color: var(--text-main); }
@@ -293,7 +301,7 @@
     </div>
 
     <div class="content-container">
-        <!-- Tab 1: Summary -->
+        <!-- Tab 1: Summary & Customer -->
         <div id="tab-summary" class="tab-panel active">
             <div class="card">
                 <div class="card-title">Klantgegevens</div>
@@ -311,7 +319,7 @@
             </div>
         </div>
 
-        <!-- Tab 2: Delivery -->
+        <!-- Tab 2: Delivery & Payment -->
         <div id="tab-delivery" class="tab-panel">
             <div class="card">
                 <div class="card-title">Levering Details</div>
@@ -321,7 +329,7 @@
                     <span class="info-label">Geplande Bezorging</span>
                     <div class="time-controls">
                         <button class="time-btn" onclick="adjustTime(-15)">-</button>
-                        <span class="info-value" id="plannedTime" style="font-size: 16px; min-width: 50px;">00:00</span>
+                        <span class="info-value" id="plannedTime" style="font-size: 17px; min-width: 50px;">00:00</span>
                         <button class="time-btn" onclick="adjustTime(15)">+</button>
                     </div>
                 </div>
@@ -377,7 +385,8 @@
             const el = document.getElementById('plannedTime');
             let [h, m] = el.innerText.split(':').map(Number);
             if (isNaN(h)) return;
-            let date = new Date(); date.setHours(h, m + mins);
+            let date = new Date(); 
+            date.setHours(h, m + mins);
             el.innerText = String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
             sendAction('update_planned_time', { newTime: el.innerText });
         }
@@ -423,15 +432,24 @@
 
             const timeline = document.getElementById('auditTimeline');
             if (data.auditLogs && data.auditLogs.length > 0) {
-                timeline.innerHTML = data.auditLogs.map(log => `
-                    <div class="audit-card">
-                        <div class="audit-meta">
-                            <span>Revisie #${log.revision_number || log.revisionNumber} (${log.change_type || log.changeType})</span>
-                            <span>${log.created_at || log.createdAt}</span>
+                timeline.innerHTML = data.auditLogs.map(log => {
+                    const rev = log.revision_number ?? log.revisionNumber ?? 1;
+                    const type = log.change_type ?? log.changeType ?? 'EDIT';
+                    const time = log.created_at ?? log.createdAt ?? '';
+                    const delta = log.delta_data ?? log.deltaData ?? {};
+
+                    return `
+                        <div class="audit-card">
+                            <div class="audit-meta">
+                                <span>Revisie #${rev} (${type})</span>
+                                <span>${time}</span>
+                            </div>
+                            ${renderDeltaSummary(delta)}
                         </div>
-                        ${renderDeltaSummary(log.delta_data || log.deltaData)}
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
+            } else {
+                timeline.innerHTML = '<div style="color: var(--text-muted); font-size: 14px;">Geen eerdere wijzigingen geregistreerd.</div>';
             }
         }
 
@@ -441,23 +459,34 @@
 
             const added = delta.added_items || delta.addedItems;
             if (added && added.length > 0) {
-                added.forEach(i => html += `<div class="change-item text-add">+ Toegevoegd: ${i.amount || 1}x ${i.name} (€${i.unit_price || i.unitPrice || 0})</div>`);
+                added.forEach(i => {
+                    const amt = i.amount ?? i.new_amount ?? 1;
+                    const price = i.unit_price ?? i.unitPrice ?? 0;
+                    html += `<div class="change-item text-add">+ Toegevoegd: ${amt}x ${i.name} (€${Number(price).toFixed(2)})</div>`;
+                });
             }
 
             const removed = delta.removed_items || delta.removedItems;
             if (removed && removed.length > 0) {
-                removed.forEach(i => html += `<div class="change-item text-del">- Verwijderd: ${i.amount || 1}x ${i.name}</div>`);
+                removed.forEach(i => {
+                    const amt = i.amount ?? i.old_amount ?? 1;
+                    html += `<div class="change-item text-del">- Verwijderd: ${amt}x ${i.name}</div>`;
+                });
             }
 
             const qtyChanges = delta.quantity_changes || delta.quantityChanges;
             if (qtyChanges && qtyChanges.length > 0) {
-                qtyChanges.forEach(i => html += `<div class="change-item">✏️ Aantal aangepast: ${i.name} (${i.old_amount || i.oldAmount}x ➔ ${i.new_amount || i.newAmount}x)</div>`);
+                qtyChanges.forEach(i => {
+                    const oldAmt = i.old_amount ?? i.oldAmount;
+                    const newAmt = i.new_amount ?? i.newAmount;
+                    html += `<div class="change-item">✏️ Aantal aangepast: ${i.name} (${oldAmt}x ➔ ${newAmt}x)</div>`;
+                });
             }
 
             const header = delta.header;
             if (header && (header.new_tot_price !== undefined || header.newTotPrice !== undefined)) {
                 const newPrice = header.new_tot_price ?? header.newTotPrice;
-                html += `<div class="change-item">💰 Totaalprijs: €${newPrice}</div>`;
+                html += `<div class="change-item">💰 Totaalprijs: €${Number(newPrice).toFixed(2)}</div>`;
             }
 
             return html || '<div class="change-item">Details bijgewerkt</div>';
