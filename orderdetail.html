@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Detail</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #973030;
+            --primary-hover: #7a2626;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent: #2563eb;
+            --danger: #dc2626;
+            --success: #16a34a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--bg-color); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        .header { background: var(--primary); color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .header-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+        .badge { font-size: 12px; padding: 4px 10px; border-radius: 9999px; background: rgba(255,255,255,0.2); font-weight: 600; text-transform: uppercase; }
+
+        .tabs { display: flex; background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 0 24px; }
+        .tab-btn { padding: 14px 20px; font-size: 14px; font-weight: 600; color: var(--text-muted); border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        .content-container { flex: 1; padding: 20px 24px; overflow-y: auto; }
+        .tab-panel { display: none; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .tab-panel.active { display: grid; }
+        .tab-panel.single { grid-template-columns: 1fr; }
+
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-title { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
+        .info-label { color: var(--text-muted); font-weight: 500; }
+        .info-value { font-weight: 600; text-align: right; }
+
+        .time-controls { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+        .time-btn { background: var(--primary); color: white; border: none; width: 32px; height: 32px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+
+        .select-input { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); font-size: 14px; font-weight: 600; }
+
+        .receipt-list { list-style: none; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; background: #f1f5f9; padding: 16px; border-radius: 8px; max-height: 320px; overflow-y: auto; }
+
+        .audit-timeline { display: flex; flex-direction: column; gap: 16px; }
+        .audit-card { border-left: 4px solid var(--accent); background: #f8fafc; padding: 14px 16px; border-radius: 0 8px 8px 0; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .audit-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+        .audit-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #e0f2fe; color: #0369a1; font-weight: 700; }
+        .change-item { font-size: 13px; font-weight: 500; margin-top: 4px; padding-left: 8px; }
+        .text-add { color: var(--success); }
+        .text-del { color: var(--danger); }
+
+        .footer-actions { background: var(--card-bg); border-top: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; gap: 12px; }
+        .btn-group { display: flex; gap: 10px; }
+        .action-btn { padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; transition: all 0.15s; }
+        .btn-danger { background: #fee2e2; color: var(--danger); }
+        .btn-danger:hover { background: #fca5a5; }
+        .btn-secondary { background: #e2e8f0; color: var(--text-main); }
+        .btn-secondary:hover { background: #cbd5e1; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">
+            <span id="orderTitle">Bestelling</span>
+            <span class="badge" id="orderServiceBadge">Bezorging</span>
+        </div>
+        <div id="headerSelectContainer"></div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-summary')">Overzicht & Items</button>
+        <button class="tab-btn" onclick="switchTab('tab-delivery')">Levering & Betaling</button>
+        <button class="tab-btn" onclick="switchTab('tab-history')">Wijzigingshistorie</button>
+    </div>
+
+    <div class="content-container">
+        <!-- Tab 1: Overview & Items -->
+        <div id="tab-summary" class="tab-panel active">
+            <div class="card">
+                <div class="card-title">Klantgegevens</div>
+                <div class="info-row"><span class="info-label">Naam</span><span class="info-value" id="custName">-</span></div>
+                <div class="info-row"><span class="info-label">Adres</span><span class="info-value" id="custAddress">-</span></div>
+                <div class="info-row"><span class="info-label">Stad / Postcode</span><span class="info-value" id="custCity">-</span></div>
+                <div class="info-row"><span class="info-label">Telefoon</span><span class="info-value" id="custPhone">-</span></div>
+                <div class="info-row" style="margin-top: 16px;"><span class="info-label">Opmerking</span></div>
+                <div id="custComment" style="font-size: 13px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid var(--border); color: var(--text-muted); font-style: italic;">Geen opmerking</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Bestelde Producten</div>
+                <div class="receipt-list" id="receiptText">Laden...</div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Delivery & Payments -->
+        <div id="tab-delivery" class="tab-panel">
+            <div class="card">
+                <div class="card-title">Levering Details</div>
+                <div class="info-row"><span class="info-label">Besteldatum</span><span class="info-value" id="orderDate">-</span></div>
+                <div class="info-row"><span class="info-label">Gewenste Bezorging</span><span class="info-value" id="desiredTime">-</span></div>
+                <div class="info-row" id="plannedTimeRow">
+                    <span class="info-label">Geplande Bezorging</span>
+                    <div class="time-controls">
+                        <button class="time-btn" onclick="adjustTime(-15)">-</button>
+                        <span class="info-value" id="plannedTime">00:00</span>
+                        <button class="time-btn" onclick="adjustTime(15)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Betaalstatus & Historie</div>
+                <div class="info-row">
+                    <span class="info-label">Betaalmethode</span>
+                    <select id="paymentSelect" class="select-input" onchange="changePaymentMethod(this.value)"></select>
+                </div>
+                <div class="card-title" style="margin-top: 20px; font-size: 14px;">Betalingen Log</div>
+                <div class="receipt-list" id="paymentHistoryText" style="height: 120px;">-</div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Order Modifications Audit Trail -->
+        <div id="tab-history" class="tab-panel single">
+            <div class="card">
+                <div class="card-title">Wijzigingshistorie (Audit Trail)</div>
+                <div class="audit-timeline" id="auditTimeline">
+                    <div style="color: var(--text-muted); font-size: 14px;">Geen eerdere wijzigingen geregistreerd.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-actions">
+        <button class="action-btn btn-danger" id="btnCancel" onclick="sendAction('cancel')">Annuleren</button>
+        <div class="btn-group">
+            <button class="action-btn btn-secondary" onclick="sendAction('print_pos')">Bon Print</button>
+            <button class="action-btn btn-secondary" onclick="sendAction('print_kitchen')">Keukenbon</button>
+            <button class="action-btn btn-primary" id="btnEdit" onclick="sendAction('edit_order')">Terugtrekken / Bewerken</button>
+            <button class="action-btn btn-secondary" onclick="sendAction('close')">Sluiten</button>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => b = p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function sendAction(action, payload = {}) {
+            window.chrome.webview.postMessage({ action: action, ...payload });
+        }
+
+        function adjustTime(mins) {
+            const el = document.getElementById('plannedTime');
+            let [h, m] = el.innerText.split(':').map(Number);
+            if (isNaN(h)) return;
+            let date = new Date(); date.setHours(h, m + mins);
+            el.innerText = String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+            sendAction('update_planned_time', { newTime: el.innerText });
+        }
+
+        function changePaymentMethod(val) {
+            sendAction('change_payment_method', { paymentMethodId: parseInt(val) });
+        }
+
+        function renderData(data) {
+            document.getElementById('orderTitle').innerText = data.title;
+            document.getElementById('orderServiceBadge').innerText = data.serviceName;
+
+            document.getElementById('custName').innerText = data.clientName || '-';
+            document.getElementById('custAddress').innerText = data.clientAddress || '-';
+            document.getElementById('custCity').innerText = data.clientCity || '-';
+            document.getElementById('custPhone').innerText = data.clientPhone || '-';
+            document.getElementById('custComment').innerText = data.comment || 'Geen opmerking';
+
+            document.getElementById('receiptText').innerText = data.receiptText;
+            document.getElementById('orderDate').innerText = data.orderDate;
+            document.getElementById('desiredTime').innerText = data.desiredTime;
+            document.getElementById('plannedTime').innerText = data.plannedTime;
+
+            if (data.isCanceled) {
+                const btn = document.getElementById('btnCancel');
+                btn.disabled = true; btn.innerText = "Geannuleerd"; btn.style.opacity = "0.6";
+                document.getElementById('btnEdit').disabled = true;
+            }
+
+            // Populate Payments Select
+            const pSel = document.getElementById('paymentSelect');
+            pSel.innerHTML = '';
+            data.paymentMethods.forEach(pm => {
+                let opt = document.createElement('option');
+                opt.value = pm.id; opt.innerText = pm.name;
+                if (pm.id === data.selectedPaymentId) opt.selected = true;
+                pSel.appendChild(opt);
+            });
+
+            document.getElementById('paymentHistoryText').innerText = data.paymentHistoryText || 'Geen betalingen gevonden';
+
+            // Render Audit Timeline
+            const timeline = document.getElementById('auditTimeline');
+            if (data.auditLogs && data.auditLogs.length > 0) {
+                timeline.innerHTML = data.auditLogs.map(log => `
+                    <div class="audit-card">
+                        <div class="audit-meta">
+                            <span>Revisie #${log.revision_number} (${log.change_type})</span>
+                            <span>${log.created_at}</span>
+                        </div>
+                        ${renderDeltaSummary(log.delta_data)}
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderDeltaSummary(delta) {
+            let html = '';
+            if (delta.added_items) {
+                delta.added_items.forEach(i => html += `<div class="change-item text-add">+ Toegevoegd: ${i.amount}x ${i.name} (€${i.unit_price})</div>`);
+            }
+            if (delta.removed_items) {
+                delta.removed_items.forEach(i => html += `<div class="change-item text-del">- Verwijderd: ${i.amount}x ${i.name}</div>`);
+            }
+            if (delta.quantity_changes) {
+                delta.quantity_changes.forEach(i => html += `<div class="change-item">✏️ Aantal aangepast: ${i.name} (${i.old_amount}x ➔ ${i.new_amount}x)</div>`);
+            }
+            if (delta.header && delta.header.old_tot_price !== delta.header.new_tot_price) {
+                html += `<div class="change-item">💰 Totaalprijs aangepast: €${delta.header.old_tot_price} ➔ €${delta.header.new_tot_price}</div>`;
+            }
+            return html || '<div class="change-item">Details bijgewerkt</div>';
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Detail</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #973030;
+            --primary-hover: #7a2626;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent: #2563eb;
+            --danger: #dc2626;
+            --success: #16a34a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--bg-color); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        .header { background: var(--primary); color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .header-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+        .badge { font-size: 12px; padding: 4px 10px; border-radius: 9999px; background: rgba(255,255,255,0.2); font-weight: 600; text-transform: uppercase; }
+
+        .tabs { display: flex; background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 0 24px; }
+        .tab-btn { padding: 14px 20px; font-size: 14px; font-weight: 600; color: var(--text-muted); border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        .content-container { flex: 1; padding: 20px 24px; overflow-y: auto; }
+        .tab-panel { display: none; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .tab-panel.active { display: grid; }
+        .tab-panel.single { grid-template-columns: 1fr; }
+
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-title { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
+        .info-label { color: var(--text-muted); font-weight: 500; }
+        .info-value { font-weight: 600; text-align: right; }
+
+        .time-controls { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+        .time-btn { background: var(--primary); color: white; border: none; width: 32px; height: 32px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+
+        .select-input { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); font-size: 14px; font-weight: 600; }
+
+        .receipt-list { list-style: none; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; background: #f1f5f9; padding: 16px; border-radius: 8px; max-height: 320px; overflow-y: auto; }
+
+        .audit-timeline { display: flex; flex-direction: column; gap: 16px; }
+        .audit-card { border-left: 4px solid var(--accent); background: #f8fafc; padding: 14px 16px; border-radius: 0 8px 8px 0; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .audit-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+        .audit-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #e0f2fe; color: #0369a1; font-weight: 700; }
+        .change-item { font-size: 13px; font-weight: 500; margin-top: 4px; padding-left: 8px; }
+        .text-add { color: var(--success); }
+        .text-del { color: var(--danger); }
+
+        .footer-actions { background: var(--card-bg); border-top: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; gap: 12px; }
+        .btn-group { display: flex; gap: 10px; }
+        .action-btn { padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; transition: all 0.15s; }
+        .btn-danger { background: #fee2e2; color: var(--danger); }
+        .btn-danger:hover { background: #fca5a5; }
+        .btn-secondary { background: #e2e8f0; color: var(--text-main); }
+        .btn-secondary:hover { background: #cbd5e1; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">
+            <span id="orderTitle">Bestelling</span>
+            <span class="badge" id="orderServiceBadge">Bezorging</span>
+        </div>
+        <div id="headerSelectContainer"></div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-summary')">Overzicht & Items</button>
+        <button class="tab-btn" onclick="switchTab('tab-delivery')">Levering & Betaling</button>
+        <button class="tab-btn" onclick="switchTab('tab-history')">Wijzigingshistorie</button>
+    </div>
+
+    <div class="content-container">
+        <!-- Tab 1: Overview & Items -->
+        <div id="tab-summary" class="tab-panel active">
+            <div class="card">
+                <div class="card-title">Klantgegevens</div>
+                <div class="info-row"><span class="info-label">Naam</span><span class="info-value" id="custName">-</span></div>
+                <div class="info-row"><span class="info-label">Adres</span><span class="info-value" id="custAddress">-</span></div>
+                <div class="info-row"><span class="info-label">Stad / Postcode</span><span class="info-value" id="custCity">-</span></div>
+                <div class="info-row"><span class="info-label">Telefoon</span><span class="info-value" id="custPhone">-</span></div>
+                <div class="info-row" style="margin-top: 16px;"><span class="info-label">Opmerking</span></div>
+                <div id="custComment" style="font-size: 13px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid var(--border); color: var(--text-muted); font-style: italic;">Geen opmerking</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Bestelde Producten</div>
+                <div class="receipt-list" id="receiptText">Laden...</div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Delivery & Payments -->
+        <div id="tab-delivery" class="tab-panel">
+            <div class="card">
+                <div class="card-title">Levering Details</div>
+                <div class="info-row"><span class="info-label">Besteldatum</span><span class="info-value" id="orderDate">-</span></div>
+                <div class="info-row"><span class="info-label">Gewenste Bezorging</span><span class="info-value" id="desiredTime">-</span></div>
+                <div class="info-row" id="plannedTimeRow">
+                    <span class="info-label">Geplande Bezorging</span>
+                    <div class="time-controls">
+                        <button class="time-btn" onclick="adjustTime(-15)">-</button>
+                        <span class="info-value" id="plannedTime">00:00</span>
+                        <button class="time-btn" onclick="adjustTime(15)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Betaalstatus & Historie</div>
+                <div class="info-row">
+                    <span class="info-label">Betaalmethode</span>
+                    <select id="paymentSelect" class="select-input" onchange="changePaymentMethod(this.value)"></select>
+                </div>
+                <div class="card-title" style="margin-top: 20px; font-size: 14px;">Betalingen Log</div>
+                <div class="receipt-list" id="paymentHistoryText" style="height: 120px;">-</div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Order Modifications Audit Trail -->
+        <div id="tab-history" class="tab-panel single">
+            <div class="card">
+                <div class="card-title">Wijzigingshistorie (Audit Trail)</div>
+                <div class="audit-timeline" id="auditTimeline">
+                    <div style="color: var(--text-muted); font-size: 14px;">Geen eerdere wijzigingen geregistreerd.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-actions">
+        <button class="action-btn btn-danger" id="btnCancel" onclick="sendAction('cancel')">Annuleren</button>
+        <div class="btn-group">
+            <button class="action-btn btn-secondary" onclick="sendAction('print_pos')">Bon Print</button>
+            <button class="action-btn btn-secondary" onclick="sendAction('print_kitchen')">Keukenbon</button>
+            <button class="action-btn btn-primary" id="btnEdit" onclick="sendAction('edit_order')">Terugtrekken / Bewerken</button>
+            <button class="action-btn btn-secondary" onclick="sendAction('close')">Sluiten</button>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => b = p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function sendAction(action, payload = {}) {
+            window.chrome.webview.postMessage({ action: action, ...payload });
+        }
+
+        function adjustTime(mins) {
+            const el = document.getElementById('plannedTime');
+            let [h, m] = el.innerText.split(':').map(Number);
+            if (isNaN(h)) return;
+            let date = new Date(); date.setHours(h, m + mins);
+            el.innerText = String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+            sendAction('update_planned_time', { newTime: el.innerText });
+        }
+
+        function changePaymentMethod(val) {
+            sendAction('change_payment_method', { paymentMethodId: parseInt(val) });
+        }
+
+        function renderData(data) {
+            document.getElementById('orderTitle').innerText = data.title;
+            document.getElementById('orderServiceBadge').innerText = data.serviceName;
+
+            document.getElementById('custName').innerText = data.clientName || '-';
+            document.getElementById('custAddress').innerText = data.clientAddress || '-';
+            document.getElementById('custCity').innerText = data.clientCity || '-';
+            document.getElementById('custPhone').innerText = data.clientPhone || '-';
+            document.getElementById('custComment').innerText = data.comment || 'Geen opmerking';
+
+            document.getElementById('receiptText').innerText = data.receiptText;
+            document.getElementById('orderDate').innerText = data.orderDate;
+            document.getElementById('desiredTime').innerText = data.desiredTime;
+            document.getElementById('plannedTime').innerText = data.plannedTime;
+
+            if (data.isCanceled) {
+                const btn = document.getElementById('btnCancel');
+                btn.disabled = true; btn.innerText = "Geannuleerd"; btn.style.opacity = "0.6";
+                document.getElementById('btnEdit').disabled = true;
+            }
+
+            // Populate Payments Select
+            const pSel = document.getElementById('paymentSelect');
+            pSel.innerHTML = '';
+            data.paymentMethods.forEach(pm => {
+                let opt = document.createElement('option');
+                opt.value = pm.id; opt.innerText = pm.name;
+                if (pm.id === data.selectedPaymentId) opt.selected = true;
+                pSel.appendChild(opt);
+            });
+
+            document.getElementById('paymentHistoryText').innerText = data.paymentHistoryText || 'Geen betalingen gevonden';
+
+            // Render Audit Timeline
+            const timeline = document.getElementById('auditTimeline');
+            if (data.auditLogs && data.auditLogs.length > 0) {
+                timeline.innerHTML = data.auditLogs.map(log => `
+                    <div class="audit-card">
+                        <div class="audit-meta">
+                            <span>Revisie #${log.revision_number} (${log.change_type})</span>
+                            <span>${log.created_at}</span>
+                        </div>
+                        ${renderDeltaSummary(log.delta_data)}
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderDeltaSummary(delta) {
+            let html = '';
+            if (delta.added_items) {
+                delta.added_items.forEach(i => html += `<div class="change-item text-add">+ Toegevoegd: ${i.amount}x ${i.name} (€${i.unit_price})</div>`);
+            }
+            if (delta.removed_items) {
+                delta.removed_items.forEach(i => html += `<div class="change-item text-del">- Verwijderd: ${i.amount}x ${i.name}</div>`);
+            }
+            if (delta.quantity_changes) {
+                delta.quantity_changes.forEach(i => html += `<div class="change-item">✏️ Aantal aangepast: ${i.name} (${i.old_amount}x ➔ ${i.new_amount}x)</div>`);
+            }
+            if (delta.header && delta.header.old_tot_price !== delta.header.new_tot_price) {
+                html += `<div class="change-item">💰 Totaalprijs aangepast: €${delta.header.old_tot_price} ➔ €${delta.header.new_tot_price}</div>`;
+            }
+            return html || '<div class="change-item">Details bijgewerkt</div>';
+        }
+    </script>
+</body>
+</html>orderdetail
