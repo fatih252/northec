@@ -22,7 +22,7 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Prevents outer window scrollbar */
+            overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: var(--bg-color);
             color: var(--text-main);
@@ -36,7 +36,6 @@
             height: 100vh;
         }
 
-        /* --- Header --- */
         .header {
             background: var(--primary);
             color: white;
@@ -64,7 +63,6 @@
             text-transform: uppercase;
         }
 
-        /* --- Touch Navigation Tabs --- */
         .tabs {
             display: flex;
             background: var(--card-bg);
@@ -93,7 +91,6 @@
             background: #fdf2f2;
         }
 
-        /* --- Main Content Area --- */
         .content-container {
             flex: 1;
             padding: 16px;
@@ -156,7 +153,6 @@
             text-align: right;
         }
 
-        /* --- Touch Time Controls --- */
         .time-controls {
             display: flex;
             align-items: center;
@@ -191,7 +187,6 @@
             min-height: 44px;
         }
 
-        /* --- Internal Scrollable Text Container --- */
         .receipt-list {
             flex: 1;
             list-style: none;
@@ -209,7 +204,6 @@
             -webkit-user-select: text;
         }
 
-        /* --- Audit History Scrollable Timeline --- */
         .audit-timeline {
             flex: 1;
             overflow-y: auto;
@@ -247,7 +241,6 @@
         .text-add { color: var(--success); }
         .text-del { color: var(--danger); }
 
-        /* --- Touch Action Bar Footer --- */
         .footer-actions {
             background: var(--card-bg);
             border-top: 2px solid var(--border);
@@ -301,7 +294,7 @@
     </div>
 
     <div class="content-container">
-        <!-- Tab 1: Summary & Customer -->
+        <!-- Tab 1: Summary -->
         <div id="tab-summary" class="tab-panel active">
             <div class="card">
                 <div class="card-title">Klantgegevens</div>
@@ -319,7 +312,7 @@
             </div>
         </div>
 
-        <!-- Tab 2: Delivery & Payment -->
+        <!-- Tab 2: Delivery -->
         <div id="tab-delivery" class="tab-panel">
             <div class="card">
                 <div class="card-title">Levering Details</div>
@@ -346,7 +339,7 @@
             </div>
         </div>
 
-        <!-- Tab 3: Audit Trail History -->
+        <!-- Tab 3: History -->
         <div id="tab-history" class="tab-panel single">
             <div class="card">
                 <div class="card-title">Wijzigingshistorie (Audit Trail)</div>
@@ -464,7 +457,8 @@
                     const price = i.unit_price ?? i.unitPrice ?? 0;
                     let extraStr = '';
                     if (i.extras && i.extras.length > 0) {
-                        extraStr = ` (${i.extras.join(', ')})`;
+                        const cleanExtras = i.extras.map(x => x.startsWith('+') ? x.substring(1).trim() : x);
+                        extraStr = ` (+ ${cleanExtras.join(', ')})`;
                     }
                     html += `<div class="change-item text-add">+ Toegevoegd: ${amt}x ${i.name}${extraStr} (€${Number(price).toFixed(2)})</div>`;
                 });
@@ -492,11 +486,17 @@
                 modChanges.forEach(m => {
                     const addEx = m.added_extras || m.addedExtras;
                     if (addEx && addEx.length > 0) {
-                        addEx.forEach(x => html += `<div class="change-item text-add">+ Extra toegevoegd (${m.name}): ${x}</div>`);
+                        addEx.forEach(x => {
+                            const cleanX = x.startsWith('+') ? x.substring(1).trim() : x;
+                            html += `<div class="change-item text-add">+ Extra toegevoegd (${m.name}): ${cleanX}</div>`;
+                        });
                     }
                     const remEx = m.removed_extras || m.removedExtras;
                     if (remEx && remEx.length > 0) {
-                        remEx.forEach(x => html += `<div class="change-item text-del">- Extra verwijderd (${m.name}): ${x}</div>`);
+                        remEx.forEach(x => {
+                            const cleanX = x.startsWith('+') ? x.substring(1).trim() : x;
+                            html += `<div class="change-item text-del">- Extra verwijderd (${m.name}): ${cleanX}</div>`;
+                        });
                     }
                 });
             }
