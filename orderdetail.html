@@ -277,6 +277,31 @@
         .btn-danger { background: #fee2e2; color: var(--danger); }
         .btn-secondary { background: #e2e8f0; color: var(--text-main); }
         .btn-primary { background: var(--primary); color: white; }
+
+        /* WebView2 Cancel Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-box {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 340px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--danger); }
+        .modal-body { font-size: 14px; margin-bottom: 20px; color: var(--text-main); font-weight: 600; }
+        .modal-actions { display: flex; gap: 12px; justify-content: center; }
     </style>
 </head>
 <body>
@@ -298,10 +323,10 @@
         <div id="tab-summary" class="tab-panel active">
             <div class="card">
                 <div class="card-title">Klantgegevens</div>
-                <div class="info-row"><span class="info-label">Naam</span><span class="info-value" id="custName">-</span></div>
-                <div class="info-row"><span class="info-label">Adres</span><span class="info-value" id="custAddress">-</span></div>
-                <div class="info-row"><span class="info-label">Stad / Postcode</span><span class="info-value" id="custCity">-</span></div>
-                <div class="info-row"><span class="info-label">Telefoon</span><span class="info-value" id="custPhone">-</span></div>
+                <div class="info-row" id="rowName"><span class="info-label">Naam</span><span class="info-value" id="custName">-</span></div>
+                <div class="info-row" id="rowAddress"><span class="info-label">Adres</span><span class="info-value" id="custAddress">-</span></div>
+                <div class="info-row" id="rowCity"><span class="info-label">Stad / Postcode</span><span class="info-value" id="custCity">-</span></div>
+                <div class="info-row" id="rowPhone"><span class="info-label">Telefoon</span><span class="info-value" id="custPhone">-</span></div>
                 <div class="info-row" style="margin-top: 10px;"><span class="info-label">Opmerking</span></div>
                 <div id="custComment" style="font-size: 13px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid var(--border); color: var(--text-muted); font-style: italic;">Geen opmerking</div>
             </div>
@@ -351,12 +376,24 @@
     </div>
 
     <div class="footer-actions">
-        <button class="action-btn btn-danger" id="btnCancel" onclick="sendAction('cancel')">Annuleren</button>
+        <button class="action-btn btn-danger" id="btnCancel" onclick="openCancelModal()">Annuleren</button>
         <div class="btn-group">
             <button class="action-btn btn-secondary" onclick="sendAction('print_pos')">Bon Print</button>
             <button class="action-btn btn-secondary" onclick="sendAction('print_kitchen')">Keukenbon</button>
             <button class="action-btn btn-primary" id="btnEdit" onclick="sendAction('edit_order')">Terugtrekken / Bewerken</button>
             <button class="action-btn btn-secondary" onclick="sendAction('close')">Sluiten</button>
+        </div>
+    </div>
+
+    <!-- Integrated Cancel Confirmation Modal -->
+    <div id="cancelModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <div class="modal-title">Bestelling Annuleren</div>
+            <div class="modal-body">Weet u zeker dat u deze bestelling wilt annuleren?</div>
+            <div class="modal-actions">
+                <button class="action-btn btn-secondary" onclick="closeCancelModal()">Nee, Terug</button>
+                <button class="action-btn btn-danger" onclick="confirmCancel()">Ja, Annuleren</button>
+            </div>
         </div>
     </div>
 
@@ -374,6 +411,19 @@
             }
         }
 
+        function openCancelModal() {
+            document.getElementById('cancelModal').style.display = 'flex';
+        }
+
+        function closeCancelModal() {
+            document.getElementById('cancelModal').style.display = 'none';
+        }
+
+        function confirmCancel() {
+            closeCancelModal();
+            sendAction('cancel');
+        }
+
         function adjustTime(mins) {
             const el = document.getElementById('plannedTime');
             let [h, m] = el.innerText.split(':').map(Number);
@@ -389,8 +439,19 @@
         }
 
         function renderData(data) {
-            document.getElementById('orderTitle').innerText = data.title;
+            const isTableOrTakeaway = data.isTable || data.isTakeaway || data.serviceTypeId === 6 || data.serviceTypeId === 7;
+
+            // 1. Header Title
+            if (data.isTable || data.serviceTypeId === 6) {
+                document.getElementById('orderTitle').innerText = data.tableName || data.tableNameHeader || 'Tafel';
+            } else {
+                document.getElementById('orderTitle').innerText = data.title || 'Bestelling';
+            }
             document.getElementById('orderServiceBadge').innerText = data.serviceName;
+
+            // 2. Hide Address Rows for Table & Takeaway Orders
+            document.getElementById('rowAddress').style.display = isTableOrTakeaway ? 'none' : 'flex';
+            document.getElementById('rowCity').style.display = isTableOrTakeaway ? 'none' : 'flex';
 
             document.getElementById('custName').innerText = data.clientName || '-';
             document.getElementById('custAddress').innerText = data.clientAddress || '-';
@@ -402,6 +463,12 @@
             document.getElementById('orderDate').innerText = data.orderDate;
             document.getElementById('desiredTime').innerText = data.desiredTime;
             document.getElementById('plannedTime').innerText = data.plannedTime;
+
+            // 3. Hide timing buttons if ZSM
+            const isZsm = (data.plannedTime || '').toUpperCase().includes('ZSM') || (data.desiredTime || '').toUpperCase().includes('ZSM');
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.style.display = isZsm ? 'none' : 'inline-block';
+            });
 
             if (data.isCanceled) {
                 const btn = document.getElementById('btnCancel');
