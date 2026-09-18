@@ -321,7 +321,8 @@
         <!-- Tab 1: Summary -->
         <div id="tab-summary" class="tab-panel active">
             <div class="card">
-                <div class="card-title">Klantgegevens</div>
+                <div class="card-title" id="cardClientTitle">Klantgegevens</div>
+                <div class="info-row" id="rowTable" style="display: none;"><span class="info-label">Tafel</span><span class="info-value" id="custTable">-</span></div>
                 <div class="info-row" id="rowName"><span class="info-label">Naam</span><span class="info-value" id="custName">-</span></div>
                 <div class="info-row" id="rowAddress"><span class="info-label">Adres</span><span class="info-value" id="custAddress">-</span></div>
                 <div class="info-row" id="rowCity"><span class="info-label">Stad / Postcode</span><span class="info-value" id="custCity">-</span></div>
@@ -442,27 +443,47 @@
 
             const isTable = serviceId === 6 || data.isTable === true || badgeText.includes('TAFEL');
             const isTakeaway = serviceId === 7 || data.isTakeaway === true || badgeText.includes('AFHAL') || badgeText.includes('TAKEAWAY');
-            const isTableOrTakeaway = isTable || isTakeaway;
 
             if (isTable) {
                 let tblName = data.tableName || data.tableNameHeader;
                 if (!tblName || tblName === data.clientAddress || tblName === data.street || tblName === data.title) {
                     tblName = data.tableId ? `Tafel ${data.tableId}` : 'Tafel';
                 }
+
                 document.getElementById('orderTitle').innerText = tblName;
                 document.getElementById('orderServiceBadge').innerText = 'TAFEL';
-            } else if (isTakeaway) {
-                document.getElementById('orderTitle').innerText = data.title || 'Afhaling';
-                document.getElementById('orderServiceBadge').innerText = 'AFHALEN';
-            } else {
-                document.getElementById('orderTitle').innerText = data.title || 'Bezorging';
-                document.getElementById('orderServiceBadge').innerText = data.serviceName || 'BEZORGING';
-            }
 
-            const rowAddress = document.getElementById('rowAddress');
-            const rowCity = document.getElementById('rowCity');
-            if (rowAddress) rowAddress.style.display = isTableOrTakeaway ? 'none' : 'flex';
-            if (rowCity) rowCity.style.display = isTableOrTakeaway ? 'none' : 'flex';
+                document.getElementById('cardClientTitle').innerText = 'Tafelgegevens';
+                document.getElementById('rowTable').style.display = 'flex';
+                document.getElementById('custTable').innerText = tblName;
+
+                // Hide all customer fields for table orders
+                document.getElementById('rowName').style.display = 'none';
+                document.getElementById('rowAddress').style.display = 'none';
+                document.getElementById('rowCity').style.display = 'none';
+                document.getElementById('rowPhone').style.display = 'none';
+            } else {
+                document.getElementById('cardClientTitle').innerText = 'Klantgegevens';
+                document.getElementById('rowTable').style.display = 'none';
+
+                if (isTakeaway) {
+                    document.getElementById('orderTitle').innerText = data.title || 'Afhaling';
+                    document.getElementById('orderServiceBadge').innerText = 'AFHALEN';
+
+                    document.getElementById('rowName').style.display = 'flex';
+                    document.getElementById('rowAddress').style.display = 'none';
+                    document.getElementById('rowCity').style.display = 'none';
+                    document.getElementById('rowPhone').style.display = 'flex';
+                } else {
+                    document.getElementById('orderTitle').innerText = data.title || 'Bezorging';
+                    document.getElementById('orderServiceBadge').innerText = data.serviceName || 'BEZORGING';
+
+                    document.getElementById('rowName').style.display = 'flex';
+                    document.getElementById('rowAddress').style.display = 'flex';
+                    document.getElementById('rowCity').style.display = 'flex';
+                    document.getElementById('rowPhone').style.display = 'flex';
+                }
+            }
 
             document.getElementById('custName').innerText = data.clientName || '-';
             document.getElementById('custAddress').innerText = data.clientAddress || '-';
