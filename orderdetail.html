@@ -144,7 +144,7 @@
             justify-content: space-between;
             align-items: center;
             font-size: 14px;
-            min-height: 44px;
+            min-height: 48px;
         }
 
         .detail-row .label {
@@ -157,12 +157,11 @@
             color: var(--text-dark);
         }
 
-        /* --- Touch-Optimized Time Adjustment Controls --- */
+        /* --- Touch-Optimized Time Adjustment Controls (-15m and +15m) --- */
         .time-control-container {
             display: flex;
             align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .time-btn {
@@ -170,17 +169,17 @@
             color: #ffffff;
             border: 1px solid #4b5563;
             border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 14px;
+            padding: 10px 16px;
+            font-size: 15px;
             font-weight: 800;
             cursor: pointer;
-            min-width: 54px;
-            height: 44px;
+            min-width: 64px;
+            height: 46px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             touch-action: manipulation;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
             transition: transform 0.05s ease, background-color 0.1s ease;
         }
 
@@ -191,11 +190,11 @@
         }
 
         .value-highlight {
-            font-size: 18px;
+            font-size: 19px;
             font-weight: 900;
             color: var(--text-dark);
-            padding: 0 8px;
-            min-width: 58px;
+            padding: 0 6px;
+            min-width: 60px;
             text-align: center;
         }
 
@@ -211,6 +210,12 @@
             padding: 0 10px;
             color: var(--text-dark);
             outline: none;
+        }
+
+        .select-input:disabled {
+            background-color: #f1f5f9;
+            color: var(--text-muted);
+            cursor: not-allowed;
         }
 
         .log-textarea {
@@ -332,7 +337,7 @@
         <div class="service-badge" id="lblService">--</div>
     </div>
 
-    <!-- Navigation Tabs (1st: Levering & Betaling, 2nd: Overzicht & Items, 3rd: Wijzigingshistorie) -->
+    <!-- Navigation Tabs -->
     <div class="tabs-header">
         <button class="tab-btn active" onclick="switchTab('tab-delivery')">Levering & Betaling</button>
         <button class="tab-btn" onclick="switchTab('tab-overview')">Overzicht & Items</button>
@@ -342,7 +347,7 @@
     <!-- Main Content Container -->
     <div class="tab-content-container">
 
-        <!-- Tab 1: Delivery & Payment Details (First Tab) -->
+        <!-- Tab 1: Delivery & Payment Details -->
         <div id="tab-delivery" class="tab-pane active">
             <div class="cards-grid">
                 
@@ -364,9 +369,7 @@
                         <span class="label" id="lblPlannedLabel">Geplande Bezorging</span>
                         <div class="time-control-container" id="timeControls">
                             <button class="time-btn" onclick="adjustPlannedTime(-15)">-15m</button>
-                            <button class="time-btn" onclick="adjustPlannedTime(-5)">-5m</button>
                             <span class="value-highlight" id="lblPlannedTime">--</span>
-                            <button class="time-btn" onclick="adjustPlannedTime(5)">+5m</button>
                             <button class="time-btn" onclick="adjustPlannedTime(15)">+15m</button>
                         </div>
                     </div>
@@ -394,7 +397,7 @@
             </div>
         </div>
 
-        <!-- Tab 2: Receipt Overview (Second Tab) -->
+        <!-- Tab 2: Receipt Overview -->
         <div id="tab-overview" class="tab-pane">
             <pre class="receipt-view" id="txtReceipt">Gegevens laden...</pre>
         </div>
@@ -411,7 +414,7 @@
     <!-- Bottom Action Bar -->
     <div class="action-bar">
         <div style="display: flex; gap: 8px;">
-            <button class="action-btn cancel-btn" onclick="sendAction('cancel')">Annuleren</button>
+            <button id="btnCancel" class="action-btn cancel-btn" onclick="sendAction('cancel')">Annuleren</button>
             
             <!-- Pay.nl Refund Button: Displayed ONLY when order is canceled AND paid online -->
             <button id="btnRefund" class="action-btn refund-btn" onclick="refundOnlineOrder()" style="display: none;">
@@ -420,13 +423,13 @@
         </div>
         
         <div style="display: flex; gap: 8px;">
-            <button class="action-btn secondary-btn" onclick="sendAction('print_pos')">Bon Print</button>
-            <button class="action-btn secondary-btn" onclick="sendAction('print_kitchen')">Keukenbon</button>
+            <button id="btnPrintPos" class="action-btn secondary-btn" onclick="sendAction('print_pos')">Bon Print</button>
+            <button id="btnPrintKitchen" class="action-btn secondary-btn" onclick="sendAction('print_kitchen')">Keukenbon</button>
         </div>
 
-        <button class="action-btn primary-btn" onclick="sendAction('edit_order')">Terugtrekken / Bewerken</button>
+        <button id="btnEdit" class="action-btn primary-btn" onclick="sendAction('edit_order')">Terugtrekken / Bewerken</button>
         
-        <button class="action-btn secondary-btn" onclick="sendAction('close')">Sluiten</button>
+        <button id="btnClose" class="action-btn secondary-btn" onclick="sendAction('close')">Sluiten</button>
     </div>
 
     <script>
@@ -449,7 +452,6 @@
             document.getElementById('lblOrderDate').innerText = data.orderDate || '--';
             document.getElementById('lblDesiredTime').innerText = data.desiredTime || 'ZSM';
 
-            // Set current planned time
             currentPlannedTime = data.plannedTime || data.desiredTime || 'ZSM';
             document.getElementById('lblPlannedTime').innerText = currentPlannedTime;
 
@@ -458,19 +460,8 @@
 
             isCanceledState = !!data.isCanceled;
 
-            // Check if paid online (e.g. payonline method or via property flag)
             const paymentMethodStr = (data.paymentMethod || '').toLowerCase();
             isOnlinePaidState = (paymentMethodStr === 'payonline' || paymentMethodStr === 'online' || !!data.isOnlinePaid);
-
-            // Toggle Pay.nl Refund button visibility
-            const btnRefund = document.getElementById('btnRefund');
-            if (btnRefund) {
-                if (isCanceledState && isOnlinePaidState) {
-                    btnRefund.style.display = 'inline-flex';
-                } else {
-                    btnRefund.style.display = 'none';
-                }
-            }
 
             // Populate Payment Methods Dropdown
             const pmSelect = document.getElementById('cmbPaymentMethod');
@@ -489,6 +480,32 @@
             const isTakeaway = (data.serviceName || '').toLowerCase().includes('afhaal');
             document.getElementById('lblDesiredLabel').innerText = isTakeaway ? 'Gewenste Afhaling' : 'Gewenste Bezorging';
             document.getElementById('lblPlannedLabel').innerText = isTakeaway ? 'Geplande Afhaling' : 'Geplande Bezorging';
+
+            // --- CANCELLED ORDER LOCKING LOGIC ---
+            const btnCancel = document.getElementById('btnCancel');
+            const btnEdit = document.getElementById('btnEdit');
+            const btnRefund = document.getElementById('btnRefund');
+            const timeControls = document.getElementById('timeControls');
+
+            if (isCanceledState) {
+                // Disable/Hide editing controls and cancellation trigger
+                if (timeControls) timeControls.style.display = 'none';
+                if (pmSelect) pmSelect.disabled = true;
+                if (btnCancel) btnCancel.style.display = 'none';
+                if (btnEdit) btnEdit.style.display = 'none';
+
+                // Display Refund button only if order was paid online
+                if (btnRefund) {
+                    btnRefund.style.display = isOnlinePaidState ? 'inline-flex' : 'none';
+                }
+            } else {
+                // Active order state: Enable controls
+                if (timeControls) timeControls.style.display = 'flex';
+                if (pmSelect) pmSelect.disabled = false;
+                if (btnCancel) btnCancel.style.display = 'inline-flex';
+                if (btnEdit) btnEdit.style.display = 'inline-flex';
+                if (btnRefund) btnRefund.style.display = 'none';
+            }
 
             // Render Audit Logs
             renderAuditLogs(data.auditLogs);
@@ -521,16 +538,12 @@
         }
 
         function onPaymentMethodChanged() {
+            if (isCanceledState) return;
             const pmId = parseInt(document.getElementById('cmbPaymentMethod').value, 10);
             sendAction('change_payment_method', { paymentMethodId: pmId });
         }
 
-        /**
-         * Refund function trigger for online paid, canceled orders.
-         * Sends Pay.nl API action bridge call to WinForms host.
-         */
         function refundOnlineOrder() {
-            // Bridge action sent to C# backend (Pay.nl API execution)
             sendAction('refund_paynl');
         }
 
