@@ -234,13 +234,23 @@
         .prefix-btn.enkel.active { background-color: var(--warning-color); color: white; }
         .types-list { flex: 1; overflow-y: auto; scrollbar-width: none; }
         .types-list::-webkit-scrollbar { display: none; }
-        .type-btn { padding: 22px 15px; font-size: 18px; font-weight: 800; border-bottom: 1px solid var(--border-color); border-left: 6px solid transparent; cursor: pointer; color: var(--text-main); }
+        .type-btn { padding: 22px 15px; font-size: 18px; font-weight: 800; border-bottom: 1px solid var(--border-color); border-left: 6px solid transparent; cursor: pointer; color: var(--text-main); line-height: 1.3; }
         .type-btn:active { background-color: var(--border-color); }
         .type-btn.active { background-color: var(--bg-color); color: var(--primary-color); border-left-color: var(--primary-color); }
         
         .modal-main { flex: 1; display: flex; flex-direction: column; background-color: var(--bg-color); }
         .mod-header-bar { padding: 20px; background-color: var(--surface-color); border-bottom: 2px solid var(--border-color); display: flex; justify-content: center; }
         .mod-product-title { font-size: 28px; font-weight: 900; color: var(--text-main); }
+
+        /* CATEGORY SUMMARY BANNER */
+        .mod-category-banner {
+            padding: 14px 20px;
+            background-color: var(--surface-color);
+            border-bottom: 2px solid var(--border-color);
+            font-size: 16px;
+            font-weight: 800;
+            display: none;
+        }
         
         .modifiers-grid { 
             flex: 1; 
@@ -267,15 +277,19 @@
         .mod-card:active { background-color: var(--border-color); border-color: var(--primary-color); }
         .mod-card.selected { border-color: var(--primary-color); background-color: rgba(59, 130, 246, 0.1); }
         .mod-name { font-size: 17px; font-weight: 800; line-height: 1.2; }
-        .mod-price { font-size: 18px; font-weight: 800; color: var(--text-muted); text-align: right; }
+        .mod-price { font-size: 16px; font-weight: 800; color: var(--text-muted); text-align: right; }
         
         .modal-cart { width: 400px; background-color: var(--surface-color); border-left: 2px solid var(--border-color); display: flex; flex-direction: column; }
         .mod-cart-items { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: var(--bg-color); }
         .mod-cart-item { background-color: var(--surface-color); border: 2px solid var(--border-color); padding: 12px; display: flex; align-items: center; justify-content: space-between; }
         .mod-cart-item.success .mod-item-name { color: var(--success-color); }
         .mod-cart-item.danger .mod-item-name { color: var(--danger-color); text-decoration: line-through; }
-        .mod-item-name { font-size: 17px; font-weight: 800; }
-        .mod-item-price { font-size: 19px; font-weight: 800; color: var(--text-muted); }
+        .mod-item-name { font-size: 16px; font-weight: 800; line-height: 1.3; }
+        .mod-item-badge { font-size: 11px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 4px; }
+        .mod-item-badge.free { background-color: rgba(16, 185, 129, 0.2); color: var(--success-color); }
+        .mod-item-badge.paid { background-color: rgba(59, 130, 246, 0.2); color: var(--primary-color); }
+        .mod-item-badge.without { background-color: rgba(239, 68, 68, 0.2); color: var(--danger-color); }
+        .mod-item-price { font-size: 18px; font-weight: 800; color: var(--text-muted); }
         .btn-mod-remove { background-color: var(--danger-color); color: white; border: none; width: 42px; height: 42px; font-size: 20px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
         /* --- PRICE OVERRIDE NUMPAD MODAL --- */
@@ -503,6 +517,8 @@
                 <div class="mod-header-bar">
                     <div class="mod-product-title" id="lblModalProductTitle">Laden...</div>
                 </div>
+                <!-- DYNAMIC CATEGORY SUMMARY BANNER -->
+                <div class="mod-category-banner" id="modalCategoryBanner"></div>
                 <div class="modifiers-grid" id="modalModifiersContainer"></div>
             </div>
 
@@ -689,6 +705,13 @@
         /* Promo Modal State */
         let activePromoType = 'FIXED';
         let isNewPromoNum = true;
+
+        /* Modifier Modal Transparency State */
+        let currentModalTypes = [];
+        let currentSubCartItems = [];
+        let activeTypeId = null;
+        let activeIsProductExtra = false;
+        let activeTypeItems = [];
 
         document.addEventListener("DOMContentLoaded", () => {
             sendHostMessage({ action: "ui_ready" });
@@ -1310,6 +1333,7 @@
         function syncCartToHost() { sendHostMessage({ action: "sync_cart", cart: currentCart }); }
         function notifyAction(actionId) { sendHostMessage({ action: "trigger_action", id: actionId }); }
 
+        /* --- MODIFIER MODAL TRANSPARENCY UI & LOGIC --- */
         window.openModifierModal = function(isEdit, lineId) { 
             isEditingCartItem = !!isEdit;
             activeEditingLineId = lineId || null;
@@ -1334,51 +1358,157 @@
         };
 
         window.renderModalTypes = function(types) {
-            const container = document.getElementById("modalTypesContainer");
-            container.innerHTML = "";
-            types.forEach(t => {
-                const btn = document.createElement("div");
-                btn.className = "type-btn";
-                btn.id = "type_" + t.id;
-                btn.innerText = t.name;
-                btn.onclick = () => {
-                    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    sendHostMessage({ action: "modal_load_type_items", typeId: t.id, isProductExtra: t.isProductExtra });
-                };
-                container.appendChild(btn);
-            });
-            if (types.length > 0) document.getElementById("type_" + types[0].id).click();
+            currentModalTypes = types || [];
+            updateTypesListUI();
+            if (types && types.length > 0) {
+                selectType(types[0].id, types[0].isProductExtra);
+            }
         };
 
+        function updateTypesListUI() {
+            const container = document.getElementById("modalTypesContainer");
+            if (!container) return;
+            container.innerHTML = "";
+
+            currentModalTypes.forEach(t => {
+                const freeLimit = t.freeLimit || 0;
+                const countInSubCart = currentSubCartItems.filter(item => 
+                    item.isProductExtra === t.isProductExtra && item.typeId === t.id && item.prefix !== '-'
+                ).length;
+
+                let badgeText = "";
+                if (freeLimit > 0) {
+                    if (countInSubCart >= freeLimit) {
+                        badgeText = ` (${countInSubCart}/${freeLimit} GRATIS - VOL)`;
+                    } else {
+                        badgeText = ` (${countInSubCart}/${freeLimit} GRATIS)`;
+                    }
+                }
+
+                const btn = document.createElement("div");
+                btn.className = "type-btn" + (activeTypeId === t.id && activeIsProductExtra === t.isProductExtra ? " active" : "");
+                btn.id = "type_" + t.id + "_" + (t.isProductExtra ? "pe" : "e");
+                btn.innerText = t.name + badgeText;
+                btn.onclick = () => selectType(t.id, t.isProductExtra);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectType(typeId, isProductExtra) {
+            activeTypeId = typeId;
+            activeIsProductExtra = isProductExtra;
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+            const targetBtn = document.getElementById("type_" + typeId + "_" + (isProductExtra ? "pe" : "e"));
+            if (targetBtn) targetBtn.classList.add('active');
+
+            sendHostMessage({ action: "modal_load_type_items", typeId: typeId, isProductExtra: isProductExtra });
+        }
+
+        function updateCategoryBanner() {
+            const banner = document.getElementById("modalCategoryBanner");
+            if (!banner) return;
+
+            const currentType = currentModalTypes.find(t => t.id === activeTypeId && t.isProductExtra === activeIsProductExtra);
+            if (!currentType) {
+                banner.style.display = "none";
+                return;
+            }
+
+            const freeLimit = currentType.freeLimit || 0;
+            if (freeLimit <= 0) {
+                banner.style.display = "block";
+                banner.style.color = "var(--text-muted)";
+                banner.innerHTML = "ℹ️ Alle gekozen extra's in deze categorie worden verrekend.";
+                return;
+            }
+
+            const countInSubCart = currentSubCartItems.filter(item => 
+                item.isProductExtra === activeIsProductExtra && item.typeId === activeTypeId && item.prefix !== '-'
+            ).length;
+
+            banner.style.display = "block";
+            if (countInSubCart < freeLimit) {
+                const remaining = freeLimit - countInSubCart;
+                banner.style.color = "var(--success-color)";
+                banner.innerHTML = `🟢 In deze categorie: <strong>${freeLimit} Gratis extra's</strong> toegestaan. U heeft er nog <strong>${remaining} beschikbaar</strong>.`;
+            } else {
+                banner.style.color = "var(--warning-color)";
+                banner.innerHTML = `🟡 Gratis limiet bereikt (<strong>${freeLimit}/${freeLimit}</strong>). Volgende gekozen extra's worden aangerekend.`;
+            }
+        }
+
         window.renderModalModifiers = function(items, isProductExtra) {
+            activeTypeItems = items || [];
             const container = document.getElementById("modalModifiersContainer");
             container.innerHTML = "";
+
+            const currentType = currentModalTypes.find(t => t.id === activeTypeId && t.isProductExtra === isProductExtra);
+            const freeLimit = currentType ? (currentType.freeLimit || 0) : 0;
+
+            const countInSubCart = currentSubCartItems.filter(item => 
+                item.isProductExtra === isProductExtra && item.typeId === activeTypeId && item.prefix !== '-'
+            ).length;
+
             items.forEach(item => {
                 const card = document.createElement("div");
                 card.className = "mod-card";
-                card.innerHTML = `<div class="mod-name">${item.name}</div><div class="mod-price">+ € ${item.price.toFixed(2)}</div>`;
+
+                let priceLabel = "";
+                if (currentPrefix === '-' || currentPrefix === '> enkel') {
+                    priceLabel = "GRATIS";
+                } else if (freeLimit > 0 && countInSubCart < freeLimit) {
+                    priceLabel = `GRATIS (Was € ${item.price.toFixed(2)})`;
+                } else {
+                    priceLabel = `+ € ${item.price.toFixed(2)}`;
+                }
+
+                card.innerHTML = `
+                    <div class="mod-name">${item.name}</div>
+                    <div class="mod-price" style="${priceLabel.includes('GRATIS') ? 'color: var(--success-color); font-weight:900;' : ''}">${priceLabel}</div>
+                `;
                 card.onclick = () => {
                     sendHostMessage({ action: "modal_add_modifier", isProductExtra: isProductExtra, prefix: currentPrefix, rawData: item.rawData });
                 };
                 container.appendChild(card);
             });
+
+            updateCategoryBanner();
         };
 
         window.renderSubCart = function(data) {
+            currentSubCartItems = data.items || [];
             document.getElementById('lblModalTotalPrice').innerText = "€ " + data.total.toFixed(2);
             const container = document.getElementById("modalSubCartContainer");
             container.innerHTML = "";
+
             data.items.forEach(item => {
+                let tagHtml = "";
+                if (item.prefix === '-') {
+                    tagHtml = `<span class="mod-item-badge without">- ZONDER</span>`;
+                } else if (item.price === 0) {
+                    tagHtml = `<span class="mod-item-badge free">GRATIS</span>`;
+                } else {
+                    tagHtml = `<span class="mod-item-badge paid">BETAALD</span>`;
+                }
+
                 const row = document.createElement("div");
                 row.className = `mod-cart-item ${item.color}`;
                 row.innerHTML = `
-                    <div><div class="mod-item-name">${item.displayName}</div><div class="mod-item-price">€ ${item.price.toFixed(2)}</div></div>
+                    <div>
+                        <div class="mod-item-name">${item.displayName} ${tagHtml}</div>
+                        <div class="mod-item-price">€ ${item.price.toFixed(2)}</div>
+                    </div>
                     <button class="btn-mod-remove" onclick="removeModifier(${item.uniqueId}, ${item.isProductExtra})">X</button>
                 `;
                 container.appendChild(row);
             });
             container.scrollTop = container.scrollHeight;
+
+            updateTypesListUI();
+            updateCategoryBanner();
+            if (activeTypeItems.length > 0) {
+                renderModalModifiers(activeTypeItems, activeIsProductExtra);
+            }
         };
 
         function setPrefix(prefix) {
@@ -1387,6 +1517,10 @@
             if(prefix === '+') document.querySelector('.prefix-btn.plus').classList.add('active');
             if(prefix === '-') document.querySelector('.prefix-btn.minus').classList.add('active');
             if(prefix === '> enkel') document.querySelector('.prefix-btn.enkel').classList.add('active');
+
+            if (activeTypeItems.length > 0) {
+                renderModalModifiers(activeTypeItems, activeIsProductExtra);
+            }
         }
 
         function removeModifier(uniqueId, isProductExtra) { 
