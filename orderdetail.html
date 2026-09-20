@@ -13,6 +13,8 @@
             --border-color: #cbd5e1;
             --text-dark: #1e293b;
             --text-muted: #64748b;
+            --amber-refund: #d97706;
+            --amber-refund-active: #b45309;
         }
 
         * {
@@ -75,9 +77,9 @@
             background: transparent;
             border: 1px solid transparent;
             border-bottom: none;
-            padding: 10px 20px;
+            padding: 12px 22px;
             font-size: 15px;
-            font-weight: 700;
+            font-weight: 800;
             color: var(--text-muted);
             cursor: pointer;
             border-top-left-radius: 8px;
@@ -142,7 +144,7 @@
             justify-content: space-between;
             align-items: center;
             font-size: 14px;
-            min-height: 38px;
+            min-height: 44px;
         }
 
         .detail-row .label {
@@ -155,44 +157,52 @@
             color: var(--text-dark);
         }
 
-        /* --- Time Adjustment Controls --- */
+        /* --- Touch-Optimized Time Adjustment Controls --- */
         .time-control-container {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
+            flex-wrap: wrap;
         }
 
         .time-btn {
-            background-color: #f1f5f9;
-            color: var(--text-dark);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 6px 8px;
-            font-size: 12px;
+            background-color: #374151;
+            color: #ffffff;
+            border: 1px solid #4b5563;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
             font-weight: 800;
             cursor: pointer;
+            min-width: 54px;
+            height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             touch-action: manipulation;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.05s ease, background-color 0.1s ease;
         }
 
         .time-btn:active {
             background-color: var(--primary-red);
-            color: #ffffff;
-            transform: scale(0.95);
+            border-color: var(--primary-red);
+            transform: scale(0.94);
         }
 
         .value-highlight {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 900;
             color: var(--text-dark);
-            padding: 0 6px;
-            min-width: 50px;
+            padding: 0 8px;
+            min-width: 58px;
             text-align: center;
         }
 
         /* --- Form Controls --- */
         .select-input {
             width: 100%;
-            height: 42px;
+            height: 44px;
             background-color: #ffffff;
             border: 2px solid var(--border-color);
             border-radius: 8px;
@@ -265,6 +275,7 @@
             justify-content: space-between;
             gap: 10px;
             flex-shrink: 0;
+            flex-wrap: wrap;
         }
 
         .action-btn {
@@ -290,6 +301,16 @@
             color: #c81e1e;
         }
 
+        .action-btn.refund-btn {
+            background-color: var(--amber-refund);
+            color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .action-btn.refund-btn:active {
+            background-color: var(--amber-refund-active);
+        }
+
         .action-btn.secondary-btn {
             background-color: #e2e8f0;
             color: #1e293b;
@@ -311,22 +332,17 @@
         <div class="service-badge" id="lblService">--</div>
     </div>
 
-    <!-- Navigation Tabs -->
+    <!-- Navigation Tabs (1st: Levering & Betaling, 2nd: Overzicht & Items, 3rd: Wijzigingshistorie) -->
     <div class="tabs-header">
-        <button class="tab-btn" onclick="switchTab('tab-overview')">Overzicht & Items</button>
         <button class="tab-btn active" onclick="switchTab('tab-delivery')">Levering & Betaling</button>
+        <button class="tab-btn" onclick="switchTab('tab-overview')">Overzicht & Items</button>
         <button class="tab-btn" onclick="switchTab('tab-audit')">Wijzigingshistorie</button>
     </div>
 
     <!-- Main Content Container -->
     <div class="tab-content-container">
 
-        <!-- Tab 1: Receipt Overview -->
-        <div id="tab-overview" class="tab-pane">
-            <pre class="receipt-view" id="txtReceipt">Gegevens laden...</pre>
-        </div>
-
-        <!-- Tab 2: Delivery & Payment Details -->
+        <!-- Tab 1: Delivery & Payment Details (First Tab) -->
         <div id="tab-delivery" class="tab-pane active">
             <div class="cards-grid">
                 
@@ -378,6 +394,11 @@
             </div>
         </div>
 
+        <!-- Tab 2: Receipt Overview (Second Tab) -->
+        <div id="tab-overview" class="tab-pane">
+            <pre class="receipt-view" id="txtReceipt">Gegevens laden...</pre>
+        </div>
+
         <!-- Tab 3: Audit Log -->
         <div id="tab-audit" class="tab-pane">
             <div class="audit-list" id="auditListContainer">
@@ -389,7 +410,14 @@
 
     <!-- Bottom Action Bar -->
     <div class="action-bar">
-        <button class="action-btn cancel-btn" onclick="sendAction('cancel')">Annuleren</button>
+        <div style="display: flex; gap: 8px;">
+            <button class="action-btn cancel-btn" onclick="sendAction('cancel')">Annuleren</button>
+            
+            <!-- Pay.nl Refund Button: Displayed ONLY when order is canceled AND paid online -->
+            <button id="btnRefund" class="action-btn refund-btn" onclick="refundOnlineOrder()" style="display: none;">
+                Terugbetalen (Pay.nl)
+            </button>
+        </div>
         
         <div style="display: flex; gap: 8px;">
             <button class="action-btn secondary-btn" onclick="sendAction('print_pos')">Bon Print</button>
@@ -404,6 +432,7 @@
     <script>
         let currentPlannedTime = "ZSM";
         let isCanceledState = false;
+        let isOnlinePaidState = false;
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -428,6 +457,20 @@
             document.getElementById('txtPaymentLog').value = data.paymentHistoryText || 'Geen betalingen gevonden';
 
             isCanceledState = !!data.isCanceled;
+
+            // Check if paid online (e.g. payonline method or via property flag)
+            const paymentMethodStr = (data.paymentMethod || '').toLowerCase();
+            isOnlinePaidState = (paymentMethodStr === 'payonline' || paymentMethodStr === 'online' || !!data.isOnlinePaid);
+
+            // Toggle Pay.nl Refund button visibility
+            const btnRefund = document.getElementById('btnRefund');
+            if (btnRefund) {
+                if (isCanceledState && isOnlinePaidState) {
+                    btnRefund.style.display = 'inline-flex';
+                } else {
+                    btnRefund.style.display = 'none';
+                }
+            }
 
             // Populate Payment Methods Dropdown
             const pmSelect = document.getElementById('cmbPaymentMethod');
@@ -480,6 +523,15 @@
         function onPaymentMethodChanged() {
             const pmId = parseInt(document.getElementById('cmbPaymentMethod').value, 10);
             sendAction('change_payment_method', { paymentMethodId: pmId });
+        }
+
+        /**
+         * Refund function trigger for online paid, canceled orders.
+         * Sends Pay.nl API action bridge call to WinForms host.
+         */
+        function refundOnlineOrder() {
+            // Bridge action sent to C# backend (Pay.nl API execution)
+            sendAction('refund_paynl');
         }
 
         function renderAuditLogs(logs) {
