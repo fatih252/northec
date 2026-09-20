@@ -1351,6 +1351,9 @@
             document.getElementById('modifierModal').style.display = 'none'; 
             isEditingCartItem = false;
             activeEditingLineId = null;
+            currentSubCartItems = [];
+            currentModalTypes = [];
+            activeTypeItems = [];
         };
         
         window.initProduct = function(data) { 
@@ -1433,7 +1436,7 @@
                 banner.innerHTML = `🟢 In deze categorie: <strong>${freeLimit} Gratis extra's</strong> toegestaan. U heeft er nog <strong>${remaining} beschikbaar</strong>.`;
             } else {
                 banner.style.color = "var(--warning-color)";
-                banner.innerHTML = `🟡 Gratis limiet bereikt (<strong>${freeLimit}/${freeLimit}</strong>). Volgende gekozen extra's worden aangerekend.`;
+                banner.innerHTML = `🟡 Gratis limiet bereikt (<strong>${countInSubCart}/${freeLimit}</strong>). Volgende gekozen extra's worden aangerekend.`;
             }
         }
 
@@ -1457,9 +1460,9 @@
                 if (currentPrefix === '-' || currentPrefix === '> enkel') {
                     priceLabel = "GRATIS";
                 } else if (freeLimit > 0 && countInSubCart < freeLimit) {
-                    priceLabel = `GRATIS (Was € ${item.price.toFixed(2)})`;
+                    priceLabel = `GRATIS (Was € ${parseFloat(item.price).toFixed(2)})`;
                 } else {
-                    priceLabel = `+ € ${item.price.toFixed(2)}`;
+                    priceLabel = `+ € ${parseFloat(item.price).toFixed(2)}`;
                 }
 
                 card.innerHTML = `
