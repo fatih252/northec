@@ -388,6 +388,12 @@
                         </div>
                     </div>
 
+                    <!-- Online Payment Status Indicator -->
+                    <div class="detail-row" id="onlineStatusRow" style="display: none;">
+                        <span class="label">Online Betaalstatus</span>
+                        <span class="value" id="lblOnlineStatus" style="padding: 4px 10px; border-radius: 6px; font-size: 13px;">--</span>
+                    </div>
+
                     <div style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
                         <span class="label" style="font-weight: 800;">Betalingen Log</span>
                         <textarea class="log-textarea" id="txtPaymentLog" readonly placeholder="Geen betalingen gevonden"></textarea>
@@ -416,9 +422,9 @@
         <div style="display: flex; gap: 8px;">
             <button id="btnCancel" class="action-btn cancel-btn" onclick="sendAction('cancel')">Annuleren</button>
             
-            <!-- Pay.nl Refund Button: Displayed ONLY when order is canceled AND paid online -->
+            <!-- Online Refund Button: Displayed ONLY when order is canceled AND paid online -->
             <button id="btnRefund" class="action-btn refund-btn" onclick="refundOnlineOrder()" style="display: none;">
-                Terugbetalen
+                Online Terugbetalen
             </button>
         </div>
         
@@ -463,6 +469,28 @@
             const paymentMethodStr = (data.paymentMethod || '').toLowerCase();
             isOnlinePaidState = (paymentMethodStr === 'payonline' || paymentMethodStr === 'online' || !!data.isOnlinePaid);
 
+            // Render Online Betaalstatus Badge
+            const onlineRow = document.getElementById('onlineStatusRow');
+            const onlineStatusLbl = document.getElementById('lblOnlineStatus');
+
+            if (isOnlinePaidState && data.onlineStatusText) {
+                onlineRow.style.display = 'flex';
+                onlineStatusLbl.innerText = data.onlineStatusText;
+
+                if (data.onlineStatusText.includes('TERUGBETAALD')) {
+                    onlineStatusLbl.style.backgroundColor = '#fef3c7';
+                    onlineStatusLbl.style.color = '#92400e';
+                } else if (data.onlineStatusText.includes('PAID') || data.onlineStatusText.includes('BETAALD')) {
+                    onlineStatusLbl.style.backgroundColor = '#d1fae5';
+                    onlineStatusLbl.style.color = '#065f46';
+                } else {
+                    onlineStatusLbl.style.backgroundColor = '#e2e8f0';
+                    onlineStatusLbl.style.color = '#334155';
+                }
+            } else {
+                onlineRow.style.display = 'none';
+            }
+
             // Populate Payment Methods Dropdown
             const pmSelect = document.getElementById('cmbPaymentMethod');
             pmSelect.innerHTML = '';
@@ -488,18 +516,15 @@
             const timeControls = document.getElementById('timeControls');
 
             if (isCanceledState) {
-                // Disable/Hide editing controls and cancellation trigger
                 if (timeControls) timeControls.style.display = 'none';
                 if (pmSelect) pmSelect.disabled = true;
                 if (btnCancel) btnCancel.style.display = 'none';
                 if (btnEdit) btnEdit.style.display = 'none';
 
-                // Display Refund button only if order was paid online
                 if (btnRefund) {
                     btnRefund.style.display = isOnlinePaidState ? 'inline-flex' : 'none';
                 }
             } else {
-                // Active order state: Enable controls
                 if (timeControls) timeControls.style.display = 'flex';
                 if (pmSelect) pmSelect.disabled = false;
                 if (btnCancel) btnCancel.style.display = 'inline-flex';
