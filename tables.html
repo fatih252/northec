@@ -265,13 +265,13 @@
             position: absolute;
             top: -10px;
             right: -10px;
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             background-color: #ef4444;
             color: #ffffff;
             border: 2px solid #ffffff;
             border-radius: 50%;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             cursor: pointer;
             display: none;
@@ -318,6 +318,60 @@
         .table-timer { font-size: 11px; color: #f97316; font-weight: 800; background: rgba(0, 0, 0, 0.7); padding: 1px 5px; border-radius: 5px; width: fit-content; margin: 0 auto; }
         .table-price { font-size: 12px; font-weight: 700; color: #f8fafc; background: var(--pizza-green); padding: 1px 6px; border-radius: 20px; margin-top: 2px; box-shadow: 0 3px 5px rgba(0,0,0,0.3); }
 
+        /* --- Touch Modal Overlays --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(2px);
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 14px;
+            padding: 24px;
+            width: 90%;
+            max-width: 460px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+        .modal-input {
+            width: 100%;
+            height: 54px;
+            background: #111827;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 18px;
+            font-weight: 700;
+            padding: 0 14px;
+            outline: none;
+            user-select: text !important;
+            -webkit-user-select: text !important;
+        }
+        .modal-input:focus {
+            border-color: var(--color-edit);
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
         @media (max-width: 1024px) {
             #order-sidebar { width: 420px; }
             .pos-btn { height: 48px; padding: 0 14px; font-size: 14px; }
@@ -335,7 +389,7 @@
                 <button id="btn-edit-toggle" class="pos-btn primary" onclick="toggleEditMode()">
                     <span>Wijzig tafel locaties</span>
                 </button>
-                <button id="btn-add-table" class="pos-btn success" onclick="createTable()" style="display:none">+ Tafel</button>
+                <button id="btn-add-table" class="pos-btn success" onclick="openCreateTableModal()" style="display:none">+ Tafel</button>
                 <button id="btn-scale-up" class="pos-btn scale-btn" onclick="adjustTableSizes(10)" style="display:none">+</button>
                 <button id="btn-scale-down" class="pos-btn scale-btn" onclick="adjustTableSizes(-10)" style="display:none">-</button>
             </div>
@@ -385,12 +439,46 @@
         </div>
     </div>
 
+    <!-- TOUCH MODAL DIALOG FOR CREATING TABLES -->
+    <div id="create-table-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-title">Nieuwe Tafel Toevoegen</div>
+            <input type="text" id="new-table-name-input" class="modal-input" placeholder="Tafelnaam..." />
+            <div class="modal-actions">
+                <button class="pos-btn" onclick="closeCreateTableModal()" style="background-color: #4b5563;">Annuleren</button>
+                <button class="pos-btn success" onclick="submitNewTable()">Toevoegen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOUCH MODAL DIALOG FOR DELETING TABLES -->
+    <div id="delete-table-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-title">Tafel Verwijderen</div>
+            <p style="color: var(--text-muted); font-size: 15px; line-height: 1.4;">Weet u zeker dat u deze tafel wilt verwijderen?</p>
+            <div class="modal-actions">
+                <button class="pos-btn" onclick="closeDeleteTableModal()" style="background-color: #4b5563;">Annuleren</button>
+                <button class="pos-btn danger" onclick="confirmDeleteTable()">Verwijderen</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         window.addEventListener('dragstart', (e) => e.preventDefault());
         window.addEventListener('drop', (e) => e.preventDefault());
         window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
         window.addEventListener('keydown', (e) => {
             if (e.ctrlKey && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault();
+            if (e.key === 'Enter' && document.getElementById('create-table-modal').classList.contains('active')) {
+                submitNewTable();
+            }
+            if (e.key === 'Enter' && document.getElementById('delete-table-modal').classList.contains('active')) {
+                confirmDeleteTable();
+            }
+            if (e.key === 'Escape') {
+                closeCreateTableModal();
+                closeDeleteTableModal();
+            }
         });
 
         const canvas = document.getElementById('canvas');
@@ -400,6 +488,7 @@
         const historyWrapper = document.getElementById('history-section-wrapper');
         
         let appState = { editMode: false, gridSize: 20, tableWidth: 110, tableHeight: 110 };
+        let pendingDeleteTableId = null;
 
         function initLayout(payload) {
             appState.editMode = payload.editMode;
@@ -434,7 +523,6 @@
             canvas.style.backgroundImage = payload.backgroundImage ? `url('${payload.backgroundImage}')` : 'none';
             canvas.innerHTML = '';
 
-            // Resolve any stacked/overlapping table initial locations
             let placedRects = [];
 
             payload.tables.forEach((table, index) => {
@@ -445,7 +533,7 @@
                 el.style.height = `${appState.tableHeight}px`;
 
                 el.innerHTML = `
-                    <button class="delete-table-btn" onclick="deleteTable(event, ${table.id})" title="Verwijder tafel">✕</button>
+                    <button class="delete-table-btn" onclick="openDeleteTableModal(event, ${table.id})" title="Verwijder tafel">✕</button>
                     <svg class="table-illustration" viewBox="0 0 100 100" preserveAspectRatio="none">
                         <rect class="chair" x="2" y="35" width="10" height="30" rx="3"/>
                         <rect class="chair" x="88" y="35" width="10" height="30" rx="3"/>
@@ -460,24 +548,25 @@
                     </div>
                 `;
 
+                // Strictly use DB location coordinates
                 let x = 40, y = 60;
                 if (table.location && table.location.includes(',')) {
                     const parts = table.location.split(',');
-                    x = parseInt(parts[0]) || 40;
-                    y = parseInt(parts[1]) || 60;
+                    x = parseInt(parts[0]);
+                    y = parseInt(parts[1]);
+                    if (isNaN(x)) x = 40;
+                    if (isNaN(y)) y = 60;
                 } else {
-                    x = 20 + (index % 6) * (appState.tableWidth + 30);
-                    y = 40 + Math.floor(index / 6) * (appState.tableHeight + 30);
+                    x = 20 + (index % 6) * (appState.tableWidth + 15);
+                    y = 40 + Math.floor(index / 6) * (appState.tableHeight + 15);
                 }
 
-                // Prevent initial overlap on load
+                // If overlapping with existing placed tables, apply a tiny offset nudge (10px)
                 let attempts = 0;
-                while (checkRectOverlap(x, y, appState.tableWidth, appState.tableHeight, placedRects) && attempts < 100) {
-                    x += appState.gridSize;
-                    if (x + appState.tableWidth > (canvas.clientWidth || 1000)) {
-                        x = 20;
-                        y += appState.gridSize;
-                    }
+                const nudgeStep = 10;
+                while (checkRectOverlap(x, y, appState.tableWidth, appState.tableHeight, placedRects) && attempts < 50) {
+                    x += nudgeStep;
+                    y += nudgeStep;
                     attempts++;
                 }
 
@@ -491,6 +580,46 @@
 
             renderBucketList(activeBucket, payload.activeOrders, 'indicator-table-open', 'Geopend', 'badgeActiveCount');
             renderBucketList(inactiveBucket, payload.inactiveOrders, 'indicator-table-closed', 'Afgesloten', 'badgeInactiveCount');
+        }
+
+        /* --- MODAL CONTROL FUNCTIONS --- */
+        function openCreateTableModal() {
+            const count = document.querySelectorAll('.table-item').length + 1;
+            const input = document.getElementById('new-table-name-input');
+            input.value = `Tafel ${count}`;
+            document.getElementById('create-table-modal').classList.add('active');
+            setTimeout(() => { input.focus(); input.select(); }, 100);
+        }
+
+        function closeCreateTableModal() {
+            document.getElementById('create-table-modal').classList.remove('active');
+        }
+
+        function submitNewTable() {
+            const input = document.getElementById('new-table-name-input');
+            const tableName = input.value.trim();
+            if (!tableName) return;
+            
+            sendToWinForms({ action: 'createTable', name: tableName });
+            closeCreateTableModal();
+        }
+
+        function openDeleteTableModal(event, tableId) {
+            event.stopPropagation();
+            pendingDeleteTableId = tableId;
+            document.getElementById('delete-table-modal').classList.add('active');
+        }
+
+        function closeDeleteTableModal() {
+            pendingDeleteTableId = null;
+            document.getElementById('delete-table-modal').classList.remove('active');
+        }
+
+        function confirmDeleteTable() {
+            if (pendingDeleteTableId !== null) {
+                sendToWinForms({ action: 'deleteTable', tableId: pendingDeleteTableId });
+                closeDeleteTableModal();
+            }
         }
 
         /* --- COLLISION DETECTION HELPERS --- */
@@ -517,19 +646,10 @@
                 const oRect = { left: oLeft, top: oTop, right: oLeft + other.clientWidth, bottom: oTop + other.clientHeight };
 
                 if (!(cand.right <= oRect.left || cand.left >= oRect.right || cand.bottom <= oRect.top || cand.top >= oRect.bottom)) {
-                    return true; // Overlap detected
+                    return true;
                 }
             }
             return false;
-        }
-
-        function deleteTable(event, tableId) {
-            event.stopPropagation();
-            sendToWinForms({ action: 'deleteTable', tableId: tableId });
-        }
-
-        function createTable() {
-            sendToWinForms({ action: 'createTable' });
         }
 
         function renderBucketList(targetElement, list, indicatorClass, statusText, badgeId) {
@@ -624,7 +744,6 @@
                 targetX = Math.max(0, Math.min(targetX, canvas.clientWidth - el.clientWidth));
                 targetY = Math.max(0, Math.min(targetY, canvas.clientHeight - el.clientHeight));
 
-                // Check collision with other tables
                 isColliding = checkCollisionWithOtherTables(targetX, targetY, el);
                 if (isColliding) {
                     el.classList.add('overlapping');
@@ -640,7 +759,6 @@
                 el.releasePointerCapture(upEvent.pointerId);
                 el.style.zIndex = "";
 
-                // Revert to initial coordinates if dropped on top of another table
                 if (el.classList.contains('overlapping')) {
                     el.style.left = `${initialLeft}px`;
                     el.style.top = `${initialTop}px`;
