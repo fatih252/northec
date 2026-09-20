@@ -157,7 +157,7 @@
             color: var(--text-dark);
         }
 
-        /* --- Touch-Optimized Time Adjustment Controls (-15m and +15m) --- */
+        /* --- Touch-Optimized Time Controls --- */
         .time-control-container {
             display: flex;
             align-items: center;
@@ -327,6 +327,49 @@
             flex: 1;
             max-width: 260px;
         }
+
+        /* --- Touch Modal Overlays --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(2px);
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-card {
+            background: #ffffff;
+            border: 2px solid var(--border-color);
+            border-radius: 14px;
+            padding: 24px;
+            width: 90%;
+            max-width: 460px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+        .modal-body {
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
     </style>
 </head>
 <body>
@@ -420,10 +463,9 @@
     <!-- Bottom Action Bar -->
     <div class="action-bar">
         <div style="display: flex; gap: 8px;">
-            <button id="btnCancel" class="action-btn cancel-btn" onclick="sendAction('cancel')">Annuleren</button>
+            <button id="btnCancel" class="action-btn cancel-btn" onclick="openCancelModal()">Annuleren</button>
             
-            <!-- Online Refund Button: Displayed ONLY when order is canceled AND paid online -->
-            <button id="btnRefund" class="action-btn refund-btn" onclick="refundOnlineOrder()" style="display: none;">
+            <button id="btnRefund" class="action-btn refund-btn" onclick="openRefundModal()" style="display: none;">
                 Online Terugbetalen
             </button>
         </div>
@@ -438,10 +480,36 @@
         <button id="btnClose" class="action-btn secondary-btn" onclick="sendAction('close')">Sluiten</button>
     </div>
 
+    <!-- TOUCH CONFIRMATION MODAL -->
+    <div id="confirm-dialog-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-title" id="confirmModalTitle">Bevestiging</div>
+            <div class="modal-body" id="confirmModalBody">Weet u het zeker?</div>
+            <div class="modal-actions">
+                <button class="action-btn secondary-btn" onclick="closeConfirmModal()">Nee, Annuleren</button>
+                <button class="action-btn primary-btn" id="btnConfirmSubmit" onclick="submitConfirmModal()">Ja, Uitvoeren</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOUCH ALERT MODAL -->
+    <div id="alert-dialog-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-title" id="alertModalTitle">Melding</div>
+            <div class="modal-body" id="alertModalBody">--</div>
+            <div class="modal-actions">
+                <button class="action-btn primary-btn" onclick="closeAlertModal()" style="max-width: 100%;">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentPlannedTime = "ZSM";
         let isCanceledState = false;
         let isOnlinePaidState = false;
+        let pendingConfirmCallback = null;
+        let totalAmountVal = "0.00";
+        let orderNumVal = "";
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -465,6 +533,8 @@
             document.getElementById('txtPaymentLog').value = data.paymentHistoryText || 'Geen betalingen gevonden';
 
             isCanceledState = !!data.isCanceled;
+            totalAmountVal = data.totPriceFormatted || "0.00";
+            orderNumVal = data.orderNumber || "";
 
             const paymentMethodStr = (data.paymentMethod || '').toLowerCase();
             isOnlinePaidState = (paymentMethodStr === 'payonline' || paymentMethodStr === 'online' || !!data.isOnlinePaid);
@@ -509,7 +579,7 @@
             document.getElementById('lblDesiredLabel').innerText = isTakeaway ? 'Gewenste Afhaling' : 'Gewenste Bezorging';
             document.getElementById('lblPlannedLabel').innerText = isTakeaway ? 'Geplande Afhaling' : 'Geplande Bezorging';
 
-            // --- CANCELLED ORDER LOCKING LOGIC ---
+            // Cancelled order locking logic
             const btnCancel = document.getElementById('btnCancel');
             const btnEdit = document.getElementById('btnEdit');
             const btnRefund = document.getElementById('btnRefund');
@@ -532,9 +602,55 @@
                 if (btnRefund) btnRefund.style.display = 'none';
             }
 
-            // Render Audit Logs
             renderAuditLogs(data.auditLogs);
         };
+
+        /* --- MODAL CONTROL FUNCTIONS --- */
+        function openCancelModal() {
+            showConfirm("Bestelling Annuleren", "Weet u zeker dat u deze bestelling wilt annuleren?", () => {
+                sendAction('confirm_cancel_order');
+            });
+        }
+
+        function openRefundModal() {
+            showConfirm(
+                "Online Terugbetaling Bevestigen", 
+                `Weet u zeker dat u €${totalAmountVal} online wilt terugbetalen voor bestelling #${orderNumVal}?`, 
+                () => {
+                    sendAction('confirm_refund_paynl');
+                }
+            );
+        }
+
+        function showConfirm(title, message, callback) {
+            document.getElementById('confirmModalTitle').innerText = title;
+            document.getElementById('confirmModalBody').innerText = message;
+            pendingConfirmCallback = callback;
+            document.getElementById('confirm-dialog-modal').classList.add('active');
+        }
+
+        function closeConfirmModal() {
+            pendingConfirmCallback = null;
+            document.getElementById('confirm-dialog-modal').classList.remove('active');
+        }
+
+        function submitConfirmModal() {
+            if (pendingConfirmCallback) {
+                const cb = pendingConfirmCallback;
+                closeConfirmModal();
+                cb();
+            }
+        }
+
+        window.showAlert = function(title, message) {
+            document.getElementById('alertModalTitle').innerText = title || "Melding";
+            document.getElementById('alertModalBody').innerText = message || "";
+            document.getElementById('alert-dialog-modal').classList.add('active');
+        };
+
+        function closeAlertModal() {
+            document.getElementById('alert-dialog-modal').classList.remove('active');
+        }
 
         function adjustPlannedTime(minutes) {
             if (isCanceledState) return;
@@ -566,10 +682,6 @@
             if (isCanceledState) return;
             const pmId = parseInt(document.getElementById('cmbPaymentMethod').value, 10);
             sendAction('change_payment_method', { paymentMethodId: pmId });
-        }
-
-        function refundOnlineOrder() {
-            sendAction('refund_paynl');
         }
 
         function renderAuditLogs(logs) {
