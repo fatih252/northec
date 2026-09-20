@@ -360,7 +360,7 @@
             color: var(--text-dark);
         }
         .modal-body {
-            font-size: 15px;
+            font-size: 16px;
             color: var(--text-muted);
             line-height: 1.4;
             white-space: pre-wrap;
@@ -368,7 +368,39 @@
         .modal-actions {
             display: flex;
             justify-content: flex-end;
-            gap: 12px;
+            gap: 14px;
+            margin-top: 6px;
+        }
+
+        /* Large Touch-Friendly Modal Option Buttons */
+        .pos-modal-btn {
+            height: 52px;
+            min-width: 120px;
+            font-size: 18px;
+            font-weight: 800;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            transition: transform 0.05s ease, background-color 0.1s ease;
+        }
+
+        .pos-modal-btn:active {
+            transform: scale(0.95);
+        }
+
+        .pos-modal-btn.cancel-touch-btn {
+            background-color: #cbd5e1;
+            color: #1e293b;
+        }
+
+        .pos-modal-btn.confirm-touch-btn {
+            background-color: var(--primary-red);
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
@@ -480,14 +512,14 @@
         <button id="btnClose" class="action-btn secondary-btn" onclick="sendAction('close')">Sluiten</button>
     </div>
 
-    <!-- TOUCH CONFIRMATION MODAL -->
+    <!-- TOUCH CONFIRMATION MODAL WITH "NEE" AND "JA" OPTIONS -->
     <div id="confirm-dialog-modal" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-title" id="confirmModalTitle">Bevestiging</div>
             <div class="modal-body" id="confirmModalBody">Weet u het zeker?</div>
             <div class="modal-actions">
-                <button class="action-btn secondary-btn" onclick="closeConfirmModal()">Nee, Annuleren</button>
-                <button class="action-btn primary-btn" id="btnConfirmSubmit" onclick="submitConfirmModal()">Ja, Uitvoeren</button>
+                <button class="pos-modal-btn cancel-touch-btn" onclick="closeConfirmModal()">Nee</button>
+                <button class="pos-modal-btn confirm-touch-btn" id="btnConfirmSubmit" onclick="submitConfirmModal()">Ja</button>
             </div>
         </div>
     </div>
@@ -498,7 +530,7 @@
             <div class="modal-title" id="alertModalTitle">Melding</div>
             <div class="modal-body" id="alertModalBody">--</div>
             <div class="modal-actions">
-                <button class="action-btn primary-btn" onclick="closeAlertModal()" style="max-width: 100%;">OK</button>
+                <button class="pos-modal-btn confirm-touch-btn" onclick="closeAlertModal()" style="width: 100%;">OK</button>
             </div>
         </div>
     </div>
@@ -605,7 +637,7 @@
             renderAuditLogs(data.auditLogs);
         };
 
-        /* --- MODAL CONTROL FUNCTIONS --- */
+        /* --- TOUCH MODAL CONTROL FUNCTIONS --- */
         function openCancelModal() {
             showConfirm("Bestelling Annuleren", "Weet u zeker dat u deze bestelling wilt annuleren?", () => {
                 sendAction('confirm_cancel_order');
