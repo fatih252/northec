@@ -121,12 +121,12 @@
             background-size: 20px 20px;
         }
 
-        /* --- Overlay Sidebar Slider (Wider Order List View) --- */
+        /* --- Overlay Sidebar Slider --- */
         #order-sidebar {
             position: absolute;
             right: 0;
             top: 0;
-            width: 500px; /* Increased from 420px */
+            width: 500px;
             height: 100%;
             background-color: #f1f5f9;
             border-left: 3px solid #cbd5e1;
@@ -242,6 +242,7 @@
         .time-tag { font-weight: bold; color: #b91c1c; }
         .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.35rem; min-width: 80px; }
 
+        /* --- Table Component --- */
         .table-item {
             position: absolute;
             display: flex;
@@ -251,8 +252,43 @@
             border-radius: 14px;
             padding: 8px;
             cursor: pointer;
+            transition: outline 0.15s ease;
         }
-        
+
+        .table-item.overlapping {
+            outline: 4px dashed #ef4444 !important;
+            box-shadow: 0 0 14px rgba(239, 68, 68, 0.8) !important;
+        }
+
+        /* Red Delete Cross Button in Edit Mode */
+        .delete-table-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 30px;
+            height: 30px;
+            background-color: #ef4444;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            pointer-events: auto;
+        }
+        .delete-table-btn:active {
+            transform: scale(0.9);
+            background-color: #dc2626;
+        }
+        .edit-mode .delete-table-btn {
+            display: flex;
+        }
+
         .table-illustration {
             position: absolute;
             top: 0;
@@ -299,6 +335,7 @@
                 <button id="btn-edit-toggle" class="pos-btn primary" onclick="toggleEditMode()">
                     <span>Wijzig tafel locaties</span>
                 </button>
+                <button id="btn-add-table" class="pos-btn success" onclick="createTable()" style="display:none">+ Tafel</button>
                 <button id="btn-scale-up" class="pos-btn scale-btn" onclick="adjustTableSizes(10)" style="display:none">+</button>
                 <button id="btn-scale-down" class="pos-btn scale-btn" onclick="adjustTableSizes(-10)" style="display:none">-</button>
             </div>
@@ -371,6 +408,7 @@
             appState.tableHeight = payload.tableSize || 110;
 
             const editToggleBtn = document.getElementById('btn-edit-toggle');
+            const addTableBtn = document.getElementById('btn-add-table');
             const plusBtn = document.getElementById('btn-scale-up');
             const minBtn = document.getElementById('btn-scale-down');
             const fsBtn = document.getElementById('btn-fullscreen');
@@ -381,12 +419,14 @@
                 document.body.classList.add('edit-mode');
                 editToggleBtn.innerText = "Opslaan";
                 editToggleBtn.className = "pos-btn success";
+                addTableBtn.style.display = "flex";
                 plusBtn.style.display = "flex";
                 minBtn.style.display = "flex";
             } else {
                 document.body.classList.remove('edit-mode');
                 editToggleBtn.innerText = "Wijzig tafel locaties";
                 editToggleBtn.className = "pos-btn primary";
+                addTableBtn.style.display = "none";
                 plusBtn.style.display = "none";
                 minBtn.style.display = "none";
             }
@@ -394,7 +434,10 @@
             canvas.style.backgroundImage = payload.backgroundImage ? `url('${payload.backgroundImage}')` : 'none';
             canvas.innerHTML = '';
 
-            payload.tables.forEach(table => {
+            // Resolve any stacked/overlapping table initial locations
+            let placedRects = [];
+
+            payload.tables.forEach((table, index) => {
                 const el = document.createElement('div');
                 el.className = `table-item ${table.isActive ? 'active' : 'vacant'}`;
                 el.setAttribute('data-id', table.id);
@@ -402,6 +445,7 @@
                 el.style.height = `${appState.tableHeight}px`;
 
                 el.innerHTML = `
+                    <button class="delete-table-btn" onclick="deleteTable(event, ${table.id})" title="Verwijder tafel">✕</button>
                     <svg class="table-illustration" viewBox="0 0 100 100" preserveAspectRatio="none">
                         <rect class="chair" x="2" y="35" width="10" height="30" rx="3"/>
                         <rect class="chair" x="88" y="35" width="10" height="30" rx="3"/>
@@ -416,20 +460,76 @@
                     </div>
                 `;
 
+                let x = 40, y = 60;
                 if (table.location && table.location.includes(',')) {
-                    const [x, y] = table.location.split(',');
-                    el.style.left = `${x}px`;
-                    el.style.top = `${y}px`;
+                    const parts = table.location.split(',');
+                    x = parseInt(parts[0]) || 40;
+                    y = parseInt(parts[1]) || 60;
                 } else {
-                    el.style.left = "40px";
-                    el.style.top = "60px";
+                    x = 20 + (index % 6) * (appState.tableWidth + 30);
+                    y = 40 + Math.floor(index / 6) * (appState.tableHeight + 30);
                 }
+
+                // Prevent initial overlap on load
+                let attempts = 0;
+                while (checkRectOverlap(x, y, appState.tableWidth, appState.tableHeight, placedRects) && attempts < 100) {
+                    x += appState.gridSize;
+                    if (x + appState.tableWidth > (canvas.clientWidth || 1000)) {
+                        x = 20;
+                        y += appState.gridSize;
+                    }
+                    attempts++;
+                }
+
+                placedRects.push({ left: x, top: y, right: x + appState.tableWidth, bottom: y + appState.tableHeight });
+
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
 
                 canvas.appendChild(el);
             });
 
             renderBucketList(activeBucket, payload.activeOrders, 'indicator-table-open', 'Geopend', 'badgeActiveCount');
             renderBucketList(inactiveBucket, payload.inactiveOrders, 'indicator-table-closed', 'Afgesloten', 'badgeInactiveCount');
+        }
+
+        /* --- COLLISION DETECTION HELPERS --- */
+        function checkRectOverlap(x, y, w, h, rectsList) {
+            const cand = { left: x, top: y, right: x + w, bottom: y + h };
+            for (let r of rectsList) {
+                if (!(cand.right <= r.left || cand.left >= r.right || cand.bottom <= r.top || cand.top >= r.bottom)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function checkCollisionWithOtherTables(targetX, targetY, currentElement) {
+            const w = currentElement.clientWidth;
+            const h = currentElement.clientHeight;
+            const cand = { left: targetX, top: targetY, right: targetX + w, bottom: targetY + h };
+
+            const allTables = document.querySelectorAll('.table-item');
+            for (let other of allTables) {
+                if (other === currentElement) continue;
+                const oLeft = parseInt(other.style.left) || 0;
+                const oTop = parseInt(other.style.top) || 0;
+                const oRect = { left: oLeft, top: oTop, right: oLeft + other.clientWidth, bottom: oTop + other.clientHeight };
+
+                if (!(cand.right <= oRect.left || cand.left >= oRect.right || cand.bottom <= oRect.top || cand.top >= oRect.bottom)) {
+                    return true; // Overlap detected
+                }
+            }
+            return false;
+        }
+
+        function deleteTable(event, tableId) {
+            event.stopPropagation();
+            sendToWinForms({ action: 'deleteTable', tableId: tableId });
+        }
+
+        function createTable() {
+            sendToWinForms({ action: 'createTable' });
         }
 
         function renderBucketList(targetElement, list, indicatorClass, statusText, badgeId) {
@@ -494,9 +594,10 @@
             });
         }
 
+        /* --- TOUCH / MOUSE DRAG WITH OVERLAP REJECTION --- */
         document.addEventListener('pointerdown', (e) => {
             const el = e.target.closest('.table-item');
-            if (!el) return;
+            if (!el || e.target.classList.contains('delete-table-btn')) return;
 
             if (!appState.editMode) {
                 const cleanId = parseInt(el.getAttribute('data-id'));
@@ -508,6 +609,7 @@
             let initialTop = parseInt(el.style.top) || 0;
             let startX = e.clientX;
             let startY = e.clientY;
+            let isColliding = false;
             
             el.setPointerCapture(e.pointerId);
             el.style.zIndex = "1000";
@@ -522,6 +624,14 @@
                 targetX = Math.max(0, Math.min(targetX, canvas.clientWidth - el.clientWidth));
                 targetY = Math.max(0, Math.min(targetY, canvas.clientHeight - el.clientHeight));
 
+                // Check collision with other tables
+                isColliding = checkCollisionWithOtherTables(targetX, targetY, el);
+                if (isColliding) {
+                    el.classList.add('overlapping');
+                } else {
+                    el.classList.remove('overlapping');
+                }
+
                 el.style.left = `${targetX}px`;
                 el.style.top = `${targetY}px`;
             };
@@ -529,6 +639,14 @@
             const onPointerUp = (upEvent) => {
                 el.releasePointerCapture(upEvent.pointerId);
                 el.style.zIndex = "";
+
+                // Revert to initial coordinates if dropped on top of another table
+                if (el.classList.contains('overlapping')) {
+                    el.style.left = `${initialLeft}px`;
+                    el.style.top = `${initialTop}px`;
+                    el.classList.remove('overlapping');
+                }
+
                 el.removeEventListener('pointermove', onPointerMove);
                 el.removeEventListener('pointerup', onPointerUp);
             };
