@@ -49,15 +49,15 @@
         
         #app-container { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
-        /* --- Low-Res Adaptive Touch Control Bar --- */
+        /* --- Control Bar --- */
         #control-bar {
-            min-height: 72px;
+            min-height: 64px;
             background-color: var(--bg-main);
             border-bottom: 2px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 14px;
+            padding: 8px 14px;
             z-index: 9999;
             flex-wrap: wrap; 
             gap: 8px;
@@ -65,14 +65,13 @@
 
         .btn-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-        /* Larger POS Touch Buttons */
         .pos-btn {
             background-color: var(--bg-card);
             color: var(--text-main);
             border: 2px solid var(--border-color);
-            height: 54px; 
-            padding: 0 18px;
-            font-size: 16px;
+            height: 48px; 
+            padding: 0 16px;
+            font-size: 15px;
             font-weight: 800;
             border-radius: 10px;
             cursor: pointer;
@@ -85,14 +84,14 @@
         .pos-btn.primary { background-color: var(--pizza-red); border-color: var(--pizza-red); }
         .pos-btn.success { background-color: var(--pizza-green); border-color: var(--pizza-green); }
         .pos-btn.danger { background-color: #b91c1c; border-color: #ef4444; }
-        .pos-btn.scale-btn { width: 54px; padding: 0; justify-content: center; font-size: 26px; }
+        .pos-btn.scale-btn { width: 48px; padding: 0; justify-content: center; font-size: 22px; }
 
         /* --- Master Workspace Shell --- */
         #workspace {
             display: flex;
             flex: 1;
             width: 100%;
-            height: calc(100% - 72px);
+            height: calc(100% - 64px);
             overflow: hidden;
             position: relative;
         }
@@ -126,7 +125,7 @@
             position: absolute;
             right: 0;
             top: 0;
-            width: 500px;
+            width: 460px;
             height: 100%;
             background-color: #f1f5f9;
             border-left: 3px solid #cbd5e1;
@@ -237,48 +236,48 @@
         .indicator-table-closed { border-left-color: #ff9800 !important; }
 
         .address-info { flex-grow: 1; min-width: 0; }
-        .address-title { font-weight: 800; font-size: 1.15rem; color: #000000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .order-details { font-size: 0.90rem; color: #334155; margin-top: 3px; line-height: 1.3; text-align: left; }
+        .address-title { font-weight: 800; font-size: 1.1rem; color: #000000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .order-details { font-size: 0.85rem; color: #334155; margin-top: 3px; line-height: 1.3; text-align: left; }
         .time-tag { font-weight: bold; color: #b91c1c; }
-        .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.35rem; min-width: 80px; }
+        .price-tag { text-align: right; font-weight: 900; color: var(--pizza-red); font-size: 1.25rem; min-width: 80px; }
 
-        /* --- Table Component --- */
+        /* --- Classic-Proportioned Table Tile --- */
         .table-item {
             position: absolute;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 14px;
-            padding: 8px;
+            border-radius: 8px;
+            padding: 4px;
             cursor: pointer;
             transition: outline 0.15s ease;
         }
 
         .table-item.overlapping {
-            outline: 4px dashed #ef4444 !important;
-            box-shadow: 0 0 14px rgba(239, 68, 68, 0.8) !important;
+            outline: 3px dashed #ef4444 !important;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.8) !important;
         }
 
         /* Red Delete Cross Button in Edit Mode */
         .delete-table-btn {
             position: absolute;
-            top: -10px;
-            right: -10px;
-            width: 32px;
-            height: 32px;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
             background-color: #ef4444;
             color: #ffffff;
             border: 2px solid #ffffff;
             border-radius: 50%;
-            font-size: 18px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 100;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
             pointer-events: auto;
         }
         .delete-table-btn:active {
@@ -299,10 +298,10 @@
             pointer-events: none;
         }
 
-        .table-item.vacant .table-illustration .table-top { fill: #450a0a; stroke: var(--color-vacant); stroke-width: 3; }
-        .table-item.vacant .table-illustration .chair { fill: #7f1d1d; stroke: var(--color-vacant); stroke-width: 1.5; }
-        .table-item.active .table-illustration .table-top { fill: #064e3b; stroke: var(--color-active); stroke-width: 3; }
-        .table-item.active .table-illustration .chair { fill: #134e4a; stroke: var(--color-active); stroke-width: 1.5; }
+        .table-item.vacant .table-illustration .table-top { fill: #450a0a; stroke: var(--color-vacant); stroke-width: 2.5; }
+        .table-item.vacant .table-illustration .chair { fill: #7f1d1d; stroke: var(--color-vacant); stroke-width: 1.2; }
+        .table-item.active .table-illustration .table-top { fill: #064e3b; stroke: var(--color-active); stroke-width: 2.5; }
+        .table-item.active .table-illustration .chair { fill: #134e4a; stroke: var(--color-active); stroke-width: 1.2; }
 
         .table-details {
             position: relative;
@@ -312,11 +311,22 @@
             flex-direction: column;
             gap: 1px;
             pointer-events: none;
+            width: 100%;
+            padding: 0 2px;
         }
 
-        .table-name { font-size: 14px; font-weight: 700; color: var(--text-main); text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
-        .table-timer { font-size: 11px; color: #f97316; font-weight: 800; background: rgba(0, 0, 0, 0.7); padding: 1px 5px; border-radius: 5px; width: fit-content; margin: 0 auto; }
-        .table-price { font-size: 12px; font-weight: 700; color: #f8fafc; background: var(--pizza-green); padding: 1px 6px; border-radius: 20px; margin-top: 2px; box-shadow: 0 3px 5px rgba(0,0,0,0.3); }
+        .table-name { 
+            font-size: 11px; 
+            font-weight: 800; 
+            color: var(--text-main); 
+            text-shadow: 0 1px 3px rgba(0,0,0,0.9); 
+            line-height: 1.1;
+            word-break: break-word;
+            max-height: 28px;
+            overflow: hidden;
+        }
+        .table-timer { font-size: 9px; color: #f97316; font-weight: 800; background: rgba(0, 0, 0, 0.85); padding: 0 4px; border-radius: 4px; width: fit-content; margin: 0 auto; }
+        .table-price { font-size: 10px; font-weight: 800; color: #f8fafc; background: var(--pizza-green); padding: 0 4px; border-radius: 10px; margin-top: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
 
         /* --- Touch Modal Overlays --- */
         .modal-overlay {
@@ -338,7 +348,7 @@
             border-radius: 14px;
             padding: 24px;
             width: 90%;
-            max-width: 460px;
+            max-width: 440px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             display: flex;
             flex-direction: column;
@@ -351,7 +361,7 @@
         }
         .modal-input {
             width: 100%;
-            height: 54px;
+            height: 50px;
             background: #111827;
             border: 2px solid var(--border-color);
             border-radius: 10px;
@@ -371,14 +381,6 @@
             justify-content: flex-end;
             gap: 12px;
         }
-
-        @media (max-width: 1024px) {
-            #order-sidebar { width: 420px; }
-            .pos-btn { height: 48px; padding: 0 14px; font-size: 14px; }
-            .pos-btn.scale-btn { width: 48px; font-size: 22px; }
-            #control-bar { min-height: 65px; padding: 6px; }
-            .table-name { font-size: 13px; }
-        }
     </style>
 </head>
 <body>
@@ -390,8 +392,8 @@
                     <span>Wijzig tafel locaties</span>
                 </button>
                 <button id="btn-add-table" class="pos-btn success" onclick="openCreateTableModal()" style="display:none">+ Tafel</button>
-                <button id="btn-scale-up" class="pos-btn scale-btn" onclick="adjustTableSizes(10)" style="display:none">+</button>
-                <button id="btn-scale-down" class="pos-btn scale-btn" onclick="adjustTableSizes(-10)" style="display:none">-</button>
+                <button id="btn-scale-up" class="pos-btn scale-btn" onclick="adjustTableSizes(5)" style="display:none">+</button>
+                <button id="btn-scale-down" class="pos-btn scale-btn" onclick="adjustTableSizes(-5)" style="display:none">-</button>
             </div>
 
             <div class="btn-group">
@@ -412,7 +414,7 @@
             <div id="order-sidebar" class="collapsed">
                 <div class="sidebar-header">
                     <h2>Tafelbeheer Overzicht</h2>
-                    <button class="pos-btn scale-btn" style="height: 40px; width: 40px; font-size: 16px; background: #e2e8f0; color: #000; border: none;" onclick="toggleSidebar()">✕</button>
+                    <button class="pos-btn scale-btn" style="height: 38px; width: 38px; font-size: 16px; background: #e2e8f0; color: #000; border: none;" onclick="toggleSidebar()">✕</button>
                 </div>
                 
                 <div class="order-list-container">
@@ -487,14 +489,15 @@
         const sidebar = document.getElementById('order-sidebar');
         const historyWrapper = document.getElementById('history-section-wrapper');
         
-        let appState = { editMode: false, gridSize: 20, tableWidth: 110, tableHeight: 110 };
+        // Match classic table dimension (65px)
+        let appState = { editMode: false, gridSize: 10, tableWidth: 65, tableHeight: 65 };
         let pendingDeleteTableId = null;
 
         function initLayout(payload) {
             appState.editMode = payload.editMode;
-            appState.gridSize = payload.gridSize || 20;
-            appState.tableWidth = payload.tableSize || 110;
-            appState.tableHeight = payload.tableSize || 110;
+            appState.gridSize = payload.gridSize || 10;
+            appState.tableWidth = payload.tableSize || 65;
+            appState.tableHeight = payload.tableSize || 65;
 
             const editToggleBtn = document.getElementById('btn-edit-toggle');
             const addTableBtn = document.getElementById('btn-add-table');
@@ -523,9 +526,7 @@
             canvas.style.backgroundImage = payload.backgroundImage ? `url('${payload.backgroundImage}')` : 'none';
             canvas.innerHTML = '';
 
-            let placedRects = [];
-
-            payload.tables.forEach((table, index) => {
+            payload.tables.forEach((table) => {
                 const el = document.createElement('div');
                 el.className = `table-item ${table.isActive ? 'active' : 'vacant'}`;
                 el.setAttribute('data-id', table.id);
@@ -535,11 +536,11 @@
                 el.innerHTML = `
                     <button class="delete-table-btn" onclick="openDeleteTableModal(event, ${table.id})" title="Verwijder tafel">✕</button>
                     <svg class="table-illustration" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        <rect class="chair" x="2" y="35" width="10" height="30" rx="3"/>
-                        <rect class="chair" x="88" y="35" width="10" height="30" rx="3"/>
-                        <rect class="chair" x="35" y="2" width="30" height="10" rx="3"/>
-                        <rect class="chair" x="35" y="88" width="30" height="10" rx="3"/>
-                        <rect class="table-top" x="18" y="18" width="64" height="64" rx="12"/>
+                        <rect class="chair" x="2" y="32" width="10" height="36" rx="3"/>
+                        <rect class="chair" x="88" y="32" width="10" height="36" rx="3"/>
+                        <rect class="chair" x="32" y="2" width="36" height="10" rx="3"/>
+                        <rect class="chair" x="32" y="88" width="36" height="10" rx="3"/>
+                        <rect class="table-top" x="16" y="16" width="68" height="68" rx="10"/>
                     </svg>
                     <div class="table-details">
                         <div class="table-name">${table.name}</div>
@@ -556,21 +557,7 @@
                     y = parseInt(parts[1]);
                     if (isNaN(x)) x = 40;
                     if (isNaN(y)) y = 60;
-                } else {
-                    x = 20 + (index % 6) * (appState.tableWidth + 15);
-                    y = 40 + Math.floor(index / 6) * (appState.tableHeight + 15);
                 }
-
-                // If overlapping with existing placed tables, apply a tiny offset nudge (10px)
-                let attempts = 0;
-                const nudgeStep = 10;
-                while (checkRectOverlap(x, y, appState.tableWidth, appState.tableHeight, placedRects) && attempts < 50) {
-                    x += nudgeStep;
-                    y += nudgeStep;
-                    attempts++;
-                }
-
-                placedRects.push({ left: x, top: y, right: x + appState.tableWidth, bottom: y + appState.tableHeight });
 
                 el.style.left = `${x}px`;
                 el.style.top = `${y}px`;
@@ -620,17 +607,6 @@
                 sendToWinForms({ action: 'deleteTable', tableId: pendingDeleteTableId });
                 closeDeleteTableModal();
             }
-        }
-
-        /* --- COLLISION DETECTION HELPERS --- */
-        function checkRectOverlap(x, y, w, h, rectsList) {
-            const cand = { left: x, top: y, right: x + w, bottom: y + h };
-            for (let r of rectsList) {
-                if (!(cand.right <= r.left || cand.left >= r.right || cand.bottom <= r.top || cand.top >= r.bottom)) {
-                    return true;
-                }
-            }
-            return false;
         }
 
         function checkCollisionWithOtherTables(targetX, targetY, currentElement) {
@@ -706,8 +682,8 @@
         }
 
         function adjustTableSizes(change) {
-            appState.tableWidth = Math.max(70, Math.min(180, appState.tableWidth + change));
-            appState.tableHeight = Math.max(70, Math.min(180, appState.tableHeight + change));
+            appState.tableWidth = Math.max(45, Math.min(150, appState.tableWidth + change));
+            appState.tableHeight = Math.max(45, Math.min(150, appState.tableHeight + change));
             document.querySelectorAll('.table-item').forEach(el => {
                 el.style.width = `${appState.tableWidth}px`;
                 el.style.height = `${appState.tableHeight}px`;
