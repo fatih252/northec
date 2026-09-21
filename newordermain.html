@@ -36,11 +36,9 @@
         }
 
         body { background-color: var(--bg-color); height: 100vh; overflow: hidden; display: flex; color: var(--text-main); margin: 0; padding: 0; }
-        
-        /* Master Flex Layout */
         .pos-layout { display: flex; width: 100vw; height: 100vh; overflow: hidden; }
         
-        /* 1. Category Sidebar (240px) */
+        /* --- CATEGORIES ZONE --- */
         .category-zone { width: 240px; flex-shrink: 0; background-color: var(--surface-color); border-right: 2px solid var(--border-color); display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none; }
         .category-zone::-webkit-scrollbar { display: none; }
         .category-pill { 
@@ -60,7 +58,7 @@
         .category-pill:active { background-color: var(--border-color); }
         .category-pill.active { background-color: var(--bg-color); color: var(--primary-color); }
 
-        /* 2. Products Workspace (Expands to fill all middle space) */
+        /* --- PRODUCTS ZONE --- */
         .products-zone { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; background-color: var(--bg-color); }
         .products-area { 
             flex: 1; 
@@ -105,7 +103,7 @@
         }
         .color-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; }
 
-        /* 3. Single Right-Hand Checkout Cart (450px) */
+        /* --- CHECKOUT CART ZONE --- */
         .checkout-zone { width: 450px; flex-shrink: 0; background-color: var(--surface-color); border-left: 2px solid var(--border-color); display: flex; flex-direction: column; z-index: 10; height: 100%; }
         .cart-header { padding: 15px 20px; border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-color); flex-shrink: 0; }
         .header-title-block { display: flex; align-items: baseline; gap: 10px; }
@@ -206,10 +204,13 @@
             cursor: pointer;
             text-transform: uppercase;
         }
+        .btn-korting:active { opacity: 0.85; }
 
         .totals-row { display: flex; justify-content: space-between; align-items: center; font-size: 28px; font-weight: 900; color: var(--text-main); padding: 2px 0; }
         .action-matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-action { width: 100%; border: none; cursor: pointer; color: white; font-weight: 900; text-transform: uppercase; padding: 22px; font-size: 18px; transition: opacity 0.15s ease; }
+        .btn-action:active { opacity: 0.8; }
+        .btn-action:disabled { opacity: 0.35 !important; cursor: not-allowed !important; pointer-events: none !important; }
         .btn-action.pay { background-color: var(--success-color); }
         .btn-action.pay:active { background-color: var(--success-active); }
         .btn-inchecken { background-color: var(--primary-color); }
@@ -1464,13 +1465,13 @@
                 card.className = "mod-card";
 
                 let priceLabel = "";
-                // Enkel '- ZONDER' is altijd € 0.00. '> ENKEL' valt onder de normale gratis/betaald limiet.
-                if (currentPrefix === '-') {
+                // Zowel '- ZONDER' als '> ENKEL' zijn altijd € 0.00
+                if (currentPrefix === '-' || currentPrefix === '> enkel') {
                     priceLabel = "€ 0.00";
                 } else if (freeLimit > 0 && countInSubCart < freeLimit) {
                     priceLabel = `€ 0.00 (Was € ${parseFloat(item.price).toFixed(2)})`;
                 } else {
-                    priceLabel = currentPrefix === '> enkel' ? `€ ${parseFloat(item.price).toFixed(2)}` : `+ € ${parseFloat(item.price).toFixed(2)}`;
+                    priceLabel = `+ € ${parseFloat(item.price).toFixed(2)}`;
                 }
 
                 card.innerHTML = `
