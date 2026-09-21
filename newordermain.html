@@ -1379,13 +1379,10 @@
                     item.isProductExtra === t.isProductExtra && item.typeId === t.id && item.prefix !== '-'
                 ).length;
 
+                // Enkel (aantal/limiet) tonen zonder 'GRATIS' of 'VOL'
                 let badgeText = "";
                 if (freeLimit > 0) {
-                    if (countInSubCart >= freeLimit) {
-                        badgeText = ` (${countInSubCart}/${freeLimit} GRATIS - VOL)`;
-                    } else {
-                        badgeText = ` (${countInSubCart}/${freeLimit} GRATIS)`;
-                    }
+                    badgeText = ` (${countInSubCart}/${freeLimit})`;
                 }
 
                 const btn = document.createElement("div");
@@ -1457,12 +1454,13 @@
                 card.className = "mod-card";
 
                 let priceLabel = "";
-                if (currentPrefix === '-' || currentPrefix === '> enkel') {
+                // Enkel '- ZONDER' is altijd gratis. '> ENKEL' valt onder de normale gratis/betaald limiet.
+                if (currentPrefix === '-') {
                     priceLabel = "GRATIS";
                 } else if (freeLimit > 0 && countInSubCart < freeLimit) {
                     priceLabel = `GRATIS (Was € ${parseFloat(item.price).toFixed(2)})`;
                 } else {
-                    priceLabel = `+ € ${parseFloat(item.price).toFixed(2)}`;
+                    priceLabel = currentPrefix === '> enkel' ? `€ ${parseFloat(item.price).toFixed(2)}` : `+ € ${parseFloat(item.price).toFixed(2)}`;
                 }
 
                 card.innerHTML = `
