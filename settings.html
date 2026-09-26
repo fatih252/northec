@@ -6,21 +6,21 @@
     <title>Instellingen</title>
     <style>
         :root {
-            /* NORTHEC DASHBOARD DARK COLOR PALETTE */
-            --bg-color: #0f172a;           /* Dark Slate background */
-            --surface-color: #1e293b;      /* Card & Header surface */
-            --surface-card: #1e293b;
-            --surface-hover: #334155;
-            --primary-color: #3b82f6;      /* Dashboard Primary Blue */
-            --primary-active: #2563eb;
-            --success-color: #10b981;      /* Emerald Green */
+            /* DASHBOARD LIGHT COLOR PALETTE */
+            --bg-color: #f8fafc;          /* Soft slate background */
+            --surface-color: #ffffff;     /* White card & header background */
+            --surface-hover: #f1f5f9;     /* Subtle hover background */
+            --primary-color: #2563eb;     /* Dashboard Primary Blue */
+            --primary-hover: #1d4ed8;
+            --success-color: #10b981;     /* Emerald Green */
             --success-active: #059669;
-            --warning-color: #f59e0b;      /* Amber Warning */
-            --danger-color: #ef4444;       /* Rose/Red Danger */
+            --warning-color: #d97706;     /* Amber Warning */
+            --danger-color: #ef4444;      /* Rose Red */
             --danger-active: #dc2626;
-            --text-main: #f8fafc;          /* High contrast text */
-            --text-muted: #94a3b8;         /* Muted gray text */
-            --border-color: #334155;       /* Crisp border lines */
+            --text-main: #0f172a;         /* High contrast slate text */
+            --text-muted: #64748b;        /* Muted slate text */
+            --border-color: #e2e8f0;      /* Soft light borders */
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
         }
 
         * {
@@ -29,7 +29,7 @@
             padding: 0;
             user-select: none;
             -webkit-user-select: none;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
             border-radius: 0 !important; 
         }
@@ -44,23 +44,28 @@
             flex-direction: column;
         }
 
-        /* CUSTOM DASHBOARD DARK SCROLLBARS */
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        /* CUSTOM LIGHT SCROLLBARS */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg-color); }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
 
-        /* --- APP HEADER --- */
+        /* --- HEADER --- */
         .app-header {
             background-color: var(--surface-color);
-            padding: 18px 28px;
+            padding: 16px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 2px solid var(--border-color);
             flex-shrink: 0;
         }
-        .app-title { font-size: 26px; font-weight: 900; letter-spacing: 1px; color: var(--text-main); }
+        .header-title-group { display: flex; align-items: center; gap: 14px; }
+        .app-title { font-size: 24px; font-weight: 900; letter-spacing: 0.5px; color: var(--text-main); }
+        .status-badge {
+            background-color: #e0f2fe; color: var(--primary-color);
+            font-size: 13px; font-weight: 800; padding: 4px 12px; border-radius: 12px !important; text-transform: uppercase;
+        }
 
         /* --- TAB NAVIGATION --- */
         .nav-tabs {
@@ -73,8 +78,8 @@
         }
         .nav-tabs::-webkit-scrollbar { display: none; }
         .nav-tab {
-            padding: 18px 28px;
-            font-size: 16px;
+            padding: 16px 24px;
+            font-size: 15px;
             font-weight: 800;
             color: var(--text-muted);
             cursor: pointer;
@@ -104,24 +109,24 @@
         .settings-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-            gap: 22px;
+            gap: 20px;
         }
         .card {
             background-color: var(--surface-color);
             border: 2px solid var(--border-color);
-            padding: 22px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 18px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            gap: 16px;
+            box-shadow: var(--card-shadow);
         }
         .card-title {
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 900;
             color: var(--primary-color);
             text-transform: uppercase;
             border-bottom: 2px solid var(--border-color);
-            padding-bottom: 12px;
+            padding-bottom: 10px;
             letter-spacing: 0.5px;
         }
 
@@ -130,17 +135,17 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            min-height: 50px;
+            min-height: 48px;
             gap: 16px;
         }
-        .form-label { font-size: 16px; font-weight: 700; color: var(--text-main); }
+        .form-label { font-size: 15px; font-weight: 700; color: var(--text-main); }
         .form-input, .form-select {
-            height: 50px;
-            background-color: var(--bg-color);
+            height: 48px;
+            background-color: #ffffff;
             border: 2px solid var(--border-color);
             color: var(--text-main);
-            padding: 0 16px;
-            font-size: 16px;
+            padding: 0 14px;
+            font-size: 15px;
             font-weight: 700;
             outline: none;
             min-width: 220px;
@@ -152,45 +157,46 @@
         .switch {
             position: relative;
             display: inline-block;
-            width: 68px;
-            height: 36px;
+            width: 64px;
+            height: 34px;
             flex-shrink: 0;
             touch-action: manipulation;
         }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--bg-color);
-            border: 2px solid var(--border-color);
+            background-color: #cbd5e1;
+            border: 2px solid #cbd5e1;
             transition: .2s;
         }
         .slider:before {
-            position: absolute; content: ""; height: 26px; width: 26px; left: 3px; bottom: 3px;
+            position: absolute; content: ""; height: 26px; width: 26px; left: 2px; bottom: 2px;
             background-color: white;
             transition: .2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         input:checked + .slider { background-color: var(--success-color); border-color: var(--success-active); }
-        input:checked + .slider:before { transform: translateX(32px); }
+        input:checked + .slider:before { transform: translateX(30px); }
 
         /* --- NUMBER STEPPERS --- */
         .stepper { display: flex; align-items: center; }
         .stepper-btn {
-            width: 50px; height: 50px;
-            background-color: var(--bg-color);
+            width: 48px; height: 48px;
+            background-color: #f1f5f9;
             border: 2px solid var(--border-color);
-            color: white; font-size: 22px; font-weight: 900;
+            color: var(--text-main); font-size: 20px; font-weight: 900;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
             touch-action: manipulation;
             transition: transform 0.05s ease, background-color 0.1s ease;
         }
-        .stepper-btn:active { background-color: var(--primary-color); transform: scale(0.95); }
+        .stepper-btn:active { background-color: var(--primary-color); color: white; transform: scale(0.95); }
         .stepper-val {
-            width: 60px; height: 50px;
-            background-color: var(--bg-color);
+            width: 56px; height: 48px;
+            background-color: #ffffff;
             border-top: 2px solid var(--border-color);
             border-bottom: 2px solid var(--border-color);
             border-left: none; border-right: none;
-            color: white; font-size: 18px; font-weight: 900; text-align: center;
+            color: var(--text-main); font-size: 17px; font-weight: 900; text-align: center;
         }
 
         /* --- DATA TABLES --- */
@@ -201,55 +207,55 @@
             border: 2px solid var(--border-color);
         }
         .table-view th, .table-view td {
-            padding: 16px 18px;
+            padding: 14px 16px;
             text-align: left;
             border-bottom: 1px solid var(--border-color);
             font-size: 15px;
         }
         .table-view th {
-            background-color: var(--bg-color);
+            background-color: #f1f5f9;
             color: var(--primary-color);
             font-weight: 900;
             text-transform: uppercase;
         }
         .table-view input[type="text"] {
-            width: 100%; height: 44px; background-color: var(--bg-color);
-            border: 1px solid var(--border-color); color: white; padding: 0 12px; font-weight: 700;
+            width: 100%; height: 42px; background-color: #ffffff;
+            border: 1px solid var(--border-color); color: var(--text-main); padding: 0 12px; font-weight: 700;
             font-size: 15px;
         }
 
         /* --- KITCHEN ROUTING 3-COLUMN LAYOUT --- */
         .kitchen-layout {
             display: grid;
-            grid-template-columns: 320px 1fr 340px;
-            gap: 22px;
+            grid-template-columns: 300px 1fr 320px;
+            gap: 20px;
             height: 100%;
         }
         .station-list {
             display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 480px;
         }
         .station-item {
-            padding: 18px; background-color: var(--bg-color); border: 2px solid var(--border-color);
+            padding: 16px; background-color: #f8fafc; border: 2px solid var(--border-color);
             font-size: 16px; font-weight: 800; cursor: pointer; touch-action: manipulation;
         }
         .station-item:active { background-color: var(--surface-hover); }
-        .station-item.active { border-color: var(--primary-color); color: var(--primary-color); background-color: rgba(59, 130, 246, 0.15); }
+        .station-item.active { border-color: var(--primary-color); color: var(--primary-color); background-color: #eff6ff; }
 
         .checkbox-grid {
-            display: flex; flex-direction: column; gap: 12px; max-height: 520px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto;
         }
         .check-item {
-            display: flex; align-items: center; gap: 14px; padding: 14px;
-            background-color: var(--bg-color); border: 1px solid var(--border-color); font-size: 16px; font-weight: 700;
+            display: flex; align-items: center; gap: 12px; padding: 12px;
+            background-color: #f8fafc; border: 1px solid var(--border-color); font-size: 15px; font-weight: 700;
             cursor: pointer; touch-action: manipulation;
         }
-        .check-item input { width: 24px; height: 24px; accent-color: var(--primary-color); }
+        .check-item input { width: 22px; height: 22px; accent-color: var(--primary-color); }
 
         /* --- BUTTONS --- */
         .btn-touch {
             height: 52px;
-            padding: 0 26px;
-            font-size: 16px;
+            padding: 0 24px;
+            font-size: 15px;
             font-weight: 900;
             border: none;
             cursor: pointer;
@@ -262,9 +268,10 @@
         }
         .btn-touch:active { transform: scale(0.96); opacity: 0.85; }
         .btn-primary { background-color: var(--primary-color); color: white; }
-        .btn-success { background-color: var(--success-color); color: white; }
-        .btn-danger { background-color: var(--danger-color); color: white; }
-        .btn-secondary { background-color: #334155; color: white; }
+        .btn-success { background-color: var(--success-color); color: white; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3); }
+        .btn-danger { background-color: #fef2f2; color: var(--danger-color); border: 1px solid #fca5a5; }
+        .btn-danger:active { background-color: var(--danger-color); color: white; }
+        .btn-secondary { background-color: #e2e8f0; color: var(--text-main); }
 
         /* --- ACTION BAR --- */
         .action-bar {
@@ -272,8 +279,8 @@
             border-top: 2px solid var(--border-color);
             padding: 16px 28px;
             display: flex;
-            justify-content: flex-end;
-            gap: 14px;
+            justify-content: space-between;
+            align-items: center;
             flex-shrink: 0;
         }
     </style>
@@ -282,26 +289,31 @@
 
     <!-- App Header -->
     <div class="app-header">
-        <div class="app-title">INSTELLINGEN</div>
-        <button class="btn-touch btn-danger" onclick="sendAction('close')">✖ SLUITEN</button>
+        <div class="header-title-group">
+            <div class="app-title">INSTELLINGEN</div>
+            <div class="status-badge" id="lblShopName">Northec POS</div>
+        </div>
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-muted);" id="lblSaveNotice">
+            Wijzigingen op alle tabbladen worden samen opgeslagen
+        </div>
     </div>
 
     <!-- Navigation Tabs -->
     <div class="nav-tabs">
-        <div class="nav-tab active" onclick="switchTab('tab-shop')">Winkel</div>
+        <div class="nav-tab active" onclick="switchTab('tab-shop')">Winkel & Kassa</div>
         <div class="nav-tab" onclick="switchTab('tab-printer')">Printers</div>
         <div class="nav-tab" onclick="switchTab('tab-kitchen')">Keuken Stations</div>
         <div class="nav-tab" onclick="switchTab('tab-hours')">Openingsuren</div>
         <div class="nav-tab" id="tabHeadTable" onclick="switchTab('tab-tables')">Tafels</div>
-        <div class="nav-tab" onclick="switchTab('tab-menu')">Menu</div>
-        <div class="nav-tab" onclick="switchTab('tab-receipt')">Bon</div>
-        <div class="nav-tab" id="tabHeadCatalog" onclick="switchTab('tab-catalog')">Cataloog</div>
+        <div class="nav-tab" onclick="switchTab('tab-menu')">Menu Layout</div>
+        <div class="nav-tab" onclick="switchTab('tab-receipt')">Kassabon</div>
+        <div class="nav-tab" id="tabHeadCatalog" onclick="switchTab('tab-catalog')">Cataloog Beheer</div>
     </div>
 
     <!-- Main Container -->
     <div class="tab-container">
 
-        <!-- TAB 1: SHOP SETTINGS -->
+        <!-- TAB 1: SHOP & POS GENERAL -->
         <div id="tab-shop" class="tab-pane active">
             <div class="settings-grid">
                 
@@ -314,7 +326,7 @@
                     </div>
 
                     <div class="form-row">
-                        <span class="form-label">Taal</span>
+                        <span class="form-label">Applicatie Taal</span>
                         <select id="cboLanguage" class="form-select">
                             <option value="nl">Nederlands (nl)</option>
                             <option value="fr">Français (fr)</option>
@@ -322,7 +334,7 @@
                     </div>
 
                     <div class="form-row">
-                        <span class="form-label">Algemene Opmerking</span>
+                        <span class="form-label">Algemene Opmerking Inschakelen</span>
                         <label class="switch"><input type="checkbox" id="chkGeneralComment"><span class="slider"></span></label>
                     </div>
 
@@ -330,7 +342,7 @@
                         <span class="form-label">Bestelgeluid</span>
                         <div style="display: flex; gap: 8px;">
                             <select id="cboOrderSound" class="form-select" style="min-width: 160px;"></select>
-                            <button class="btn-touch btn-primary" style="width: 50px; padding: 0;" onclick="playSound()">▶</button>
+                            <button class="btn-touch btn-primary" style="width: 48px; padding: 0;" onclick="playSound()">▶</button>
                         </div>
                     </div>
                 </div>
@@ -358,7 +370,7 @@
                     <div class="card-title">Promotie Banner</div>
                     
                     <div class="form-row">
-                        <span class="form-label">Banner Zichtbaar</span>
+                        <span class="form-label">Banner Zichtbaar op Kassa</span>
                         <label class="switch"><input type="checkbox" id="chkBannerVisible"><span class="slider"></span></label>
                     </div>
 
@@ -369,7 +381,7 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-title">Kassa Opties</div>
+                    <div class="card-title">Kassa Interface & Beveiliging</div>
                     
                     <div class="form-row">
                         <span class="form-label">Sluitingsdag voor Z-Rapport</span>
@@ -385,17 +397,17 @@
                     </div>
 
                     <div class="form-row">
-                        <span class="form-label">Klantzoek Functie</span>
+                        <span class="form-label">Automatische Klantzoek Functie</span>
                         <label class="switch"><input type="checkbox" id="chkClientSearch"><span class="slider"></span></label>
                     </div>
 
                     <div class="form-row">
-                        <span class="form-label">Beveilig Order Data</span>
+                        <span class="form-label">Beveilig Order Data met Wachtwoord</span>
                         <label class="switch"><input type="checkbox" id="chkProtectOrderData"><span class="slider"></span></label>
                     </div>
 
                     <div class="form-row">
-                        <span class="form-label">Order Tracking</span>
+                        <span class="form-label">Live Order Tracking</span>
                         <label class="switch"><input type="checkbox" id="chkOrderTracking"><span class="slider"></span></label>
                     </div>
 
@@ -410,9 +422,9 @@
 
         <!-- TAB 2: PRINTERS -->
         <div id="tab-printer" class="tab-pane">
-            <div class="settings-grid" style="margin-bottom: 22px;">
+            <div class="settings-grid" style="margin-bottom: 20px;">
                 <div class="card">
-                    <div class="card-title">Printer Opties</div>
+                    <div class="card-title">Printer Automatisering</div>
                     <div class="form-row">
                         <span class="form-label">Automatisch Printen Uitschakelen</span>
                         <label class="switch"><input type="checkbox" id="chkNoAutomaticPrint"><span class="slider"></span></label>
@@ -429,8 +441,8 @@
             </div>
 
             <div class="card">
-                <div class="card-title">Printers per Besteltype</div>
-                <div class="nav-tabs" style="background: none; border-bottom: 2px solid var(--border-color); margin-bottom: 18px;">
+                <div class="card-title">Printers per Besteltype & Aantal Kopies</div>
+                <div class="nav-tabs" style="background: none; border-bottom: 2px solid var(--border-color); margin-bottom: 16px;">
                     <div class="nav-tab active" onclick="switchPrinterTab('ptab-delivery')">Levering</div>
                     <div class="nav-tab" onclick="switchPrinterTab('ptab-takeaway')">Afhaling</div>
                     <div class="nav-tab" onclick="switchPrinterTab('ptab-table')">Tafel</div>
@@ -482,8 +494,8 @@
                         </div>
                     </div>
 
-                    <div style="border-top: 2px solid var(--border-color); padding-top: 18px; margin-top: 14px;">
-                        <div class="card-title" style="font-size: 15px; margin-bottom: 14px;">Overige Producten (Fallback)</div>
+                    <div style="border-top: 2px solid var(--border-color); padding-top: 16px; margin-top: 12px;">
+                        <div class="card-title" style="font-size: 14px; margin-bottom: 12px;">Overige Producten (Fallback)</div>
                         <div class="form-row">
                             <span class="form-label">Fallback Printer</span>
                             <select id="cboFallbackPrinter" class="form-select"></select>
@@ -534,17 +546,17 @@
                         <span class="form-label">Tafelnaam</span>
                         <input type="text" id="txtTableAdd" class="form-input" placeholder="bijv. Tafel 12" />
                     </div>
-                    <button class="btn-touch btn-success" onclick="addTable()" style="margin-top: 14px;">Voeg Toe</button>
+                    <button class="btn-touch btn-success" onclick="addTable()" style="margin-top: 12px;">Voeg Toe</button>
                 </div>
             </div>
         </div>
 
-        <!-- TAB 6: MENU -->
+        <!-- TAB 6: MENU LAYOUT -->
         <div id="tab-menu" class="tab-pane">
             <div class="settings-grid">
                 
                 <div class="card">
-                    <div class="card-title">Algemeen</div>
+                    <div class="card-title">Algemene Menu Opties</div>
                     <div class="form-row">
                         <span class="form-label">Prijs Zichtbaar in Menu</span>
                         <label class="switch"><input type="checkbox" id="chkPricesVisibleMenu"><span class="slider"></span></label>
@@ -684,7 +696,7 @@
             <div class="settings-grid">
                 <div class="card">
                     <div class="card-title">Cataloog Beheer & Import/Export</div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 10px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 10px;">
                         <button class="btn-touch btn-secondary" onclick="catalogAction('intake')">Intake Shop</button>
                         <button class="btn-touch btn-secondary" onclick="catalogAction('load_category')">Laad Categoriën</button>
                         <button class="btn-touch btn-secondary" onclick="catalogAction('load_products')">Laad Producten</button>
@@ -701,7 +713,7 @@
     <!-- Action Bar -->
     <div class="action-bar">
         <button class="btn-touch btn-secondary" onclick="sendAction('close')">Annuleren</button>
-        <button class="btn-touch btn-success" style="min-width: 200px;" onclick="saveAllSettings()">OK / Opslaan</button>
+        <button class="btn-touch btn-success" style="min-width: 220px;" onclick="saveAllSettings()">Opslaan & Sluiten</button>
     </div>
 
     <script>
@@ -1027,7 +1039,7 @@
             sendHostMessage({ action: "catalog_action", type: actionName });
         }
 
-        /* --- MASTER SAVE --- */
+        /* --- MASTER MULTI-TAB SAVE --- */
         function saveAllSettings() {
             if (selectedStationIndex >= 0 && selectedStationIndex < currentStations.length) {
                 currentStations[selectedStationIndex].Name = document.getElementById('txtStationName').value;
