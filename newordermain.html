@@ -36,9 +36,11 @@
         }
 
         body { background-color: var(--bg-color); height: 100vh; overflow: hidden; display: flex; color: var(--text-main); margin: 0; padding: 0; }
+        
+        /* Master Flex Layout */
         .pos-layout { display: flex; width: 100vw; height: 100vh; overflow: hidden; }
         
-        /* --- CATEGORIES ZONE --- */
+        /* 1. Category Sidebar (240px) */
         .category-zone { width: 240px; flex-shrink: 0; background-color: var(--surface-color); border-right: 2px solid var(--border-color); display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none; }
         .category-zone::-webkit-scrollbar { display: none; }
         .category-pill { 
@@ -58,7 +60,7 @@
         .category-pill:active { background-color: var(--border-color); }
         .category-pill.active { background-color: var(--bg-color); color: var(--primary-color); }
 
-        /* --- PRODUCTS ZONE --- */
+        /* 2. Products Workspace (Expands to fill all remaining width) */
         .products-zone { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; background-color: var(--bg-color); }
         .products-area { 
             flex: 1; 
@@ -103,7 +105,7 @@
         }
         .color-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; }
 
-        /* --- CHECKOUT CART ZONE --- */
+        /* 3. SINGLE Checkout Cart Zone */
         .checkout-zone { width: 450px; flex-shrink: 0; background-color: var(--surface-color); border-left: 2px solid var(--border-color); display: flex; flex-direction: column; z-index: 10; height: 100%; }
         .cart-header { padding: 15px 20px; border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-color); flex-shrink: 0; }
         .header-title-block { display: flex; align-items: baseline; gap: 10px; }
@@ -718,6 +720,17 @@
         let activeIsProductExtra = false;
         let activeTypeItems = [];
 
+        // HELPER TO EXTRACT NUMERIC VALUES SAFELY (PREVENTS 0 FROM BEING FALSY)
+        function getNumericValue(...args) {
+            for (let i = 0; i < args.length; i++) {
+                const val = args[i];
+                if (val !== undefined && val !== null && val !== "" && !isNaN(val)) {
+                    return parseFloat(val);
+                }
+            }
+            return 0;
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             sendHostMessage({ action: "ui_ready" });
         });
@@ -840,11 +853,13 @@
                     sendHostMessage({ action: "edit_cart_item", lineId: item.lineId });
                 };
 
-                const baseUnitPrice = item.originalPrice ? item.originalPrice : (item.value ? item.value : item.pos_value);
-                const isDiscounted = (item.lineTotal < baseUnitPrice - 0.001);
+                // SAFE NUMERIC EXTRACTION (PREVENTS FALSY ZERO RE-EVALUATION TO POS_VALUE)
+                const unitPrice = getNumericValue(item.lineTotal, item.value, item.pos_value);
+                const baseUnitPrice = getNumericValue(item.originalPrice, item.value, item.pos_value);
+                const isDiscounted = (unitPrice < baseUnitPrice - 0.001);
                 
                 const originalTotal = baseUnitPrice * item.amount;
-                const currentTotal = item.lineTotal * item.amount;
+                const currentTotal = unitPrice * item.amount;
 
                 const isEditable = (
                     item.value_editable === true || item.value_editable === 1 || item.value_editable === "true" ||
@@ -855,7 +870,7 @@
                 if (isEditable) {
                     priceDisplayHtml = `
                         <input type="number" step="0.01" class="cart-price-input" 
-                               value="${parseFloat(item.lineTotal || 0).toFixed(2)}" 
+                               value="${unitPrice.toFixed(2)}" 
                                onclick="event.stopPropagation()"
                                onfocus="this.select()"
                                onchange="onCartPriceInputChange('${item.lineId}', this.value)" />
@@ -863,7 +878,7 @@
                 } else {
                     priceDisplayHtml = `
                         ${isDiscounted ? `<div class="cart-original-price">€ ${originalTotal.toFixed(2)}</div>` : ''}
-                        <div class="cart-price" style="${isDiscounted ? 'color: var(--danger-color); font-weight: 900;' : ''}" ondblclick="event.stopPropagation(); overridePrice('${item.lineId}', ${item.lineTotal})">€ ${currentTotal.toFixed(2)}</div>
+                        <div class="cart-price" style="${isDiscounted ? 'color: var(--danger-color); font-weight: 900;' : ''}" ondblclick="event.stopPropagation(); overridePrice('${item.lineId}', ${unitPrice})">€ ${currentTotal.toFixed(2)}</div>
                     `;
                 }
 
@@ -908,6 +923,7 @@
                 const item = currentCart.find(i => i.lineId === lineId);
                 if (item) {
                     item.lineTotal = val;
+                    item.value = val;
                     item.priceModified = true;
                     if (item.action !== 'I' && item.orderDetailId !== 0) item.action = 'U';
                     renderCartUI();
@@ -1050,6 +1066,7 @@
                 const item = currentCart.find(i => i.lineId === editingLineId);
                 if (item) {
                     item.lineTotal = val;
+                    item.value = val;
                     item.priceModified = true;
                     if (item.action !== 'I' && item.orderDetailId !== 0) item.action = 'U';
                     renderCartUI();
@@ -1384,7 +1401,6 @@
                     item.isProductExtra === t.isProductExtra && item.typeId === t.id && item.prefix !== '-'
                 ).length;
 
-                // Enkel (aantal/limiet) tonen zonder 'GRATIS' of 'VOL'
                 let badgeText = "";
                 if (freeLimit > 0) {
                     badgeText = ` (${countInSubCart}/${freeLimit})`;
@@ -1413,7 +1429,6 @@
             const banner = document.getElementById("modalCategoryBanner");
             if (!banner) return;
 
-            // Verberg de banner indien de gekozen modus op - ZONDER of > ENKEL staat
             if (currentPrefix === '-' || currentPrefix === '> enkel') {
                 banner.style.display = "none";
                 return;
@@ -1465,7 +1480,6 @@
                 card.className = "mod-card";
 
                 let priceLabel = "";
-                // Zowel '- ZONDER' als '> ENKEL' zijn altijd € 0.00
                 if (currentPrefix === '-' || currentPrefix === '> enkel') {
                     priceLabel = "€ 0.00";
                 } else if (freeLimit > 0 && countInSubCart < freeLimit) {
