@@ -50,7 +50,7 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
 
-        /* --- HEADER --- */
+        /* --- APP HEADER --- */
         .app-header {
             background-color: var(--surface-color);
             padding: 16px 28px;
@@ -199,7 +199,7 @@
             color: var(--text-main); font-size: 17px; font-weight: 900; text-align: center;
         }
 
-        /* --- DATA TABLES --- */
+        /* --- DATA TABLES & TIME CONTROLS --- */
         .table-view {
             width: 100%;
             border-collapse: collapse;
@@ -218,10 +218,39 @@
             font-weight: 900;
             text-transform: uppercase;
         }
-        .table-view input[type="text"] {
-            width: 100%; height: 42px; background-color: #ffffff;
-            border: 1px solid var(--border-color); color: var(--text-main); padding: 0 12px; font-weight: 700;
+
+        .time-picker-range {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .time-picker-input {
+            height: 44px;
+            padding: 0 8px;
+            background-color: #ffffff;
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+            font-weight: 700;
             font-size: 15px;
+            outline: none;
+        }
+        .time-picker-input:disabled {
+            background-color: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+            border-color: #cbd5e1;
+        }
+        .hours-row-disabled {
+            opacity: 0.5;
+            background-color: #f8fafc;
+        }
+
+        /* DEDICATED SCROLL BOX FOR TABLES LIST */
+        .tables-scroll-box {
+            max-height: 480px;
+            overflow-y: auto;
+            border: 2px solid var(--border-color);
+            background-color: #ffffff;
         }
 
         /* --- KITCHEN ROUTING 3-COLUMN LAYOUT --- */
@@ -471,30 +500,30 @@
                     </div>
                 </div>
 
-                <!-- Center: Station Details -->
+                <!-- Center: Station Details (WITH LIVE STATE LISTENERS) -->
                 <div class="card">
                     <div class="card-title">Configureer Regio</div>
                     
                     <div class="form-row">
                         <span class="form-label">Regio Naam</span>
-                        <input type="text" id="txtStationName" class="form-input" placeholder="bijv. Pizzaiolo / Bar" />
+                        <input type="text" id="txtStationName" class="form-input" placeholder="bijv. Pizzaiolo / Bar" oninput="updateActiveStation()" />
                     </div>
 
                     <div class="form-row">
                         <span class="form-label">Printer Selectie</span>
-                        <select id="cboStationPrinter" class="form-select"></select>
+                        <select id="cboStationPrinter" class="form-select" onchange="updateActiveStation()"></select>
                     </div>
 
                     <div class="form-row">
                         <span class="form-label">Aantal Prints</span>
                         <div class="stepper">
-                            <button class="stepper-btn" onclick="stepVal('nudStationCopies', -1)">-</button>
+                            <button class="stepper-btn" onclick="stepVal('nudStationCopies', -1); updateActiveStation();">-</button>
                             <input type="text" id="nudStationCopies" class="stepper-val" value="1" readonly />
-                            <button class="stepper-btn" onclick="stepVal('nudStationCopies', 1)">+</button>
+                            <button class="stepper-btn" onclick="stepVal('nudStationCopies', 1); updateActiveStation();">+</button>
                         </div>
                     </div>
 
-                    <div style="border-top: 2px solid var(--border-color); padding-top: 16px; margin-top: 12px;">
+                    <div style="border-top: 2px solid var(--border-color); padding-top: 16px; margin-top: 14px;">
                         <div class="card-title" style="font-size: 14px; margin-bottom: 12px;">Overige Producten (Fallback)</div>
                         <div class="form-row">
                             <span class="form-label">Fallback Printer</span>
@@ -511,17 +540,17 @@
             </div>
         </div>
 
-        <!-- TAB 4: OPENINGSUREN -->
+        <!-- TAB 4: OPENINGSUREN (WITH TIME PICKERS & AUTO DISABLE) -->
         <div id="tab-hours" class="tab-pane">
             <div class="card">
                 <div class="card-title">Winkel Openingsuren</div>
                 <table class="table-view">
                     <thead>
                         <tr>
-                            <th>Dag</th>
-                            <th>Opening VM</th>
-                            <th>Opening NM</th>
-                            <th>Sluitingsdag</th>
+                            <th style="width: 150px;">Dag</th>
+                            <th>Opening Voormiddag (VM)</th>
+                            <th>Opening Namiddag (NM)</th>
+                            <th style="width: 140px; text-align: center;">Sluitingsdag</th>
                         </tr>
                     </thead>
                     <tbody id="tblHoursBody"></tbody>
@@ -529,15 +558,17 @@
             </div>
         </div>
 
-        <!-- TAB 5: TAFELS -->
+        <!-- TAB 5: TAFELS (WITH DEDICATED SCROLL CONTAINER) -->
         <div id="tab-tables" class="tab-pane">
             <div class="settings-grid">
                 <div class="card">
                     <div class="card-title">Bestaande Tafels</div>
-                    <table class="table-view">
-                        <thead><tr><th>Tafelnaam</th></tr></thead>
-                        <tbody id="tblTablesBody"></tbody>
-                    </table>
+                    <div class="tables-scroll-box">
+                        <table class="table-view">
+                            <thead><tr><th>Tafelnaam</th></tr></thead>
+                            <tbody id="tblTablesBody"></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="card" style="height: fit-content;">
@@ -736,13 +767,22 @@
 
             event.currentTarget.classList.add('active');
             document.getElementById(tabId).classList.add('active');
+
+            // DEFAULT PRINTER TAB TO LEVERING (FIRST SUB-TAB)
+            if (tabId === 'tab-printer') {
+                switchPrinterTab('ptab-delivery');
+            }
         }
 
         function switchPrinterTab(ptabId) {
             document.querySelectorAll('#tab-printer .nav-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.printer-pane').forEach(p => p.style.display = 'none');
 
-            event.currentTarget.classList.add('active');
+            const targetTab = Array.from(document.querySelectorAll('#tab-printer .nav-tab')).find(
+                t => t.getAttribute('onclick').includes(ptabId)
+            );
+            if (targetTab) targetTab.classList.add('active');
+
             document.getElementById(ptabId).style.display = 'block';
         }
 
@@ -839,7 +879,7 @@
             populateStationCategories(data.allCategories);
             renderStationList();
 
-            // Populate Opening Hours Table
+            // Populate Opening Hours Table with Time Pickers
             renderHoursTable(data.hoursList);
 
             // Populate Tables Grid
@@ -964,6 +1004,21 @@
             });
         }
 
+        // LIVE LISTENERS FIX: INSTANTLY SYNC EDITS TO CURRENTSTATIONS ARRAY
+        function updateActiveStation() {
+            if (selectedStationIndex < 0 || selectedStationIndex >= currentStations.length) return;
+            const st = currentStations[selectedStationIndex];
+            st.Name = document.getElementById('txtStationName').value;
+            st.PrinterName = document.getElementById('cboStationPrinter').value;
+            st.CopyCount = parseInt(document.getElementById('nudStationCopies').value, 10) || 1;
+            
+            // Refresh list item title if name changed
+            const listItems = document.querySelectorAll('#stationListContainer .station-item');
+            if (listItems[selectedStationIndex]) {
+                listItems[selectedStationIndex].innerText = st.Name || 'Nieuw Station';
+            }
+        }
+
         function addStation() {
             currentStations.push({
                 Name: "Nieuw Station",
@@ -1000,22 +1055,56 @@
             }
         }
 
-        /* --- HOURS TABLE LOGIC --- */
+        /* --- HOURS TABLE LOGIC WITH NATIVE TIME PICKERS --- */
+        function parseTimeRange(rangeStr) {
+            if (!rangeStr || !rangeStr.includes('-')) return { start: '', end: '' };
+            const parts = rangeStr.split('-');
+            return { start: parts[0] || '', end: parts[1] || '' };
+        }
+
         function renderHoursTable(hoursList) {
             const tbody = document.getElementById('tblHoursBody');
             tbody.innerHTML = '';
             (hoursList || []).forEach(h => {
+                const am = parseTimeRange(h.am_hour);
+                const pm = parseTimeRange(h.pm_hour);
+                const isClosed = !!h.closeDay;
+
                 const tr = document.createElement('tr');
+                if (isClosed) tr.className = 'hours-row-disabled';
+
                 tr.innerHTML = `
                     <td style="font-weight:800;">${h.name}</td>
-                    <td><input type="text" class="hour-am" data-hid="${h.hours_id}" value="${h.am_hour || ''}" placeholder="11:30-14:30" /></td>
-                    <td><input type="text" class="hour-pm" data-hid="${h.hours_id}" value="${h.pm_hour || ''}" placeholder="17:00-22:00" /></td>
+                    <td>
+                        <div class="time-picker-range">
+                            <input type="time" class="time-picker-input hour-am-start" data-hid="${h.hours_id}" value="${am.start}" ${isClosed ? 'disabled' : ''} />
+                            <span>tot</span>
+                            <input type="time" class="time-picker-input hour-am-end" data-hid="${h.hours_id}" value="${am.end}" ${isClosed ? 'disabled' : ''} />
+                        </div>
+                    </td>
+                    <td>
+                        <div class="time-picker-range">
+                            <input type="time" class="time-picker-input hour-pm-start" data-hid="${h.hours_id}" value="${pm.start}" ${isClosed ? 'disabled' : ''} />
+                            <span>tot</span>
+                            <input type="time" class="time-picker-input hour-pm-end" data-hid="${h.hours_id}" value="${pm.end}" ${isClosed ? 'disabled' : ''} />
+                        </div>
+                    </td>
                     <td style="text-align:center;">
-                        <label class="switch"><input type="checkbox" class="hour-closed" data-hid="${h.hours_id}" ${h.closeDay ? 'checked' : ''}><span class="slider"></span></label>
+                        <label class="switch">
+                            <input type="checkbox" class="hour-closed" data-hid="${h.hours_id}" ${isClosed ? 'checked' : ''} onchange="toggleHoursRowDisabled(this)" />
+                            <span class="slider"></span>
+                        </label>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        function toggleHoursRowDisabled(chk) {
+            const row = chk.closest('tr');
+            const inputs = row.querySelectorAll('.time-picker-input');
+            inputs.forEach(inp => inp.disabled = chk.checked);
+            row.classList.toggle('hours-row-disabled', chk.checked);
         }
 
         /* --- TABLES LIST LOGIC --- */
@@ -1041,11 +1130,7 @@
 
         /* --- MASTER MULTI-TAB SAVE --- */
         function saveAllSettings() {
-            if (selectedStationIndex >= 0 && selectedStationIndex < currentStations.length) {
-                currentStations[selectedStationIndex].Name = document.getElementById('txtStationName').value;
-                currentStations[selectedStationIndex].PrinterName = document.getElementById('cboStationPrinter').value;
-                currentStations[selectedStationIndex].CopyCount = parseInt(document.getElementById('nudStationCopies').value, 10) || 1;
-            }
+            updateActiveStation(); // Sync current station edits before saving
 
             const collectPrinters = (tblId) => {
                 const list = [];
@@ -1057,14 +1142,21 @@
 
             const hoursPayload = [];
             document.querySelectorAll('#tblHoursBody tr').forEach(tr => {
-                const am = tr.querySelector('.hour-am');
-                const pm = tr.querySelector('.hour-pm');
-                const closed = tr.querySelector('.hour-closed');
+                const amStart = tr.querySelector('.hour-am-start').value;
+                const amEnd = tr.querySelector('.hour-am-end').value;
+                const pmStart = tr.querySelector('.hour-pm-start').value;
+                const pmEnd = tr.querySelector('.hour-pm-end').value;
+                const closed = tr.querySelector('.hour-closed').checked;
+                const hid = parseInt(tr.querySelector('.hour-closed').dataset.hid, 10);
+
+                const amStr = (amStart && amEnd) ? `${amStart}-${amEnd}` : '';
+                const pmStr = (pmStart && pmEnd) ? `${pmStart}-${pmEnd}` : '';
+
                 hoursPayload.push({
-                    hours_id: parseInt(am.dataset.hid, 10),
-                    am_hour: am.value,
-                    pm_hour: pm.value,
-                    closeDay: closed.checked
+                    hours_id: hid,
+                    am_hour: amStr,
+                    pm_hour: pmStr,
+                    closeDay: closed
                 });
             });
 
