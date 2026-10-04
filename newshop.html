@@ -8,14 +8,12 @@
         :root {
             --bg-color: #0f172a;
             --surface-color: #1e293b;
-            --surface-card: #1e293b;
             --surface-hover: #334155;
             --primary-color: #3b82f6;
             --primary-hover: #2563eb;
             --success-color: #10b981;
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
-            --danger-hover: #dc2626;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: #334155;
@@ -76,9 +74,10 @@
             background-color: var(--surface-color);
             border-bottom: 2px solid var(--border-color);
             flex-shrink: 0;
+            overflow-x: auto;
         }
         .nav-tab {
-            padding: 16px 28px;
+            padding: 16px 24px;
             font-size: 15px;
             font-weight: 800;
             color: var(--text-muted);
@@ -172,7 +171,27 @@
         .btn-danger { background-color: var(--danger-color); color: white; }
         .btn-secondary { background-color: #334155; color: white; }
 
-        /* DIAGNOSTICS LOG VIEWER */
+        /* TABLES */
+        .table-view {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--bg-color);
+            border: 2px solid var(--border-color);
+        }
+        .table-view th, .table-view td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+        .table-view th {
+            background-color: #020617;
+            color: var(--primary-color);
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        /* CONSOLE & CODE VIEWER */
         .log-console {
             background-color: #020617;
             border: 2px solid var(--border-color);
@@ -185,24 +204,25 @@
             white-space: pre-wrap;
             word-break: break-all;
         }
-
-        /* JSON VIEWER */
-        .json-box {
+        .xml-box {
             background-color: #020617;
             border: 2px solid var(--border-color);
-            padding: 14px;
+            padding: 16px;
             font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 12px;
-            color: #a7f3d0;
-            max-height: 250px;
+            font-size: 13px;
+            color: #f1f5f9;
+            height: 480px;
             overflow: auto;
+            white-space: pre;
+            user-select: text;
+            -webkit-user-select: text;
         }
 
-        /* METRIC BADGES */
+        /* METRIC BOXES */
         .metric-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 12px;
         }
         .metric-box {
             background-color: var(--bg-color);
@@ -215,14 +235,14 @@
         .metric-title { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
         .metric-value { font-size: 18px; font-weight: 900; color: var(--text-main); }
 
-        /* MODAL OVERLAY */
+        /* MODAL OVERLAYS */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background-color: rgba(15, 23, 42, 0.85);
             z-index: 9999; display: none; align-items: center; justify-content: center;
         }
         .modal-card {
-            width: 460px;
+            width: 480px;
             background-color: var(--surface-color);
             border: 2px solid var(--border-color);
             padding: 24px;
@@ -246,7 +266,6 @@
             border: 1px solid transparent;
         }
         .toast-banner.danger { background-color: rgba(239, 68, 68, 0.15); color: var(--danger-color); border-color: var(--danger-color); }
-        .toast-banner.success { background-color: rgba(16, 185, 129, 0.15); color: var(--success-color); border-color: var(--success-color); }
     </style>
 </head>
 <body>
@@ -263,7 +282,10 @@
     <!-- TABS -->
     <div class="nav-tabs">
         <div class="nav-tab active" onclick="switchTab('tab-intake')">Winkel Registratie</div>
-        <div class="nav-tab" onclick="switchTab('tab-debug')">MQTT & Diagnostics</div>
+        <div class="nav-tab" onclick="switchTab('tab-mqtt')">MQTT Remote Control</div>
+        <div class="nav-tab" onclick="switchTab('tab-system')">Systeem & Netwerk</div>
+        <div class="nav-tab" onclick="switchTab('tab-printers')">Printers & Randapparatuur</div>
+        <div class="nav-tab" onclick="switchTab('tab-xml')">Raw Config XML</div>
     </div>
 
     <!-- MAIN CONTAINER -->
@@ -273,10 +295,10 @@
         <div id="tab-intake" class="tab-pane active">
             <div style="max-width: 540px; margin: 0 auto;">
                 <div class="card">
-                    <div class="card-title">Registrer Shop Key</div>
+                    <div class="card-title">Registreer Shop Code</div>
                     
                     <div id="alertBanner" class="toast-banner danger">
-                        <span id="alertBannerText">Foutieve shop ID of admin key!</span>
+                        <span id="alertBannerText">Foutieve shop ID of admin key !</span>
                     </div>
 
                     <div class="form-group">
@@ -296,68 +318,122 @@
             </div>
         </div>
 
-        <!-- TAB 2: MQTT & DEBUG DIAGNOSTICS -->
-        <div id="tab-debug" class="tab-pane">
+        <!-- TAB 2: MQTT REMOTE CONTROL -->
+        <div id="tab-mqtt" class="tab-pane">
+            <div class="card">
+                <div class="card-title">
+                    <span>MQTT Remote Commando's</span>
+                    <span id="lblMqttStatus" style="font-size: 12px; color: var(--success-color);">MQTT CONNECTIE ACTIEF</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                    <button class="btn-touch btn-primary" onclick="triggerMqttCommand('DEBUG')">🔍 DEBUG DUMP</button>
+                    <button class="btn-touch btn-secondary" onclick="triggerMqttCommand('INSTALL_RUSTDESK')">🛠 RUSTDESK STIL</button>
+                    <button class="btn-touch btn-secondary" onclick="triggerMqttCommand('TEST_PRINT')">🖨 TEST PRINT</button>
+                    <button class="btn-touch btn-secondary" onclick="triggerMqttCommand('RESTART')">🔄 RESTART POS</button>
+                    <button class="btn-touch btn-danger" onclick="triggerMqttCommand('STOP')">⛔ STOP POS PROCES</button>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label class="form-label">MQTT Response Live Console</label>
+                    <div class="log-console" id="mqttLogConsole">> Systeem gereed voor MQTT commando's...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: SYSTEM & NETWORK DIAGNOSTICS -->
+        <div id="tab-system" class="tab-pane">
             <div class="grid-2col">
-                
-                <!-- Left: Controls & MQTT Console -->
                 <div class="card">
-                    <div class="card-title">
-                        <span>Op Afstand & MQTT Commando's</span>
-                        <span id="lblMqttStatus" style="font-size: 12px; color: var(--success-color);">CONNECTIE ACTIEF</span>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                        <button class="btn-touch btn-primary" onclick="triggerMqttCommand('DEBUG')">🔍 DEBUG DUMP</button>
-                        <button class="btn-touch btn-secondary" onclick="triggerMqttCommand('INSTALL_RUSTDESK')">🛠 RUSTDESK STIL</button>
-                        <button class="btn-touch btn-secondary" onclick="triggerMqttCommand('TEST_PRINT')">🖨 TEST PRINT</button>
-                        <button class="btn-touch btn-secondary" onclick="triggerMqttCommand('RESTART')">🔄 RESTART POS</button>
-                        <button class="btn-touch btn-danger" style="grid-column: span 2;" onclick="triggerMqttCommand('STOP')">⛔ STOP POS PROCES</button>
-                    </div>
-
-                    <div class="form-group" style="margin-top: 10px;">
-                        <label class="form-label">MQTT Live Response Console</label>
-                        <div class="log-console" id="mqttLogConsole">> Systeem gereed voor MQTT commando's...</div>
+                    <div class="card-title">Systeem & Hardware Status</div>
+                    <div class="metric-grid">
+                        <div class="metric-box">
+                            <span class="metric-title">Client ID</span>
+                            <span class="metric-value" id="lblClientId">--</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-title">Timestamp (UTC)</span>
+                            <span class="metric-value" id="lblTimestamp" style="font-size: 14px;">--</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-title">App / OS Versie</span>
+                            <span class="metric-value" id="lblSysVersion" style="font-size: 14px;">--</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-title">Scherm Resolutie</span>
+                            <span class="metric-value" id="lblResolution">--</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-title">Vrije Schijfruimte</span>
+                            <span class="metric-value" id="lblDiskSpace">-- GB</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-title">RAM Geheugen</span>
+                            <span class="metric-value" id="lblRamUsage">-- MB</span>
+                        </div>
+                        <div class="metric-box" style="grid-column: span 2;">
+                            <span class="metric-title">Systeem Uptime</span>
+                            <span class="metric-value" id="lblSystemUptime">-- uren</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Right: Diagnostics Live Stats -->
                 <div class="card">
-                    <div class="card-title">Systeem & Netwerk Status</div>
-
+                    <div class="card-title">Netwerk, DB & Remote Support</div>
+                    
                     <div class="metric-grid">
                         <div class="metric-box">
-                            <span class="metric-title">App / OS Versie</span>
-                            <span class="metric-value" id="lblSysVersion">--</span>
+                            <span class="metric-title">Netwerk Status</span>
+                            <span class="metric-value" id="lblNetworkStatus" style="color: var(--success-color);">ONLINE</span>
                         </div>
                         <div class="metric-box">
                             <span class="metric-title">Ping Latency</span>
                             <span class="metric-value" id="lblPingLatency">-- ms</span>
                         </div>
-                        <div class="metric-box">
-                            <span class="metric-title">RAM Verbruik</span>
-                            <span class="metric-value" id="lblRamUsage">-- MB</span>
-                        </div>
-                        <div class="metric-box">
-                            <span class="metric-title">Systeem Uptime</span>
-                            <span class="metric-value" id="lblSystemUptime">-- uren</span>
-                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">RustDesk Remote Support</label>
+                        <label class="form-label">RustDesk Remote Assistance</label>
                         <div class="metric-box" style="flex-direction: row; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 800;" id="lblRustDeskStatus">RustDesk: Niet Gedetecteerd</span>
+                            <span style="font-weight: 800;" id="lblRustDeskStatus">RustDesk: --</span>
                             <span style="font-weight: 900; color: var(--primary-color);" id="lblRustDeskId">ID: --</span>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Laatst Gegenereerde JSON Payload</label>
-                        <div class="json-box" id="jsonViewer">{}</div>
+                        <label class="form-label">Database Connection Strings</label>
+                        <div class="log-console" id="lblDbConn" style="height: 90px; color: #a7f3d0;">--</div>
                     </div>
                 </div>
+            </div>
+        </div>
 
+        <!-- TAB 4: PRINTERS & PERIPHERALS -->
+        <div id="tab-printers" class="tab-pane">
+            <div class="card">
+                <div class="card-title">Geïnstalleerde Printers & Papier Formaten</div>
+                <table class="table-view">
+                    <thead>
+                        <tr>
+                            <th>Printer Naam</th>
+                            <th>Driver Papier Formaat</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblPrintersBody">
+                        <tr><td colspan="2" style="text-align:center; color: var(--text-muted);">Geen printergegevens geladen. Klik op "DEBUG DUMP".</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 5: RAW CONFIG XML -->
+        <div id="tab-xml" class="tab-pane">
+            <div class="card">
+                <div class="card-title">
+                    <span>User Configuration XML</span>
+                    <button class="btn-touch btn-secondary" style="height: 36px; padding: 0 16px; font-size: 13px;" onclick="copyXmlToClipboard()">📋 KOPIEER XML</button>
+                </div>
+                <div class="xml-box" id="xmlContentViewer">Geen XML configuratie geladen.</div>
             </div>
         </div>
 
@@ -375,6 +451,8 @@
     </div>
 
     <script>
+        let rawXmlText = "";
+
         document.addEventListener("DOMContentLoaded", () => {
             sendHostMessage({ action: "ui_ready" });
         });
@@ -447,6 +525,18 @@
             document.getElementById('appModal').style.display = 'none';
         }
 
+        function copyXmlToClipboard() {
+            if (!rawXmlText) return;
+            navigator.clipboard.writeText(rawXmlText).then(() => {
+                showModal("Kopieer Succes", "XML configuratie is gekopieerd naar het klembord.", null);
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
         /* HOST CALLBACK FUNCTIONS */
         window.onInitData = function(data) {
             if (data.currentShopId) {
@@ -462,7 +552,7 @@
             if (success) {
                 showModal("Succesvolle Registratie", "Shop ID succesvol opgeslagen! De applicatie herstart nu...", "");
             } else {
-                showToastAlert(message || "Foutieve shop ID of admin key !");
+                showToastAlert(message || "foutieve shop id of admin key !");
             }
         };
 
@@ -473,24 +563,55 @@
         window.updateDebugData = function(jsonPayload) {
             try {
                 const parsed = typeof jsonPayload === 'string' ? JSON.parse(jsonPayload) : jsonPayload;
-                document.getElementById('jsonViewer').innerText = JSON.stringify(parsed, null, 2);
+
+                // Tab 3: System & Network
+                if (parsed.clientId) document.getElementById('lblClientId').innerText = parsed.clientId;
+                if (parsed.timestampUtc) document.getElementById('lblTimestamp').innerText = parsed.timestampUtc;
+                if (parsed.appVersion && parsed.osVersion) {
+                    document.getElementById('lblSysVersion').innerText = `${parsed.appVersion} (${parsed.osVersion})`;
+                }
+                if (parsed.display) document.getElementById('lblResolution').innerText = parsed.display.resolution || "--";
 
                 if (parsed.network) {
-                    document.getElementById('lblPingLatency').innerText = parsed.network.pingLatencyMs + " ms";
+                    document.getElementById('lblNetworkStatus').innerText = parsed.network.isOnline ? "ONLINE" : "OFFLINE";
+                    document.getElementById('lblNetworkStatus').style.color = parsed.network.isOnline ? "var(--success-color)" : "var(--danger-color)";
+                    document.getElementById('lblPingLatency').innerText = (parsed.network.pingLatencyMs ?? "--") + " ms";
                 }
+
                 if (parsed.systemHealth) {
-                    document.getElementById('lblRamUsage').innerText = parsed.systemHealth.appRamUsageMb + " MB";
-                    document.getElementById('lblSystemUptime').innerText = parsed.systemHealth.systemUptimeHours + " uren";
+                    document.getElementById('lblDiskSpace').innerText = (parsed.systemHealth.freeDiskSpaceGb ?? "--") + " GB";
+                    document.getElementById('lblRamUsage').innerText = (parsed.systemHealth.appRamUsageMb ?? "--") + " MB";
+                    document.getElementById('lblSystemUptime').innerText = (parsed.systemHealth.systemUptimeHours ?? "--") + " uren";
                 }
+
                 if (parsed.rustDesk) {
                     document.getElementById('lblRustDeskStatus').innerText = parsed.rustDesk.isInstalled ? "RustDesk: Geïnstalleerd" : "RustDesk: Niet Aanwezig";
                     document.getElementById('lblRustDeskId').innerText = "ID: " + (parsed.rustDesk.id || "--");
                 }
-                if (parsed.appVersion) {
-                    document.getElementById('lblSysVersion').innerText = parsed.appVersion;
+
+                if (parsed.database) {
+                    document.getElementById('lblDbConn').innerText = parsed.database.connectionStrings || "--";
                 }
+
+                // Tab 4: Printers
+                const tbody = document.getElementById('tblPrintersBody');
+                tbody.innerHTML = '';
+                if (parsed.peripherals && parsed.peripherals.installedPrinters && parsed.peripherals.installedPrinters.length > 0) {
+                    parsed.peripherals.installedPrinters.forEach(p => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td style="font-weight:800;">${escapeHtml(p.Name || p.name)}</td><td>${escapeHtml(p.PaperSize || p.paperSize || 'Standard')}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; color: var(--text-muted);">Geen geïnstalleerde printers gevonden.</td></tr>`;
+                }
+
+                // Tab 5: Raw XML
+                rawXmlText = parsed.userConfigXml || "";
+                document.getElementById('xmlContentViewer').innerText = rawXmlText || "Geen XML configuratie gevonden.";
+
             } catch(e) {
-                document.getElementById('jsonViewer').innerText = jsonPayload;
+                appendLog("Fout bij parsen van debug payload: " + e.message);
             }
         };
 
