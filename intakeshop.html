@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shop Intake & Administration</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --surface-hover: #334155;
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --success-color: #10b981;
+            --success-active: #059669;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            border-radius: 0 !important;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
+
+        /* HEADER */
+        .app-header {
+            background-color: var(--surface-color);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .header-title-group { display: flex; align-items: center; gap: 14px; }
+        .app-title { font-size: 22px; font-weight: 900; letter-spacing: 0.8px; color: var(--text-main); }
+        .status-badge {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+            font-size: 13px;
+            font-weight: 800;
+            padding: 4px 12px;
+            border: 1px solid var(--success-color);
+            text-transform: uppercase;
+        }
+
+        /* LAYOUT GRID */
+        .intake-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            flex: 1;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        /* LEFT SIDEBAR (SHOP LIST & QUICK ACTIONS) */
+        .sidebar-card {
+            background-color: var(--surface-color);
+            border: 2px solid var(--border-color);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: 100%;
+            overflow: hidden;
+        }
+        .sidebar-title {
+            font-size: 15px;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+        .shop-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .shop-item {
+            padding: 12px 14px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background-color 0.1s ease;
+        }
+        .shop-item:active { background-color: var(--surface-hover); }
+        .shop-item.active {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background-color: rgba(59, 130, 246, 0.15);
+        }
+
+        /* FORM WORKSPACE */
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 16px;
+        }
+        .card {
+            background-color: var(--surface-color);
+            border: 2px solid var(--border-color);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: var(--card-shadow);
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        /* FORM CONTROLS */
+        .form-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 44px;
+            gap: 12px;
+        }
+        .form-label { font-size: 14px; font-weight: 700; color: var(--text-main); }
+        .form-input, .form-select {
+            height: 44px;
+            background-color: var(--bg-color);
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0 12px;
+            font-size: 15px;
+            font-weight: 700;
+            outline: none;
+            flex: 1;
+            max-width: 260px;
+        }
+        .form-input:focus, .form-select:focus { border-color: var(--primary-color); }
+
+        /* TOGGLE SWITCH */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 58px;
+            height: 30px;
+            flex-shrink: 0;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-color);
+            border: 2px solid var(--border-color);
+            transition: .2s;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 22px; width: 22px; left: 2px; bottom: 2px;
+            background-color: white;
+            transition: .2s;
+        }
+        input:checked + .slider { background-color: var(--success-color); border-color: var(--success-active); }
+        input:checked + .slider:before { transform: translateX(28px); }
+
+        /* BUTTONS */
+        .btn-touch {
+            height: 48px;
+            padding: 0 20px;
+            font-size: 14px;
+            font-weight: 900;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            gap: 8px;
+            transition: transform 0.05s ease, opacity 0.1s ease;
+        }
+        .btn-touch:active { transform: scale(0.97); opacity: 0.85; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-secondary { background-color: #334155; color: white; }
+        .btn-warning { background-color: var(--warning-color); color: #000; }
+
+        /* ACTION BAR */
+        .action-bar {
+            background-color: var(--surface-color);
+            border-top: 2px solid var(--border-color);
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        /* MODAL OVERLAY */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(15, 23, 42, 0.88);
+            z-index: 9999; display: none; align-items: center; justify-content: center;
+        }
+        .modal-card {
+            width: 560px;
+            max-width: 92vw;
+            background-color: var(--surface-color);
+            border: 2px solid var(--border-color);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+        .modal-title { font-size: 18px; font-weight: 900; color: var(--primary-color); text-transform: uppercase; }
+        .modal-body { font-size: 15px; color: var(--text-main); line-height: 1.4; word-break: break-word; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+
+        /* DIAGNOSTIC TABS INSIDE MODAL */
+        .diag-tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 10px; }
+        .diag-tab { padding: 10px 16px; font-weight: 800; color: var(--text-muted); cursor: pointer; }
+        .diag-tab.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); }
+        .diag-console {
+            background-color: #020617; border: 2px solid var(--border-color); padding: 12px;
+            font-family: 'Consolas', monospace; font-size: 12px; color: #a7f3d0; height: 260px; overflow: auto; white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="app-header">
+        <div class="header-title-group">
+            <div class="app-title">SHOP INTAKE & ADMINISTRATIE</div>
+            <div class="status-badge" id="lblMqttStatus">MQTT ADMIN CONNECTIE ACTIEF</div>
+        </div>
+        <button class="btn-touch btn-danger" onclick="sendAction('close_window')">✖ SLUITEN</button>
+    </div>
+
+    <!-- MAIN INTAKE LAYOUT -->
+    <div class="intake-layout">
+        
+        <!-- LEFT SIDEBAR: SHOP LIST & MQTT DEBUG COMMANDS -->
+        <div class="sidebar-card">
+            <div class="sidebar-title">Bestaande Shops</div>
+            
+            <div class="shop-list" id="shopListContainer"></div>
+
+            <button class="btn-touch btn-secondary" onclick="prepareNewClientForm()">
+                ➕ NIEUWE KLANT
+            </button>
+            <button class="btn-touch btn-warning" onclick="requestSelectedShopDebug()">
+                🔍 DEBUG GEKOZEN SHOP
+            </button>
+            <button class="btn-touch btn-primary" onclick="requestAllShopsDebug()">
+                📡 DEBUG ALLE SHOPS
+            </button>
+        </div>
+
+        <!-- RIGHT FORM WORKSPACE -->
+        <div class="form-container">
+            <div class="form-grid">
+                
+                <!-- CARD 1: ALGEMEEN -->
+                <div class="card">
+                    <div class="card-title">Algemene Gegevens</div>
+                    
+                    <div class="form-row">
+                        <span class="form-label">Shop Naam</span>
+                        <input type="text" id="txtName" class="form-input" placeholder="bijv. Pizzeria Northec" />
+                    </div>
+
+                    <div class="form-row">
+                        <span class="form-label">Adres</span>
+                        <input type="text" id="txtAddress" class="form-input" placeholder="bijv. Kerkstraat 12" />
+                    </div>
+
+                    <div class="form-row">
+                        <span class="form-label">Telefoonnummer</span>
+                        <input type="text" id="txtPhone" class="form-input" placeholder="04..." />
+                    </div>
+
+                    <div class="form-row">
+                        <span class="form-label">Gemeente / Stad</span>
+                        <input type="text" id="txtCity" class="form-input" placeholder="bijv. Antwerpen" />
+                    </div>
+
+                    <div class="form-row">
+                        <span class="form-label">Postcode</span>
+                        <input type="text" id="txtPostalcode" class="form-input" placeholder="2000" />
+                    </div>
+                </div>
+
+                <!-- CARD 2: CONFIGURATIE & RECHTEN -->
+                <div class="card">
+                    <div class="card-title">Kassa Configuratie</div>
+
+                    <div class="form-row">
+                        <span class="form-label">Afronding Methode</span>
+                        <select id="cboRounding" class="form-select">
+                            <option value="Round">Round</option>
+                            <option value="Nearest">Nearest</option>
+                            <option value="noroundup">noroundup</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <span class="form-label">POS Kassa Actief</span>
+                        <label class="switch"><input type="checkbox" id="chkPos"><span class="slider"></span></label>
+                    </div>
+
+                    <div class="form-row">
+                        <span class="form-label">Web Bestellingen Actief</span>
+                        <label class="switch"><input type="checkbox" id="chkWeb"><span class="slider"></span></label>
+                    </div>
+
+                    <div class="form-row">
+                        <span class="form-label">Verwijder Rechten (Delete)</span>
+                        <label class="switch"><input type="checkbox" id="chkDeleteRights"><span class="slider"></span></label>
+                    </div>
+
+                    <div class="form-row">
+                        <span class="form-label">Shop Ingeschakeld</span>
+                        <label class="switch"><input type="checkbox" id="chkEnabled" checked><span class="slider"></span></label>
+                    </div>
+                </div>
+
+                <!-- CARD 3: BEDRIJFSGEGEVENS -->
+                <div class="card">
+                    <div class="card-title">Bedrijf & Domein</div>
+
+                    <div class="form-row">
+                        <span class="form-label">Bedrijfsnaam</span>
+                        <input type="text" id="txtCompanyName" class="form-input" placeholder="BVBA / NV..." />
+                    </div>
+
+                    <div class="form-row">
+                        <span class="form-label">BTW Nummer</span>
+                        <input type="text" id="txtVatCode" class="form-input" placeholder="BE0123.456.789" />
+                    </div>
+
+                    <div class="form-row">
+                        <span class="form-label">Domeinnaam</span>
+                        <input type="text" id="txtDomainName" class="form-input" placeholder="pizzerianorthec.be" />
+                    </div>
+
+                    <button class="btn-touch btn-secondary" style="margin-top: 6px;" onclick="generateQrCode()">
+                        📱 GENEREER QR CODE
+                    </button>
+                </div>
+
+                <!-- CARD 4: FACTURATIE & BETALINGEN -->
+                <div class="card">
+                    <div class="card-title">Facturatie & Betaaldata</div>
+
+                    <div class="form-row">
+                        <span class="form-label">Facturatiebedrag (€)</span>
+                        <select id="cboInvocedAmount" class="form-select">
+                            <option value="181.5">181.50</option>
+                            <option value="363">363.00</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <span class="form-label">Betaaldatum</span>
+                        <input type="date" id="txtPaymentDate" class="form-input" onchange="autoCalculateNextPaymentDate()" />
+                    </div>
+
+                    <div class="form-row">
+                        <span class="form-label">Volgende Betaaldatum</span>
+                        <input type="date" id="txtNextPaymentDate" class="form-input" />
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ACTION FOOTER BAR -->
+    <div class="action-bar">
+        <button class="btn-touch btn-secondary" onclick="sendAction('close_window')">Annuleren</button>
+        <button class="btn-touch btn-success" style="min-width: 200px;" onclick="saveShopIntake()">
+            💾 OPSLAAN / OK
+        </button>
+    </div>
+
+    <!-- GENERAL MODAL DIALOG -->
+    <div class="modal-overlay" id="appModal">
+        <div class="modal-card" id="modalCard">
+            <div class="modal-title" id="lblModalTitle">Melding</div>
+            <div class="modal-body" id="lblModalBody">Inhoud...</div>
+            <div class="modal-actions" id="modalActions">
+                <button class="btn-touch btn-primary" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentShopsList = [];
+        let selectedShopIndex = -1;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            sendHostMessage({ action: "ui_ready" });
+        });
+
+        function sendHostMessage(payload) {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(payload);
+            }
+        }
+
+        function sendAction(actionName) {
+            sendHostMessage({ action: actionName });
+        }
+
+        function showModal(title, bodyHtml, actionsHtml) {
+            document.getElementById('lblModalTitle').innerText = title;
+            document.getElementById('lblModalBody').innerHTML = bodyHtml;
+            if (actionsHtml) {
+                document.getElementById('modalActions').innerHTML = actionsHtml;
+            } else {
+                document.getElementById('modalActions').innerHTML = `<button class="btn-touch btn-primary" onclick="closeModal()">OK</button>`;
+            }
+            document.getElementById('appModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('appModal').style.display = 'none';
+        }
+
+        /* DATA RENDER FROM C# */
+        window.renderShopsList = function(shops) {
+            currentShopsList = shops || [];
+            const container = document.getElementById('shopListContainer');
+            container.innerHTML = '';
+
+            currentShopsList.forEach((s, idx) => {
+                const div = document.createElement('div');
+                div.className = `shop-item ${idx === selectedShopIndex ? 'active' : ''}`;
+                div.innerText = s.name || `Shop #${s.shop_id}`;
+                div.onclick = () => selectShop(idx);
+                container.appendChild(div);
+            });
+        };
+
+        function selectShop(idx) {
+            selectedShopIndex = idx;
+            window.renderShopsList(currentShopsList);
+
+            const s = currentShopsList[idx];
+            if (!s) return;
+
+            document.getElementById('txtName').value = s.name || '';
+            document.getElementById('txtAddress').value = s.address || '';
+            document.getElementById('txtPhone').value = s.phone_no || '';
+            document.getElementById('txtCity').value = s.city || '';
+            document.getElementById('txtPostalcode').value = s.postalcode || '';
+
+            document.getElementById('cboRounding').value = s.rounding || 'Round';
+            document.getElementById('chkPos').checked = !!s.pos_enabled;
+            document.getElementById('chkWeb').checked = !!s.web_enabled;
+            document.getElementById('chkDeleteRights').checked = !!s.delete_rights;
+            document.getElementById('chkEnabled').checked = !!s.enabled;
+
+            document.getElementById('txtCompanyName').value = s.company_name || '';
+            document.getElementById('txtVatCode').value = s.vat_code || '';
+            document.getElementById('txtDomainName').value = s.domain || '';
+
+            document.getElementById('cboInvocedAmount').value = s.invoiced_value || '181.5';
+
+            if (s.payment_due) {
+                document.getElementById('txtPaymentDate').value = formatDateForInput(s.payment_due);
+            } else {
+                document.getElementById('txtPaymentDate').value = '';
+            }
+
+            if (s.payment_next_due) {
+                document.getElementById('txtNextPaymentDate').value = formatDateForInput(s.payment_next_due);
+            } else {
+                document.getElementById('txtNextPaymentDate').value = '';
+            }
+        }
+
+        function prepareNewClientForm() {
+            selectedShopIndex = -1;
+            window.renderShopsList(currentShopsList);
+
+            document.getElementById('txtName').value = '';
+            document.getElementById('txtAddress').value = '';
+            document.getElementById('txtPhone').value = '';
+            document.getElementById('txtCity').value = '';
+            document.getElementById('txtPostalcode').value = '';
+
+            document.getElementById('cboRounding').value = 'Round';
+            document.getElementById('chkPos').checked = false;
+            document.getElementById('chkWeb').checked = false;
+            document.getElementById('chkDeleteRights').checked = false;
+            document.getElementById('chkEnabled').checked = true;
+
+            document.getElementById('txtCompanyName').value = '';
+            document.getElementById('txtVatCode').value = '';
+            document.getElementById('txtDomainName').value = '';
+
+            document.getElementById('cboInvocedAmount').value = '181.5';
+            document.getElementById('txtPaymentDate').value = '';
+            document.getElementById('txtNextPaymentDate').value = '';
+
+            document.getElementById('txtName').focus();
+        }
+
+        function formatDateForInput(dateStr) {
+            try {
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return '';
+                return d.toISOString().split('T')[0];
+            } catch(e) { return ''; }
+        }
+
+        function autoCalculateNextPaymentDate() {
+            const val = document.getElementById('txtPaymentDate').value;
+            if (!val) return;
+            try {
+                const d = new Date(val);
+                d.setMonth(d.getMonth() + 2);
+                document.getElementById('txtNextPaymentDate').value = d.toISOString().split('T')[0];
+            } catch(e) {}
+        }
+
+        function saveShopIntake() {
+            const payload = {
+                name: document.getElementById('txtName').value.trim(),
+                address: document.getElementById('txtAddress').value.trim(),
+                phone: document.getElementById('txtPhone').value.trim(),
+                city: document.getElementById('txtCity').value.trim(),
+                postalcode: document.getElementById('txtPostalcode').value.trim(),
+
+                rounding: document.getElementById('cboRounding').value,
+                posEnabled: document.getElementById('chkPos').checked,
+                webEnabled: document.getElementById('chkWeb').checked,
+                deleteRights: document.getElementById('chkDeleteRights').checked,
+                enabled: document.getElementById('chkEnabled').checked,
+
+                companyName: document.getElementById('txtCompanyName').value.trim(),
+                vatCode: document.getElementById('txtVatCode').value.trim(),
+                domain: document.getElementById('txtDomainName').value.trim(),
+
+                invoicedAmount: parseFloat(document.getElementById('cboInvocedAmount').value) || 0,
+                paymentDate: document.getElementById('txtPaymentDate').value,
+                nextPaymentDate: document.getElementById('txtNextPaymentDate').value
+            };
+
+            if (!payload.name) {
+                showModal("Invoer Fout", "Vul a.u.b. ten minste een shop naam in.", null);
+                return;
+            }
+
+            sendHostMessage({ action: "save_shop", data: payload });
+        }
+
+        function generateQrCode() {
+            const domain = document.getElementById('txtDomainName').value.trim();
+            if (!domain) {
+                showModal("Geen Domein", "Vul eerst een domeinnaam in om een QR code te genereren.", null);
+                return;
+            }
+            sendHostMessage({ action: "generate_qr", domain: domain });
+        }
+
+        function requestSelectedShopDebug() {
+            if (selectedShopIndex < 0 || !currentShopsList[selectedShopIndex]) {
+                showModal("Geen Selectie", "Selecteer a.u.b. eerst een shop uit de lijst om te debuggen.", null);
+                return;
+            }
+            const shop = currentShopsList[selectedShopIndex];
+            showModal("MQTT Debug Aanvraag", `Verzoek om telemetry/debug data verzonden voor <strong>${shop.name}</strong> (ID: ${shop.shop_id})...`, null);
+            sendHostMessage({ action: "debug_selected_shop", shopId: shop.shop_id });
+        }
+
+        function requestAllShopsDebug() {
+            showModal("MQTT Broadcast Debug", "Broadcast commando verzonden naar <strong>ALLE SHOPS</strong>. Antwoorden van online kassaterminals worden geladen...", null);
+            sendHostMessage({ action: "debug_all_shops" });
+        }
+
+        /* HOST CALLBACKS FOR DIAGNOSTICS & QR CODE */
+        window.onQrCodeGenerated = function(base64Image) {
+            const imgHtml = `<div style="text-align:center;"><img src="${base64Image}" style="max-width:260px; border:2px solid var(--border-color);" /><p style="margin-top:10px; font-weight:800;">QR code succesvol gegenereerd!</p></div>`;
+            showModal("QR Code Preview", imgHtml, null);
+        };
+
+        window.onDebugResponseReceived = function(shopPayload) {
+            let prettyJson = "";
+            try {
+                const parsed = typeof shopPayload === 'string' ? JSON.parse(shopPayload) : shopPayload;
+                prettyJson = JSON.stringify(parsed, null, 2);
+            } catch(e) {
+                prettyJson = shopPayload;
+            }
+
+            const html = `
+                <div class="diag-tabs">
+                    <div class="diag-tab active">Telemetry JSON Payload</div>
+                </div>
+                <div class="diag-console">${escapeHtml(prettyJson)}</div>
+            `;
+            showModal("POS Diagnostics Resultaat", html, null);
+        };
+
+        window.onSaveSuccess = function() {
+            showModal("Succesvol Opgeslagen", "De shop- en gebruikersgegevens zijn succesvol verwerkt in de database!", null);
+        };
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
