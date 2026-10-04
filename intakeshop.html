@@ -752,6 +752,10 @@
 
                 const isOnline = data.network ? !!data.network.isOnline : false;
                 const pingMs = data.network ? (data.network.pingLatencyMs ?? "--") : "--";
+                
+                // Bandwidth throughput speed values
+                const downSpeed = (data.network && data.network.downloadMbps >= 0) ? `${data.network.downloadMbps} Mbps` : "N/A";
+                const upSpeed = (data.network && data.network.uploadMbps >= 0) ? `${data.network.uploadMbps} Mbps` : "N/A";
 
                 const appVer = data.appVersion || "--";
                 const osVer = data.osVersion || "--";
@@ -810,6 +814,10 @@
                                 <span class="debug-metric-val ${isOnline ? 'green' : 'red'}">${isOnline ? 'ONLINE' : 'OFFLINE'} (${pingMs} ms)</span>
                             </div>
                             <div class="debug-metric-card">
+                                <span class="debug-metric-label">Download / Upload Speed</span>
+                                <span class="debug-metric-val green">⬇ ${downSpeed} / ⬆ ${upSpeed}</span>
+                            </div>
+                            <div class="debug-metric-card">
                                 <span class="debug-metric-label">RustDesk ID</span>
                                 <span class="debug-metric-val green">${rustDeskInstalled ? rustDeskId : 'Niet Aanwezig'}</span>
                             </div>
@@ -817,8 +825,8 @@
                                 <span class="debug-metric-label">RAM / Vrije Schijf</span>
                                 <span class="debug-metric-val">${ram} MB / ${disk} GB</span>
                             </div>
-                            <div class="debug-metric-card">
-                                <span class="debug-metric-label">App Versie & Uptime</span>
+                            <div class="debug-metric-card" style="grid-column: span 2;">
+                                <span class="debug-metric-label">App Versie & System Uptime</span>
                                 <span class="debug-metric-val">${appVer} (${uptime}u)</span>
                             </div>
                         </div>
