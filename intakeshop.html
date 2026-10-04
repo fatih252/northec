@@ -80,7 +80,7 @@
             overflow: hidden;
         }
 
-        /* LEFT SIDEBAR (SHOP LIST & QUICK ACTIONS) */
+        /* LEFT SIDEBAR */
         .sidebar-card {
             background-color: var(--surface-color);
             border: 2px solid var(--border-color);
@@ -259,15 +259,27 @@
         .modal-body { font-size: 15px; color: var(--text-main); line-height: 1.4; word-break: break-word; overflow-y: auto; max-height: 75vh; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
 
-        /* USER-FRIENDLY DEBUG DASHBOARD STYLES */
+        /* DIAGNOSTICS DASHBOARD */
         .debug-dashboard {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 18px;
         }
+        .debug-cmd-bar {
+            background-color: var(--bg-color);
+            border: 2px solid var(--border-color);
+            padding: 14px 18px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .debug-cmd-title { font-size: 14px; font-weight: 900; color: var(--text-main); }
+        
         .debug-metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
             gap: 12px;
         }
         .debug-metric-card {
@@ -298,7 +310,6 @@
             border-collapse: collapse;
             background-color: var(--bg-color);
             border: 1px solid var(--border-color);
-            margin-top: 6px;
         }
         .debug-table th, .debug-table td {
             padding: 10px 12px;
@@ -313,17 +324,6 @@
             text-transform: uppercase;
         }
 
-        .debug-cmd-bar {
-            background-color: var(--bg-color);
-            border: 2px solid var(--border-color);
-            padding: 14px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-            justify-content: space-between;
-        }
-
         .xml-viewer-box {
             background-color: #020617;
             border: 1px solid var(--border-color);
@@ -331,24 +331,12 @@
             font-family: 'Consolas', 'Courier New', monospace;
             font-size: 12px;
             color: #f1f5f9;
-            max-height: 220px;
+            max-height: 240px;
             overflow: auto;
             white-space: pre;
             user-select: text;
             -webkit-user-select: text;
         }
-
-        /* TOAST BANNERS */
-        .toast-banner {
-            padding: 14px 18px;
-            font-size: 14px;
-            font-weight: 800;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            border: 1px solid transparent;
-        }
-        .toast-banner.danger { background-color: rgba(239, 68, 68, 0.15); color: var(--danger-color); border-color: var(--danger-color); }
     </style>
 </head>
 <body>
@@ -730,7 +718,7 @@
             try {
                 let data = typeof shopPayload === 'string' ? JSON.parse(shopPayload) : shopPayload;
                 if (!data || typeof data !== 'object') {
-                    showModal("POS Diagnostics Resultaat", `<div style="color:var(--danger-color);">${shopPayload}</div>`, null, false);
+                    showModal("POS Diagnostics Resultaat", `<div style="color:var(--danger-color);">${escapeHtml(shopPayload)}</div>`, null, false);
                     return;
                 }
 
@@ -765,8 +753,9 @@
                 let dbInfoHtml = "--";
                 if (data.database && data.database.connectionStrings && data.database.connectionStrings.length > 0) {
                     dbInfoHtml = data.database.connectionStrings.map(db => `
-                        <div style="font-size:12px; font-family:Consolas, monospace;">
-                            <strong>${escapeHtml(db.name || 'Default')}:</strong> ${escapeHtml(db.connectionString || '')}
+                        <div style="font-size:12px; font-family:Consolas, monospace; background:var(--bg-color); padding:8px; border:1px solid var(--border-color); margin-top:4px;">
+                            <strong>${escapeHtml(db.name || 'Default')} (${escapeHtml(db.provider || 'Npgsql')}):</strong><br/>
+                            <span style="color:#a7f3d0; word-break:break-all;">${escapeHtml(db.connectionString || '')}</span>
                         </div>
                     `).join('');
                 }
@@ -778,7 +767,7 @@
                         
                         <!-- REMOTE COMMANDS ACTION BAR -->
                         <div class="debug-cmd-bar">
-                            <span style="font-size:13px; font-weight:900;">ACTIES VOOR SHOP ID ${data.clientId || '--'}:</span>
+                            <span class="debug-cmd-title">COMMANDO'S VOOR SHOP ID ${data.clientId || '--'}:</span>
                             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                                 <button class="btn-touch btn-primary" style="height:38px; padding:0 12px; font-size:12px;" onclick="sendRemoteMqttCommand('DEBUG')">🔍 REFRESH</button>
                                 <button class="btn-touch btn-secondary" style="height:38px; padding:0 12px; font-size:12px;" onclick="sendRemoteMqttCommand('INSTALL_RUSTDESK')">🛠 RUSTDESK</button>
@@ -810,7 +799,7 @@
 
                         <!-- PRINTERS & SYSTEM DETAILS -->
                         <div>
-                            <div class="debug-section-header">Geïnstalleerde Printers</div>
+                            <div class="debug-section-header">Geïnstalleerde Printers & Papier Formaten</div>
                             <table class="debug-table">
                                 <thead><tr><th>Printer Naam</th><th>Papier Formaat</th></tr></thead>
                                 <tbody>${printersTableRows}</tbody>
@@ -819,7 +808,7 @@
 
                         <!-- DATABASE CONNECTION -->
                         <div>
-                            <div class="debug-section-header">Database Verbindingsreeks</div>
+                            <div class="debug-section-header">Database Verbindingsreeksen</div>
                             ${dbInfoHtml}
                         </div>
 
