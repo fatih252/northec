@@ -228,7 +228,7 @@
             border-top: 2px solid var(--border-color);
             padding: 14px 24px;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
             flex-shrink: 0;
         }
@@ -258,6 +258,21 @@
         .modal-title { font-size: 18px; font-weight: 900; color: var(--primary-color); text-transform: uppercase; }
         .modal-body { font-size: 15px; color: var(--text-main); line-height: 1.4; word-break: break-word; overflow-y: auto; max-height: 75vh; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+
+        /* SPINNER ANIMATION */
+        .spinner {
+            display: inline-block;
+            width: 44px;
+            height: 44px;
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-radius: 50% !important;
+            border-top-color: var(--primary-color);
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
         /* DIAGNOSTICS DASHBOARD */
         .debug-dashboard {
@@ -305,11 +320,17 @@
             margin-bottom: 10px;
         }
 
+        /* SCROLLABLE TABLE CONTAINER */
+        .table-scroll-container {
+            max-height: 180px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+        }
+
         .debug-table {
             width: 100%;
             border-collapse: collapse;
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
         }
         .debug-table th, .debug-table td {
             padding: 10px 12px;
@@ -322,6 +343,9 @@
             color: var(--primary-color);
             font-weight: 900;
             text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 2;
         }
 
         .xml-viewer-box {
@@ -331,7 +355,7 @@
             font-family: 'Consolas', 'Courier New', monospace;
             font-size: 12px;
             color: #f1f5f9;
-            max-height: 240px;
+            max-height: 220px;
             overflow: auto;
             white-space: pre;
             user-select: text;
@@ -353,7 +377,7 @@
     <!-- MAIN INTAKE LAYOUT -->
     <div class="intake-layout">
         
-        <!-- LEFT SIDEBAR: SHOP LIST & MQTT DEBUG COMMANDS -->
+        <!-- LEFT SIDEBAR: SHOP LIST & QUICK ACTIONS -->
         <div class="sidebar-card">
             <div class="sidebar-title">Bestaande Shops</div>
             
@@ -364,9 +388,6 @@
             </button>
             <button class="btn-touch btn-warning" onclick="requestSelectedShopDebug()">
                 🔍 DEBUG GEKOZEN SHOP
-            </button>
-            <button class="btn-touch btn-primary" onclick="requestAllShopsDebug()">
-                📡 DEBUG ALLE SHOPS
             </button>
         </div>
 
@@ -425,11 +446,6 @@
                     <div class="form-row">
                         <span class="form-label">Web Bestellingen Actief</span>
                         <label class="switch"><input type="checkbox" id="chkWeb"><span class="slider"></span></label>
-                    </div>
-
-                    <div class="form-row">
-                        <span class="form-label">Verwijder Rechten (Delete)</span>
-                        <label class="switch"><input type="checkbox" id="chkDeleteRights"><span class="slider"></span></label>
                     </div>
 
                     <div class="form-row">
@@ -492,8 +508,7 @@
 
     <!-- ACTION FOOTER BAR -->
     <div class="action-bar">
-        <button class="btn-touch btn-secondary" onclick="sendAction('close_window')">Annuleren</button>
-        <button class="btn-touch btn-success" style="min-width: 200px;" onclick="saveShopIntake()">
+        <button class="btn-touch btn-success" style="min-width: 220px;" onclick="saveShopIntake()">
             💾 OPSLAAN / OK
         </button>
     </div>
@@ -504,7 +519,7 @@
             <div class="modal-title" id="lblModalTitle">Melding</div>
             <div class="modal-body" id="lblModalBody">Inhoud...</div>
             <div class="modal-actions" id="modalActions">
-                <button class="btn-touch btn-primary" onclick="closeModal()">OK</button>
+                <button class="btn-touch btn-primary" onclick="closeModal()">SLUITEN</button>
             </div>
         </div>
     </div>
@@ -534,12 +549,24 @@
             const card = document.getElementById('modalCard');
             if (isWide) card.classList.add('wide'); else card.classList.remove('wide');
 
-            if (actionsHtml) {
+            if (actionsHtml !== undefined && actionsHtml !== null) {
                 document.getElementById('modalActions').innerHTML = actionsHtml;
             } else {
-                document.getElementById('modalActions').innerHTML = `<button class="btn-touch btn-primary" onclick="closeModal()">OK</button>`;
+                document.getElementById('modalActions').innerHTML = `<button class="btn-touch btn-primary" onclick="closeModal()">SLUITEN</button>`;
             }
             document.getElementById('appModal').style.display = 'flex';
+        }
+
+        function showLoadingModal(title, message) {
+            const bodyHtml = `
+                <div style="text-align:center; padding: 24px 10px;">
+                    <div class="spinner"></div>
+                    <div style="margin-top:18px; font-size:16px; font-weight:800; color:var(--text-main);">${message}</div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">Verbinding maken via MQTT protocol...</div>
+                </div>
+            `;
+            const actionsHtml = `<button class="btn-touch btn-secondary" onclick="closeModal()">SLUITEN</button>`;
+            showModal(title, bodyHtml, actionsHtml, false);
         }
 
         function closeModal() {
@@ -579,7 +606,6 @@
             document.getElementById('cboRounding').value = s.rounding || 'Round';
             document.getElementById('chkPos').checked = !!s.pos_enabled;
             document.getElementById('chkWeb').checked = !!s.web_enabled;
-            document.getElementById('chkDeleteRights').checked = !!s.delete_rights;
             document.getElementById('chkEnabled').checked = !!s.enabled;
 
             document.getElementById('txtCompanyName').value = s.company_name || '';
@@ -615,7 +641,6 @@
             document.getElementById('cboRounding').value = 'Round';
             document.getElementById('chkPos').checked = false;
             document.getElementById('chkWeb').checked = false;
-            document.getElementById('chkDeleteRights').checked = false;
             document.getElementById('chkEnabled').checked = true;
 
             document.getElementById('txtCompanyName').value = '';
@@ -658,7 +683,7 @@
                 rounding: document.getElementById('cboRounding').value,
                 posEnabled: document.getElementById('chkPos').checked,
                 webEnabled: document.getElementById('chkWeb').checked,
-                deleteRights: document.getElementById('chkDeleteRights').checked,
+                deleteRights: false,
                 enabled: document.getElementById('chkEnabled').checked,
 
                 companyName: document.getElementById('txtCompanyName').value.trim(),
@@ -694,26 +719,27 @@
             }
             const shop = currentShopsList[selectedShopIndex];
             activeDebugShopId = shop.shop_id;
-            showModal("MQTT Debug Aanvraag", `Verzoek om telemetry/debug data verzonden voor <strong>${shop.name}</strong> (Shop ID: ${shop.shop_id})...`, null, false);
+            showLoadingModal("MQTT Debug Telemetry", `Data ophalen voor <strong>${escapeHtml(shop.name)}</strong> (Shop ID: ${shop.shop_id})...`);
             sendHostMessage({ action: "debug_selected_shop", shopId: shop.shop_id });
-        }
-
-        function requestAllShopsDebug() {
-            showModal("MQTT Broadcast Debug", "Broadcast commando verzonden naar <strong>ALLE SHOPS</strong>. Antwoorden van online terminals worden geladen...", null, false);
-            sendHostMessage({ action: "debug_all_shops" });
         }
 
         function sendRemoteMqttCommand(cmd) {
             if (!activeDebugShopId) return;
-            sendHostMessage({
-                action: "send_remote_command",
-                shopId: activeDebugShopId,
-                command: cmd
-            });
-            showModal("Commando Verzonden", `MQTT commando <strong>${cmd}</strong> is verzonden naar Shop ID <strong>${activeDebugShopId}</strong>.`, null, false);
+
+            if (cmd === 'DEBUG') {
+                showLoadingModal("MQTT Refresh", `Vernieuwen van diagnostic data voor Shop ID <strong>${activeDebugShopId}</strong>...`);
+                sendHostMessage({ action: "debug_selected_shop", shopId: activeDebugShopId });
+            } else {
+                sendHostMessage({
+                    action: "send_remote_command",
+                    shopId: activeDebugShopId,
+                    command: cmd
+                });
+                showModal("Commando Verzonden", `MQTT commando <strong>${cmd}</strong> is verzonden naar Shop ID <strong>${activeDebugShopId}</strong>.`, null, false);
+            }
         }
 
-        /* USER-FRIENDLY PARSER FOR TELEMETRY DEBUG PAYLOAD */
+        /* PARSER FOR TELEMETRY DEBUG PAYLOAD */
         window.onDebugResponseReceived = function(shopPayload) {
             try {
                 let data = typeof shopPayload === 'string' ? JSON.parse(shopPayload) : shopPayload;
@@ -797,13 +823,15 @@
                             </div>
                         </div>
 
-                        <!-- PRINTERS & SYSTEM DETAILS -->
+                        <!-- PRINTERS WITH SCROLLBAR -->
                         <div>
                             <div class="debug-section-header">Geïnstalleerde Printers & Papier Formaten</div>
-                            <table class="debug-table">
-                                <thead><tr><th>Printer Naam</th><th>Papier Formaat</th></tr></thead>
-                                <tbody>${printersTableRows}</tbody>
-                            </table>
+                            <div class="table-scroll-container">
+                                <table class="debug-table">
+                                    <thead><tr><th>Printer Naam</th><th>Papier Formaat</th></tr></thead>
+                                    <tbody>${printersTableRows}</tbody>
+                                </table>
+                            </div>
                         </div>
 
                         <!-- DATABASE CONNECTION -->
