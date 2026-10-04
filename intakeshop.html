@@ -236,7 +236,7 @@
         /* MODAL OVERLAY */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(15, 23, 42, 0.88);
+            background-color: rgba(15, 23, 42, 0.92);
             z-index: 9999; display: none; align-items: center; justify-content: center;
         }
         .modal-card {
@@ -248,20 +248,107 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+        .modal-card.wide {
+            width: 1100px;
+            max-width: 95vw;
+            max-height: 92vh;
         }
         .modal-title { font-size: 18px; font-weight: 900; color: var(--primary-color); text-transform: uppercase; }
-        .modal-body { font-size: 15px; color: var(--text-main); line-height: 1.4; word-break: break-word; }
+        .modal-body { font-size: 15px; color: var(--text-main); line-height: 1.4; word-break: break-word; overflow-y: auto; max-height: 75vh; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
 
-        /* DIAGNOSTIC TABS INSIDE MODAL */
-        .diag-tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 10px; }
-        .diag-tab { padding: 10px 16px; font-weight: 800; color: var(--text-muted); cursor: pointer; }
-        .diag-tab.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); }
-        .diag-console {
-            background-color: #020617; border: 2px solid var(--border-color); padding: 12px;
-            font-family: 'Consolas', monospace; font-size: 12px; color: #a7f3d0; height: 260px; overflow: auto; white-space: pre-wrap;
+        /* USER-FRIENDLY DEBUG DASHBOARD STYLES */
+        .debug-dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
+        .debug-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .debug-metric-card {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .debug-metric-label { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+        .debug-metric-val { font-size: 18px; font-weight: 900; color: var(--text-main); }
+        .debug-metric-val.green { color: var(--success-color); }
+        .debug-metric-val.red { color: var(--danger-color); }
+
+        .debug-section-header {
+            font-size: 14px;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+        }
+
+        .debug-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            margin-top: 6px;
+        }
+        .debug-table th, .debug-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+        .debug-table th {
+            background-color: #020617;
+            color: var(--primary-color);
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .debug-cmd-bar {
+            background-color: var(--bg-color);
+            border: 2px solid var(--border-color);
+            padding: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .xml-viewer-box {
+            background-color: #020617;
+            border: 1px solid var(--border-color);
+            padding: 14px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+            color: #f1f5f9;
+            max-height: 220px;
+            overflow: auto;
+            white-space: pre;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        /* TOAST BANNERS */
+        .toast-banner {
+            padding: 14px 18px;
+            font-size: 14px;
+            font-weight: 800;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid transparent;
+        }
+        .toast-banner.danger { background-color: rgba(239, 68, 68, 0.15); color: var(--danger-color); border-color: var(--danger-color); }
     </style>
 </head>
 <body>
@@ -437,6 +524,7 @@
     <script>
         let currentShopsList = [];
         let selectedShopIndex = -1;
+        let activeDebugShopId = null;
 
         document.addEventListener("DOMContentLoaded", () => {
             sendHostMessage({ action: "ui_ready" });
@@ -452,9 +540,12 @@
             sendHostMessage({ action: actionName });
         }
 
-        function showModal(title, bodyHtml, actionsHtml) {
+        function showModal(title, bodyHtml, actionsHtml, isWide) {
             document.getElementById('lblModalTitle').innerText = title;
             document.getElementById('lblModalBody').innerHTML = bodyHtml;
+            const card = document.getElementById('modalCard');
+            if (isWide) card.classList.add('wide'); else card.classList.remove('wide');
+
             if (actionsHtml) {
                 document.getElementById('modalActions').innerHTML = actionsHtml;
             } else {
@@ -489,6 +580,8 @@
             const s = currentShopsList[idx];
             if (!s) return;
 
+            activeDebugShopId = s.shop_id;
+
             document.getElementById('txtName').value = s.name || '';
             document.getElementById('txtAddress').value = s.address || '';
             document.getElementById('txtPhone').value = s.phone_no || '';
@@ -522,6 +615,7 @@
 
         function prepareNewClientForm() {
             selectedShopIndex = -1;
+            activeDebugShopId = null;
             window.renderShopsList(currentShopsList);
 
             document.getElementById('txtName').value = '';
@@ -589,7 +683,7 @@
             };
 
             if (!payload.name) {
-                showModal("Invoer Fout", "Vul a.u.b. ten minste een shop naam in.", null);
+                showModal("Invoer Fout", "Vul a.u.b. ten minste een shop naam in.", null, false);
                 return;
             }
 
@@ -599,7 +693,7 @@
         function generateQrCode() {
             const domain = document.getElementById('txtDomainName').value.trim();
             if (!domain) {
-                showModal("Geen Domein", "Vul eerst een domeinnaam in om een QR code te genereren.", null);
+                showModal("Geen Domein", "Vul eerst een domeinnaam in om een QR code te genereren.", null, false);
                 return;
             }
             sendHostMessage({ action: "generate_qr", domain: domain });
@@ -607,45 +701,151 @@
 
         function requestSelectedShopDebug() {
             if (selectedShopIndex < 0 || !currentShopsList[selectedShopIndex]) {
-                showModal("Geen Selectie", "Selecteer a.u.b. eerst een shop uit de lijst om te debuggen.", null);
+                showModal("Geen Selectie", "Selecteer a.u.b. eerst een shop uit de lijst om te debuggen.", null, false);
                 return;
             }
             const shop = currentShopsList[selectedShopIndex];
-            showModal("MQTT Debug Aanvraag", `Verzoek om telemetry/debug data verzonden voor <strong>${shop.name}</strong> (ID: ${shop.shop_id})...`, null);
+            activeDebugShopId = shop.shop_id;
+            showModal("MQTT Debug Aanvraag", `Verzoek om telemetry/debug data verzonden voor <strong>${shop.name}</strong> (Shop ID: ${shop.shop_id})...`, null, false);
             sendHostMessage({ action: "debug_selected_shop", shopId: shop.shop_id });
         }
 
         function requestAllShopsDebug() {
-            showModal("MQTT Broadcast Debug", "Broadcast commando verzonden naar <strong>ALLE SHOPS</strong>. Antwoorden van online kassaterminals worden geladen...", null);
+            showModal("MQTT Broadcast Debug", "Broadcast commando verzonden naar <strong>ALLE SHOPS</strong>. Antwoorden van online terminals worden geladen...", null, false);
             sendHostMessage({ action: "debug_all_shops" });
         }
 
-        /* HOST CALLBACKS FOR DIAGNOSTICS & QR CODE */
-        window.onQrCodeGenerated = function(base64Image) {
-            const imgHtml = `<div style="text-align:center;"><img src="${base64Image}" style="max-width:260px; border:2px solid var(--border-color);" /><p style="margin-top:10px; font-weight:800;">QR code succesvol gegenereerd!</p></div>`;
-            showModal("QR Code Preview", imgHtml, null);
+        function sendRemoteMqttCommand(cmd) {
+            if (!activeDebugShopId) return;
+            sendHostMessage({
+                action: "send_remote_command",
+                shopId: activeDebugShopId,
+                command: cmd
+            });
+            showModal("Commando Verzonden", `MQTT commando <strong>${cmd}</strong> is verzonden naar Shop ID <strong>${activeDebugShopId}</strong>.`, null, false);
+        }
+
+        /* USER-FRIENDLY PARSER FOR TELEMETRY DEBUG PAYLOAD */
+        window.onDebugResponseReceived = function(shopPayload) {
+            try {
+                let data = typeof shopPayload === 'string' ? JSON.parse(shopPayload) : shopPayload;
+                if (!data || typeof data !== 'object') {
+                    showModal("POS Diagnostics Resultaat", `<div style="color:var(--danger-color);">${shopPayload}</div>`, null, false);
+                    return;
+                }
+
+                if (data.clientId) activeDebugShopId = data.clientId;
+
+                const isOnline = data.network ? !!data.network.isOnline : false;
+                const pingMs = data.network ? (data.network.pingLatencyMs ?? "--") : "--";
+
+                const appVer = data.appVersion || "--";
+                const osVer = data.osVersion || "--";
+                const res = data.display ? (data.display.resolution || "--") : "--";
+
+                const disk = data.systemHealth ? (data.systemHealth.freeDiskSpaceGb ?? "--") : "--";
+                const ram = data.systemHealth ? (data.systemHealth.appRamUsageMb ?? "--") : "--";
+                const uptime = data.systemHealth ? (data.systemHealth.systemUptimeHours ?? "--") : "--";
+
+                const rustDeskInstalled = data.rustDesk ? !!data.rustDesk.isInstalled : false;
+                const rustDeskId = data.rustDesk ? (data.rustDesk.id || "--") : "--";
+
+                // Render Printers Table
+                let printersTableRows = `<tr><td colspan="2" style="text-align:center; color: var(--text-muted);">Geen printers gevonden</td></tr>`;
+                if (data.peripherals && data.peripherals.installedPrinters && data.peripherals.installedPrinters.length > 0) {
+                    printersTableRows = data.peripherals.installedPrinters.map(p => `
+                        <tr>
+                            <td style="font-weight:800;">${escapeHtml(p.name)}</td>
+                            <td>${escapeHtml(p.paperSize || 'Standaard')}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Render DB Connections
+                let dbInfoHtml = "--";
+                if (data.database && data.database.connectionStrings && data.database.connectionStrings.length > 0) {
+                    dbInfoHtml = data.database.connectionStrings.map(db => `
+                        <div style="font-size:12px; font-family:Consolas, monospace;">
+                            <strong>${escapeHtml(db.name || 'Default')}:</strong> ${escapeHtml(db.connectionString || '')}
+                        </div>
+                    `).join('');
+                }
+
+                const xmlText = data.userConfigXml || "Geen XML configuratie gevonden.";
+
+                const dashboardHtml = `
+                    <div class="debug-dashboard">
+                        
+                        <!-- REMOTE COMMANDS ACTION BAR -->
+                        <div class="debug-cmd-bar">
+                            <span style="font-size:13px; font-weight:900;">ACTIES VOOR SHOP ID ${data.clientId || '--'}:</span>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <button class="btn-touch btn-primary" style="height:38px; padding:0 12px; font-size:12px;" onclick="sendRemoteMqttCommand('DEBUG')">🔍 REFRESH</button>
+                                <button class="btn-touch btn-secondary" style="height:38px; padding:0 12px; font-size:12px;" onclick="sendRemoteMqttCommand('INSTALL_RUSTDESK')">🛠 RUSTDESK</button>
+                                <button class="btn-touch btn-secondary" style="height:38px; padding:0 12px; font-size:12px;" onclick="sendRemoteMqttCommand('TEST_PRINT')">🖨 TEST PRINT</button>
+                                <button class="btn-touch btn-warning" style="height:38px; padding:0 12px; font-size:12px;" onclick="sendRemoteMqttCommand('RESTART')">🔄 RESTART</button>
+                                <button class="btn-touch btn-danger" style="height:38px; padding:0 12px; font-size:12px;" onclick="sendRemoteMqttCommand('STOP')">⛔ STOP</button>
+                            </div>
+                        </div>
+
+                        <!-- METRICS GRID -->
+                        <div class="debug-metrics-grid">
+                            <div class="debug-metric-card">
+                                <span class="debug-metric-label">Status & Latency</span>
+                                <span class="debug-metric-val ${isOnline ? 'green' : 'red'}">${isOnline ? 'ONLINE' : 'OFFLINE'} (${pingMs} ms)</span>
+                            </div>
+                            <div class="debug-metric-card">
+                                <span class="debug-metric-label">RustDesk ID</span>
+                                <span class="debug-metric-val green">${rustDeskInstalled ? rustDeskId : 'Niet Aanwezig'}</span>
+                            </div>
+                            <div class="debug-metric-card">
+                                <span class="debug-metric-label">RAM / Vrije Schijf</span>
+                                <span class="debug-metric-val">${ram} MB / ${disk} GB</span>
+                            </div>
+                            <div class="debug-metric-card">
+                                <span class="debug-metric-label">App Versie & Uptime</span>
+                                <span class="debug-metric-val">${appVer} (${uptime}u)</span>
+                            </div>
+                        </div>
+
+                        <!-- PRINTERS & SYSTEM DETAILS -->
+                        <div>
+                            <div class="debug-section-header">Geïnstalleerde Printers</div>
+                            <table class="debug-table">
+                                <thead><tr><th>Printer Naam</th><th>Papier Formaat</th></tr></thead>
+                                <tbody>${printersTableRows}</tbody>
+                            </table>
+                        </div>
+
+                        <!-- DATABASE CONNECTION -->
+                        <div>
+                            <div class="debug-section-header">Database Verbindingsreeks</div>
+                            ${dbInfoHtml}
+                        </div>
+
+                        <!-- USER CONFIG XML -->
+                        <div>
+                            <div class="debug-section-header">User Configuration XML</div>
+                            <div class="xml-viewer-box">${escapeHtml(xmlText)}</div>
+                        </div>
+
+                    </div>
+                `;
+
+                showModal(`POS Diagnostics — Shop #${data.clientId}`, dashboardHtml, null, true);
+
+            } catch(e) {
+                showModal("POS Diagnostics (Raw)", `<div class="xml-viewer-box">${escapeHtml(shopPayload)}</div>`, null, true);
+            }
         };
 
-        window.onDebugResponseReceived = function(shopPayload) {
-            let prettyJson = "";
-            try {
-                const parsed = typeof shopPayload === 'string' ? JSON.parse(shopPayload) : shopPayload;
-                prettyJson = JSON.stringify(parsed, null, 2);
-            } catch(e) {
-                prettyJson = shopPayload;
-            }
-
-            const html = `
-                <div class="diag-tabs">
-                    <div class="diag-tab active">Telemetry JSON Payload</div>
-                </div>
-                <div class="diag-console">${escapeHtml(prettyJson)}</div>
-            `;
-            showModal("POS Diagnostics Resultaat", html, null);
+        window.onQrCodeGenerated = function(base64Image) {
+            const imgHtml = `<div style="text-align:center;"><img src="${base64Image}" style="max-width:260px; border:2px solid var(--border-color);" /><p style="margin-top:10px; font-weight:800;">QR code succesvol gegenereerd!</p></div>`;
+            showModal("QR Code Preview", imgHtml, null, false);
         };
 
         window.onSaveSuccess = function() {
-            showModal("Succesvol Opgeslagen", "De shop- en gebruikersgegevens zijn succesvol verwerkt in de database!", null);
+            showModal("Succesvol Opgeslagen", "De shop- en gebruikersgegevens zijn succesvol verwerkt in de database!", null, false);
         };
 
         function escapeHtml(str) {
