@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shop Intake & Diagnostics</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --surface-card: #1e293b;
+            --surface-hover: #334155;
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            border-radius: 0 !important;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
+
+        /* HEADER */
+        .app-header {
+            background-color: var(--surface-color);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .header-title-group { display: flex; align-items: center; gap: 12px; }
+        .app-title { font-size: 22px; font-weight: 900; letter-spacing: 0.8px; color: var(--text-main); }
+        .status-badge {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: var(--primary-color);
+            font-size: 13px;
+            font-weight: 800;
+            padding: 4px 12px;
+            border: 1px solid var(--primary-color);
+            text-transform: uppercase;
+        }
+
+        /* NAVIGATION TABS */
+        .nav-tabs {
+            display: flex;
+            background-color: var(--surface-color);
+            border-bottom: 2px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .nav-tab {
+            padding: 16px 28px;
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 4px solid transparent;
+            transition: all 0.15s ease;
+        }
+        .nav-tab:active { background-color: var(--surface-hover); }
+        .nav-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            background-color: var(--bg-color);
+        }
+
+        /* CONTENT CONTAINER */
+        .tab-container {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .tab-pane { display: none; height: 100%; }
+        .tab-pane.active { display: block; }
+
+        /* GRID & CARDS */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background-color: var(--surface-color);
+            border: 2px solid var(--border-color);
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: var(--card-shadow);
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* FORM CONTROLS */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .form-label { font-size: 14px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+        .form-input {
+            height: 50px;
+            background-color: var(--bg-color);
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0 16px;
+            font-size: 16px;
+            font-weight: 700;
+            outline: none;
+        }
+        .form-input:focus { border-color: var(--primary-color); }
+
+        /* BUTTONS */
+        .btn-touch {
+            height: 52px;
+            padding: 0 24px;
+            font-size: 15px;
+            font-weight: 900;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            gap: 8px;
+            transition: transform 0.05s ease, opacity 0.1s ease;
+        }
+        .btn-touch:active { transform: scale(0.97); opacity: 0.85; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-secondary { background-color: #334155; color: white; }
+
+        /* DIAGNOSTICS LOG VIEWER */
+        .log-console {
+            background-color: #020617;
+            border: 2px solid var(--border-color);
+            padding: 14px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            color: #38bdf8;
+            height: 180px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* JSON VIEWER */
+        .json-box {
+            background-color: #020617;
+            border: 2px solid var(--border-color);
+            padding: 14px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+            color: #a7f3d0;
+            max-height: 250px;
+            overflow: auto;
+        }
+
+        /* METRIC BADGES */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .metric-box {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .metric-title { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+        .metric-value { font-size: 18px; font-weight: 900; color: var(--text-main); }
+
+        /* MODAL OVERLAY */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(15, 23, 42, 0.85);
+            z-index: 9999; display: none; align-items: center; justify-content: center;
+        }
+        .modal-card {
+            width: 460px;
+            background-color: var(--surface-color);
+            border: 2px solid var(--border-color);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+        .modal-title { font-size: 20px; font-weight: 900; color: var(--text-main); }
+        .modal-body { font-size: 15px; color: var(--text-muted); line-height: 1.4; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+
+        /* TOAST BANNERS */
+        .toast-banner {
+            padding: 14px 18px;
+            font-size: 14px;
+            font-weight: 800;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid transparent;
+        }
+        .toast-banner.danger { background-color: rgba(239, 68, 68, 0.15); color: var(--danger-color); border-color: var(--danger-color); }
+        .toast-banner.success { background-color: rgba(16, 185, 129, 0.15); color: var(--success-color); border-color: var(--success-color); }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="app-header">
+        <div class="header-title-group">
+            <div class="app-title">SHOP REGISTRATIE & DIAGNOSTICS</div>
+            <div class="status-badge" id="lblCurrentShopId">Shop ID: --</div>
+        </div>
+        <button class="btn-touch btn-danger" onclick="sendAction('close_window')">✖ SLUITEN</button>
+    </div>
+
+    <!-- TABS -->
+    <div class="nav-tabs">
+        <div class="nav-tab active" onclick="switchTab('tab-intake')">Winkel Registratie</div>
+        <div class="nav-tab" onclick="switchTab('tab-debug')">MQTT & Diagnostics</div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="tab-container">
+
+        <!-- TAB 1: SHOP INTAKE -->
+        <div id="tab-intake" class="tab-pane active">
+            <div style="max-width: 540px; margin: 0 auto;">
+                <div class="card">
+                    <div class="card-title">Registrer Shop Key</div>
+                    
+                    <div id="alertBanner" class="toast-banner danger">
+                        <span id="alertBannerText">Foutieve shop ID of admin key!</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Restaurant Code (Shop ID)</label>
+                        <input type="text" id="txtShopId" class="form-input" placeholder="bijv. 101" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Admin Wachtwoord</label>
+                        <input type="password" id="txtAdminKey" class="form-input" placeholder="Wachtwoord..." />
+                    </div>
+
+                    <button class="btn-touch btn-success" style="margin-top: 10px;" onclick="submitRegistration()">
+                        REGISTREER & HERSTART
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: MQTT & DEBUG DIAGNOSTICS -->
+        <div id="tab-debug" class="tab-pane">
+            <div class="grid-2col">
+                
+                <!-- Left: Controls & MQTT Console -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>Op Afstand & MQTT Commando's</span>
+                        <span id="lblMqttStatus" style="font-size: 12px; color: var(--success-color);">CONNECTIE ACTIEF</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <button class="btn-touch btn-primary" onclick="triggerMqttCommand('DEBUG')">🔍 DEBUG DUMP</button>
+                        <button class="btn-touch btn-secondary" onclick="triggerMqttCommand('INSTALL_RUSTDESK')">🛠 RUSTDESK STIL</button>
+                        <button class="btn-touch btn-secondary" onclick="triggerMqttCommand('TEST_PRINT')">🖨 TEST PRINT</button>
+                        <button class="btn-touch btn-secondary" onclick="triggerMqttCommand('RESTART')">🔄 RESTART POS</button>
+                        <button class="btn-touch btn-danger" style="grid-column: span 2;" onclick="triggerMqttCommand('STOP')">⛔ STOP POS PROCES</button>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label class="form-label">MQTT Live Response Console</label>
+                        <div class="log-console" id="mqttLogConsole">> Systeem gereed voor MQTT commando's...</div>
+                    </div>
+                </div>
+
+                <!-- Right: Diagnostics Live Stats -->
+                <div class="card">
+                    <div class="card-title">Systeem & Netwerk Status</div>
+
+                    <div class="metric-grid">
+                        <div class="metric-box">
+                            <span class="metric-title">App / OS Versie</span>
+                            <span class="metric-value" id="lblSysVersion">--</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-title">Ping Latency</span>
+                            <span class="metric-value" id="lblPingLatency">-- ms</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-title">RAM Verbruik</span>
+                            <span class="metric-value" id="lblRamUsage">-- MB</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-title">Systeem Uptime</span>
+                            <span class="metric-value" id="lblSystemUptime">-- uren</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">RustDesk Remote Support</label>
+                        <div class="metric-box" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 800;" id="lblRustDeskStatus">RustDesk: Niet Gedetecteerd</span>
+                            <span style="font-weight: 900; color: var(--primary-color);" id="lblRustDeskId">ID: --</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Laatst Gegenereerde JSON Payload</label>
+                        <div class="json-box" id="jsonViewer">{}</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- GENERAL MODAL DIALOG -->
+    <div class="modal-overlay" id="appModal">
+        <div class="modal-card">
+            <div class="modal-title" id="lblModalTitle">Melding</div>
+            <div class="modal-body" id="lblModalBody">Berichtinhoud...</div>
+            <div class="modal-actions" id="modalActions">
+                <button class="btn-touch btn-primary" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            sendHostMessage({ action: "ui_ready" });
+        });
+
+        function sendHostMessage(payload) {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(payload);
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-container > .tab-pane').forEach(p => p.classList.remove('active'));
+
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function sendAction(actionName) {
+            sendHostMessage({ action: actionName });
+        }
+
+        function submitRegistration() {
+            const shopId = document.getElementById('txtShopId').value.trim();
+            const adminKey = document.getElementById('txtAdminKey').value.trim();
+
+            if (!shopId || !adminKey) {
+                showToastAlert("Vul a.u.b. zowel het Shop ID als het wachtwoord in.");
+                return;
+            }
+
+            sendHostMessage({
+                action: "register_shop",
+                shopId: shopId,
+                adminKey: adminKey
+            });
+        }
+
+        function triggerMqttCommand(cmd) {
+            appendLog(`> Uitvoeren commando: ${cmd}...`);
+            sendHostMessage({ action: "mqtt_command", command: cmd });
+        }
+
+        function appendLog(msg) {
+            const consoleBox = document.getElementById('mqttLogConsole');
+            const timestamp = new Date().toLocaleTimeString();
+            consoleBox.innerText += `\n[${timestamp}] ${msg}`;
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        function showToastAlert(msg) {
+            const banner = document.getElementById('alertBanner');
+            const text = document.getElementById('alertBannerText');
+            text.innerText = msg;
+            banner.style.display = 'flex';
+        }
+
+        function showModal(title, bodyText, actionsHtml) {
+            document.getElementById('lblModalTitle').innerText = title;
+            document.getElementById('lblModalBody').innerText = bodyText;
+            if (actionsHtml) {
+                document.getElementById('modalActions').innerHTML = actionsHtml;
+            } else {
+                document.getElementById('modalActions').innerHTML = `<button class="btn-touch btn-primary" onclick="closeModal()">OK</button>`;
+            }
+            document.getElementById('appModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('appModal').style.display = 'none';
+        }
+
+        /* HOST CALLBACK FUNCTIONS */
+        window.onInitData = function(data) {
+            if (data.currentShopId) {
+                document.getElementById('lblCurrentShopId').innerText = "Active Shop ID: " + data.currentShopId;
+                document.getElementById('txtShopId').value = data.currentShopId;
+            }
+            if (data.appVersion) {
+                document.getElementById('lblSysVersion').innerText = data.appVersion;
+            }
+        };
+
+        window.onRegistrationResult = function(success, message) {
+            if (success) {
+                showModal("Succesvolle Registratie", "Shop ID succesvol opgeslagen! De applicatie herstart nu...", "");
+            } else {
+                showToastAlert(message || "Foutieve shop ID of admin key !");
+            }
+        };
+
+        window.onMqttLog = function(message) {
+            appendLog(message);
+        };
+
+        window.updateDebugData = function(jsonPayload) {
+            try {
+                const parsed = typeof jsonPayload === 'string' ? JSON.parse(jsonPayload) : jsonPayload;
+                document.getElementById('jsonViewer').innerText = JSON.stringify(parsed, null, 2);
+
+                if (parsed.network) {
+                    document.getElementById('lblPingLatency').innerText = parsed.network.pingLatencyMs + " ms";
+                }
+                if (parsed.systemHealth) {
+                    document.getElementById('lblRamUsage').innerText = parsed.systemHealth.appRamUsageMb + " MB";
+                    document.getElementById('lblSystemUptime').innerText = parsed.systemHealth.systemUptimeHours + " uren";
+                }
+                if (parsed.rustDesk) {
+                    document.getElementById('lblRustDeskStatus').innerText = parsed.rustDesk.isInstalled ? "RustDesk: Geïnstalleerd" : "RustDesk: Niet Aanwezig";
+                    document.getElementById('lblRustDeskId').innerText = "ID: " + (parsed.rustDesk.id || "--");
+                }
+                if (parsed.appVersion) {
+                    document.getElementById('lblSysVersion').innerText = parsed.appVersion;
+                }
+            } catch(e) {
+                document.getElementById('jsonViewer').innerText = jsonPayload;
+            }
+        };
+
+        window.showTestPrintModal = function() {
+            showModal("MQTT Commando Ontvangen", "Test print commando succesvol ontvangen via HiveMQ Console!", null);
+        };
+    </script>
+</body>
+</html>
