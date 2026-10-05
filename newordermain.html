@@ -146,24 +146,20 @@
             gap: 6px;
         }
 
-        /* VERGROOT: Categorie label */
         .cart-category-tag {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 900;
-            color: var(--primary-color);
+            color: #60A5FA;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.6px;
         }
 
-        /* VERGROOT: Productnaam in winkelmand */
-        .cart-title { font-size: 24px; font-weight: 900; color: var(--text-main); line-height: 1.2; word-break: break-word; }
+        .cart-title { font-size: 24px; font-weight: 900; color: #FFFFFF; line-height: 1.2; word-break: break-word; }
         
-        /* VERGROOT: Extra's en opties */
-        .cart-details { font-size: 18px; color: var(--text-muted); white-space: pre-line; line-height: 1.35; margin-top: 3px; font-weight: 600; }
+        .cart-details { font-size: 19px; color: #E5E7EB; white-space: pre-line; line-height: 1.4; margin-top: 4px; font-weight: 700; }
         
         .price-block { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
         
-        /* VERGROOT: Prijs op artikel */
         .cart-price { font-weight: 900; font-size: 26px; padding: 0 2px; }
         .cart-price:hover { background-color: rgba(59, 130, 246, 0.2); border-color: var(--primary-color); }
         .cart-original-price { font-size: 16px; color: var(--danger-color); text-decoration: line-through; font-weight: 800; }
@@ -186,7 +182,6 @@
             color: var(--success-color);
         }
 
-        /* VERGROOT: Aantalknoppen en weergave */
         .cart-controls { display: flex; align-items: center; justify-content: flex-end; gap: 6px; border-top: none; padding-top: 0; margin-top: 0; }
         .qty-btn { width: 42px; height: 42px; border: none; font-size: 24px; font-weight: bold; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; background-color: var(--primary-color); }
         .qty-btn:active { background-color: var(--primary-active); }
@@ -773,6 +768,9 @@
         let activeIsProductExtra = false;
         let activeTypeItems = [];
 
+        /* Double Submission Lock Guard */
+        let isSubmittingCheckout = false;
+
         // HELPER TO EXTRACT NUMERIC VALUES SAFELY (PREVENTS 0 FROM BEING FALSY)
         function getNumericValue(...args) {
             for (let i = 0; i < args.length; i++) {
@@ -904,7 +902,6 @@
                     sendHostMessage({ action: "edit_cart_item", lineId: item.lineId });
                 };
 
-                // SAFE NUMERIC EXTRACTION (PREVENTS FALSY ZERO RE-EVALUATION TO POS_VALUE)
                 const unitPrice = getNumericValue(item.lineTotal, item.value, item.pos_value);
                 const baseUnitPrice = getNumericValue(item.originalPrice, item.value, item.pos_value);
                 const isDiscounted = (unitPrice < baseUnitPrice - 0.001);
@@ -1280,11 +1277,16 @@
             }
         }
 
-        function closeCustomerModal() {
-            document.getElementById('customerModal').style.display = 'none';
-        }
-
         function confirmCustomerCheckout() {
+            if (isSubmittingCheckout) return;
+            isSubmittingCheckout = true;
+
+            const btn = document.getElementById('btnConfirmCustomer');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = "VERWERKEN...";
+            }
+
             const payload = {
                 phone: document.getElementById('custPhone').value,
                 firstName: document.getElementById('custFirstName').value,
@@ -1296,8 +1298,20 @@
                 posPrint: document.getElementById('chkPosPrint') ? document.getElementById('chkPosPrint').checked : true,
                 kitchenPrint: document.getElementById('chkKitchenPrint') ? document.getElementById('chkKitchenPrint').checked : true
             };
+
             sendHostMessage({ action: "customer_submit", data: payload });
             closeCustomerModal();
+        }
+
+        function closeCustomerModal() {
+            document.getElementById('customerModal').style.display = 'none';
+            
+            isSubmittingCheckout = false;
+            const btn = document.getElementById('btnConfirmCustomer');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = "AFRONDEN (F8)";
+            }
         }
 
         window.openTableModal = function(dataPayload) {
@@ -1394,7 +1408,6 @@
             sendHostMessage({ action: "set_delivery_type", type: type });
         }
 
-        /* --- DIRECT ORDER EXECUTION FOR THE 3 BUTTONS --- */
         function executeDirectOrder(type) {
             if (isTableMode) return;
             const activeItems = currentCart.filter(i => i.action !== 'D');
@@ -1409,7 +1422,6 @@
         function syncCartToHost() { sendHostMessage({ action: "sync_cart", cart: currentCart }); }
         function notifyAction(actionId) { sendHostMessage({ action: "trigger_action", id: actionId }); }
 
-        /* --- MODIFIER MODAL TRANSPARENCY UI & LOGIC --- */
         window.openModifierModal = function(isEdit, lineId) { 
             isEditingCartItem = !!isEdit;
             activeEditingLineId = lineId || null;
