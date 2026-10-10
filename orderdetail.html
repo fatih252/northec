@@ -129,6 +129,7 @@
             display: flex;
             flex-direction: column;
             gap: 14px;
+            overflow-y: auto;
         }
 
         .card-title {
@@ -144,7 +145,7 @@
             justify-content: space-between;
             align-items: center;
             font-size: 14px;
-            min-height: 48px;
+            min-height: 40px;
         }
 
         .detail-row .label {
@@ -155,6 +156,7 @@
         .detail-row .value {
             font-weight: 800;
             color: var(--text-dark);
+            text-align: right;
         }
 
         /* --- Touch-Optimized Time Controls --- */
@@ -493,7 +495,7 @@
         <div id="tab-delivery" class="tab-pane active">
             <div class="cards-grid">
                 
-                <!-- Delivery Details Card -->
+                <!-- Delivery & Time Details Card -->
                 <div class="card">
                     <div class="card-title">Levering Details</div>
                     
@@ -515,13 +517,40 @@
                             <button class="time-btn" onclick="adjustPlannedTime(15)">+15m</button>
                         </div>
                     </div>
+
+                    <!-- Customer & Address Details (Exclusively for Delivery Orders) -->
+                    <div id="deliveryCustomerSection" style="display: none; flex-direction: column; gap: 8px; margin-top: 10px; border-top: 2px dashed var(--border-color); padding-top: 12px;">
+                        <div class="card-title" style="font-size: 14px; border: none; padding: 0; color: var(--primary-red);">Klant & Bezorgadres</div>
+                        
+                        <div class="detail-row">
+                            <span class="label">Klantnaam</span>
+                            <span class="value" id="lblClientName">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Adres</span>
+                            <span class="value" id="lblClientAddress">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Gemeente</span>
+                            <span class="value" id="lblClientCity">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Telefoon</span>
+                            <span class="value" id="lblClientPhone">--</span>
+                        </div>
+                        <div class="detail-row" id="rowComment" style="display: none;">
+                            <span class="label">Opmerking</span>
+                            <span class="value" id="lblClientComment" style="color: #b45309; font-style: italic;">--</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Payment Status & History Card -->
                 <div class="card">
                     <div class="card-title">Betaalstatus & Historie</div>
                     
-                    <div class="detail-row">
+                    <!-- Selection Row to Change Payment Method (HIDDEN for Online Paid Orders) -->
+                    <div class="detail-row" id="paymentMethodRow">
                         <span class="label">Betaalmethode</span>
                         <div style="width: 60%;">
                             <select id="cmbPaymentMethod" class="select-input" onchange="onPaymentMethodChanged()">
@@ -638,6 +667,12 @@
             const paymentMethodStr = (data.paymentMethod || '').toLowerCase();
             isOnlinePaidState = (paymentMethodStr === 'payonline' || paymentMethodStr === 'online' || !!data.isOnlinePaid);
 
+            // Hide payment method selection dropdown for online-paid orders
+            const pmRow = document.getElementById('paymentMethodRow');
+            if (pmRow) {
+                pmRow.style.display = isOnlinePaidState ? 'none' : 'flex';
+            }
+
             // Render Online Betaalstatus Badge
             const onlineRow = document.getElementById('onlineStatusRow');
             const onlineStatusLbl = document.getElementById('lblOnlineStatus');
@@ -673,10 +708,32 @@
                 });
             }
 
-            // Adjust labels for Pickup / Delivery
-            const isTakeaway = (data.serviceName || '').toLowerCase().includes('afhaal');
+            // Delivery vs Takeaway / Table Logic
+            const isTakeaway = (data.serviceName || '').toLowerCase().includes('afhaal') || (data.serviceName || '').toLowerCase().includes('tafel');
+            const isDelivery = !isTakeaway;
+
             document.getElementById('lblDesiredLabel').innerText = isTakeaway ? 'Gewenste Afhaling' : 'Gewenste Bezorging';
             document.getElementById('lblPlannedLabel').innerText = isTakeaway ? 'Geplande Afhaling' : 'Geplande Bezorging';
+
+            // Show Customer & Delivery Details ONLY for Delivery orders
+            const deliverySection = document.getElementById('deliveryCustomerSection');
+            if (isDelivery) {
+                deliverySection.style.display = 'flex';
+                document.getElementById('lblClientName').innerText = data.clientName || '--';
+                document.getElementById('lblClientAddress').innerText = data.clientAddress || '--';
+                document.getElementById('lblClientCity').innerText = data.clientCity || '--';
+                document.getElementById('lblClientPhone').innerText = data.clientPhone || '--';
+
+                const commentRow = document.getElementById('rowComment');
+                if (data.comment && data.comment.trim().length > 0) {
+                    commentRow.style.display = 'flex';
+                    document.getElementById('lblClientComment').innerText = data.comment;
+                } else {
+                    commentRow.style.display = 'none';
+                }
+            } else {
+                deliverySection.style.display = 'none';
+            }
 
             // Hide time buttons if both desired and planned times are ZSM
             const isDesiredZsm = (!data.desiredTime || data.desiredTime.trim().toUpperCase() === 'ZSM');
