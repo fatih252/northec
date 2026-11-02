@@ -1257,9 +1257,15 @@
             
             (journals || []).forEach(j => {
                 const opt = document.createElement('option');
-                opt.value = j.journalID || '';
-                opt.text = j.displayName || j.nameNL || j.nameEN || j.nameFR || j.nameDE || (j.journalID || 'Journal');
-                if ((j.journalID || '') === _currentJournalId) opt.selected = true;
+                // Catch the ID whether C# serialized it as camelCase or PascalCase
+                opt.value = j.journalID || j.JournalID || '';
+                
+                // Add j.name and j.Name to the front of the fallback chain
+                opt.text = j.name || j.Name || j.displayName || j.nameNL || j.nameEN || opt.value || 'Journal';
+                
+                if (opt.value === _currentJournalId && _currentJournalId !== '') {
+                    opt.selected = true;
+                }
                 cbo.appendChild(opt);
             });
         }
