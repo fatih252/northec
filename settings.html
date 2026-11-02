@@ -799,7 +799,8 @@
                             <div class="card-title">Scrada Journal Management</div>
                             <div class="form-row">
                                 <span class="form-label">Actieve Journal</span>
-                                <select id="cboScradaJournals" class="form-select" style="flex:1; max-width: 250px;"></select>
+                                <!-- NEW: Added onchange="onJournalSelectionChanged()" here -->
+                                <select id="cboScradaJournals" class="form-select" style="flex:1; max-width: 250px;" onchange="onJournalSelectionChanged()"></select>
                             </div>
 
                             <div style="border-top: 2px solid var(--border-color); padding-top: 16px; margin-top: 14px;">
@@ -1260,7 +1261,7 @@
                 // Capture the ID (using both variations just in case)
                 opt.value = j.journalID || j.JournalID || j.id || j.Id || '';
                 
-                // FIXED: Explicitly grab the `name` property from the C# object
+                // Read the actual name string from Scrada API properties
                 opt.text = j.name || j.Name || j.nameNL || j.displayName || opt.value || 'Journal';
                 
                 if ((opt.value === _currentJournalId) && _currentJournalId !== '') {
@@ -1268,6 +1269,21 @@
                 }
                 cbo.appendChild(opt);
             });
+        }
+
+        // NEW: This triggers a save automatically when the user selects a journal from the dropdown
+        function onJournalSelectionChanged() {
+            _currentJournalId = document.getElementById('cboScradaJournals').value;
+            
+            if (_currentJournalId) {
+                saveScradaSettings(); // Sends the current journal ID to C# to save in DB immediately
+                
+                const lbl = document.getElementById('lblScradaStatus');
+                if (lbl) {
+                    lbl.style.color = '#16a34a'; 
+                    lbl.innerText = 'Geselecteerde journal automatisch opgeslagen.';
+                }
+            }
         }
 
         function onScradaActionResult(result) {
