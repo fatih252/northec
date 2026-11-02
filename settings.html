@@ -1257,11 +1257,11 @@
             
             (journals || []).forEach(j => {
                 const opt = document.createElement('option');
-                // Catch the ID whether C# serialized it as camelCase or PascalCase
-                opt.value = j.journalID || j.JournalID || '';
+                // Capture the ID (using both variations just in case)
+                opt.value = j.journalID || j.JournalID || j.id || j.Id || '';
                 
-                // Read the actual name string from Scrada API properties
-                opt.text = j.name || j.Name || j.displayName || j.nameNL || j.nameEN || opt.value || 'Journal';
+                // FIXED: Explicitly grab the `name` property from the C# object
+                opt.text = j.name || j.Name || j.nameNL || j.displayName || opt.value || 'Journal';
                 
                 if ((opt.value === _currentJournalId) && _currentJournalId !== '') {
                     opt.selected = true;
