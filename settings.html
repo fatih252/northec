@@ -1260,10 +1260,10 @@
                 // Catch the ID whether C# serialized it as camelCase or PascalCase
                 opt.value = j.journalID || j.JournalID || '';
                 
-                // Add j.name and j.Name to the front of the fallback chain
+                // Read the actual name string from Scrada API properties
                 opt.text = j.name || j.Name || j.displayName || j.nameNL || j.nameEN || opt.value || 'Journal';
                 
-                if (opt.value === _currentJournalId && _currentJournalId !== '') {
+                if ((opt.value === _currentJournalId) && _currentJournalId !== '') {
                     opt.selected = true;
                 }
                 cbo.appendChild(opt);
