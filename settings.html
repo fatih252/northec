@@ -153,6 +153,21 @@
         }
         .form-input:focus, .form-select:focus { border-color: var(--primary-color); }
 
+        .num-box {
+            height: 48px;
+            width: 110px;
+            min-width: 110px;
+            background-color: #ffffff;
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0 12px;
+            font-size: 16px;
+            font-weight: 800;
+            text-align: center;
+            outline: none;
+        }
+        .num-box:focus { border-color: var(--primary-color); }
+
         /* --- TOUCH TOGGLE SWITCH --- */
         .switch {
             position: relative;
@@ -280,6 +295,33 @@
         }
         .check-item input { width: 22px; height: 22px; accent-color: var(--primary-color); }
 
+        .integration-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        .integration-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .integration-item {
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            background-color: #f8fafc;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .integration-item.active {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background-color: #eff6ff;
+        }
+        .integration-pane { display: none; }
+        .integration-pane.active { display: block; }
+
         /* --- BUTTONS --- */
         .btn-touch {
             height: 52px;
@@ -336,6 +378,7 @@
         <div class="nav-tab" id="tabHeadTable" onclick="switchTab('tab-tables')">Tafels</div>
         <div class="nav-tab" onclick="switchTab('tab-menu')">Menu Layout</div>
         <div class="nav-tab" onclick="switchTab('tab-receipt')">Kassabon</div>
+        <div class="nav-tab" onclick="switchTab('tab-integrations')">Integraties</div>
         <div class="nav-tab" id="tabHeadCatalog" onclick="switchTab('tab-catalog')">Cataloog Beheer</div>
     </div>
 
@@ -358,7 +401,7 @@
                         <span class="form-label">Applicatie Taal</span>
                         <select id="cboLanguage" class="form-select">
                             <option value="nl">Nederlands (nl)</option>
-                            <option value="fr">Français (fr)</option>
+                            <option value="fr">Fran�ais (fr)</option>
                         </select>
                     </div>
 
@@ -371,7 +414,7 @@
                         <span class="form-label">Bestelgeluid</span>
                         <div style="display: flex; gap: 8px;">
                             <select id="cboOrderSound" class="form-select" style="min-width: 160px;"></select>
-                            <button class="btn-touch btn-primary" style="width: 48px; padding: 0;" onclick="playSound()">▶</button>
+                            <button class="btn-touch btn-primary" style="width: 48px; padding: 0;" onclick="playSound()">?</button>
                         </div>
                     </div>
                 </div>
@@ -722,14 +765,58 @@
             </div>
         </div>
 
-        <!-- TAB 8: CATALOOG (ADMIN UTILITIES) -->
+        <!-- TAB 8: INTEGRATIES -->
+        <div id="tab-integrations" class="tab-pane">
+            <div class="integration-layout">
+                <div class="card">
+                    <div class="card-title">Integraties</div>
+                    <div class="integration-list" id="integrationList">
+                        <div class="integration-item active" data-target="integration-scrada" onclick="selectIntegration('integration-scrada', this)">Scrada</div>
+                    </div>
+                </div>
+
+                <div class="integration-pane active" id="integration-scrada">
+                    <div class="settings-grid">
+                        <div class="card">
+                            <div class="card-title">Scrada API Credentials</div>
+                            <div class="form-row"><span class="form-label">API Key</span><input id="txtScradaApiKey" class="form-input" type="text" style="flex:1;" /></div>
+                            <div class="form-row"><span class="form-label">Password</span><input id="txtScradaPassword" class="form-input" type="password" style="flex:1;" /></div>
+                            <div class="form-row"><span class="form-label">Company ID</span><input id="txtScradaCompanyId" class="form-input" type="text" style="flex:1;" /></div>
+                            <div class="form-row"><span class="form-label">Selected Journal ID</span><input id="txtScradaJournalId" class="form-input" type="text" style="flex:1;" /></div>
+                            <div class="form-row"><span class="form-label">Auto Send Daily Receipts</span><label class="switch"><input type="checkbox" id="chkScradaAutoSend"><span class="slider"></span></label></div>
+                            <div class="form-row"><span class="form-label">Auto Send Hour (0-23)</span><input id="nudScradaAutoHour" class="num-box" type="number" min="0" max="23" value="5" /></div>
+                            <div style="margin-top:14px; font-size:13px; font-weight:700; color:var(--text-muted);">
+                                Scrada instellingen worden opgeslagen met "Opslaan & Sluiten".
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">Scrada Journal Management</div>
+                            <div class="form-row"><span class="form-label">Nieuw Journal Naam</span><input id="txtScradaJournalName" class="form-input" type="text" style="flex:1;" /></div>
+                            <div style="display:flex; gap:10px; margin-top:10px;">
+                                <button class="btn-touch btn-primary" onclick="createScradaJournal()">Journal Aanmaken</button>
+                            </div>
+                            <div style="margin-top:14px;">
+                                <select id="cboScradaJournals" class="form-select" style="width:100%;"></select>
+                            </div>
+                            <div style="display:flex; gap:10px; margin-top:10px;">
+                                <button class="btn-touch btn-secondary" onclick="useSelectedScradaJournal()">Gebruik Geselecteerde Journal</button>
+                            </div>
+                            <div id="lblScradaStatus" style="margin-top:12px; font-weight:700; color:#475569;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 9: CATALOOG (ADMIN UTILITIES) -->
         <div id="tab-catalog" class="tab-pane">
             <div class="settings-grid">
                 <div class="card">
                     <div class="card-title">Cataloog Beheer & Import/Export</div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 10px;">
                         <button class="btn-touch btn-secondary" onclick="catalogAction('intake')">Intake Shop</button>
-                        <button class="btn-touch btn-secondary" onclick="catalogAction('load_category')">Laad Categoriën</button>
+                        <button class="btn-touch btn-secondary" onclick="catalogAction('load_category')">Laad Categori�n</button>
                         <button class="btn-touch btn-secondary" onclick="catalogAction('load_products')">Laad Producten</button>
                         <button class="btn-touch btn-secondary" onclick="catalogAction('load_options')">Laad Opties</button>
                         <button class="btn-touch btn-secondary" onclick="catalogAction('load_extras')">Laad Extra's</button>
@@ -771,6 +858,10 @@
             // DEFAULT PRINTER TAB TO LEVERING (FIRST SUB-TAB)
             if (tabId === 'tab-printer') {
                 switchPrinterTab('ptab-delivery');
+            }
+
+            if (tabId === 'tab-integrations') {
+                loadScradaJournals();
             }
         }
 
@@ -1128,6 +1219,80 @@
             sendHostMessage({ action: "catalog_action", type: actionName });
         }
 
+        function selectIntegration(targetId, trigger) {
+            document.querySelectorAll('#integrationList .integration-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('#tab-integrations .integration-pane').forEach(el => el.classList.remove('active'));
+
+            if (trigger) trigger.classList.add('active');
+            const target = document.getElementById(targetId);
+            if (target) target.classList.add('active');
+        }
+
+        function renderScradaSettings(data) {
+            data = data || {};
+            const defaultItem = document.querySelector('#integrationList .integration-item[data-target="integration-scrada"]');
+            if (defaultItem) selectIntegration('integration-scrada', defaultItem);
+            document.getElementById('txtScradaApiKey').value = data.apiKey || '';
+            document.getElementById('txtScradaPassword').value = data.password || '';
+            document.getElementById('txtScradaCompanyId').value = data.companyId || '';
+            document.getElementById('txtScradaJournalId').value = data.journalId || '';
+            document.getElementById('chkScradaAutoSend').checked = !!data.autoSendDailyReceipts;
+            document.getElementById('nudScradaAutoHour').value = Number.isInteger(data.autoSendHour) ? data.autoSendHour : 5;
+        }
+
+        function renderScradaJournals(journals, selectedJournalId) {
+            const cbo = document.getElementById('cboScradaJournals');
+            cbo.innerHTML = '';
+            (journals || []).forEach(j => {
+                const opt = document.createElement('option');
+                opt.value = j.journalID || '';
+                opt.text = j.displayName || j.nameNL || j.nameEN || j.nameFR || j.nameDE || (j.journalID || 'Journal');
+                if ((j.journalID || '') === (selectedJournalId || '')) opt.selected = true;
+                cbo.appendChild(opt);
+            });
+        }
+
+        function onScradaActionResult(result) {
+            const lbl = document.getElementById('lblScradaStatus');
+            if (!lbl) return;
+            lbl.style.color = result && result.success ? '#16a34a' : '#dc2626';
+            lbl.innerText = (result && result.message) ? result.message : '';
+            if (result && result.selectedJournalId) {
+                document.getElementById('txtScradaJournalId').value = result.selectedJournalId;
+            }
+        }
+
+        function saveScradaSettings() {
+            const payload = {
+                apiKey: document.getElementById('txtScradaApiKey').value || '',
+                password: document.getElementById('txtScradaPassword').value || '',
+                companyId: document.getElementById('txtScradaCompanyId').value || '',
+                journalId: document.getElementById('txtScradaJournalId').value || '',
+                autoSendDailyReceipts: document.getElementById('chkScradaAutoSend').checked,
+                autoSendHour: parseInt(document.getElementById('nudScradaAutoHour').value || '5', 10)
+            };
+            sendHostMessage({ action: 'save_scrada_settings', data: payload });
+        }
+
+        function loadScradaJournals() {
+            sendHostMessage({ action: 'load_scrada_journals' });
+        }
+
+        function createScradaJournal() {
+            const name = (document.getElementById('txtScradaJournalName').value || '').trim();
+            if (!name) {
+                onScradaActionResult({ success:false, message:'Geef een journal naam op.' });
+                return;
+            }
+            sendHostMessage({ action: 'create_scrada_journal', journalName: name });
+        }
+
+        function useSelectedScradaJournal() {
+            const id = document.getElementById('cboScradaJournals').value || '';
+            document.getElementById('txtScradaJournalId').value = id;
+            onScradaActionResult({ success:true, message:'Journal geselecteerd. Klik Opslaan & Sluiten om te bewaren.', selectedJournalId: id });
+        }
+
         /* --- MASTER MULTI-TAB SAVE --- */
         function saveAllSettings() {
             updateActiveStation(); // Sync current station edits before saving
@@ -1217,7 +1382,15 @@
                 receiptGeneralSize: parseInt(document.getElementById('nudReceiptGeneralSize').value, 10),
                 receiptCategorySize: parseInt(document.getElementById('nudReceiptCategorySize').value, 10),
                 receiptProductSize: parseInt(document.getElementById('nudReceiptProductSize').value, 10),
-                receiptExtraSize: parseInt(document.getElementById('nudReceiptExtraSize').value, 10)
+                receiptExtraSize: parseInt(document.getElementById('nudReceiptExtraSize').value, 10),
+
+                // Integraties - Scrada
+                scradaApiKey: document.getElementById('txtScradaApiKey').value || '',
+                scradaPassword: document.getElementById('txtScradaPassword').value || '',
+                scradaCompanyId: document.getElementById('txtScradaCompanyId').value || '',
+                scradaJournalId: document.getElementById('txtScradaJournalId').value || '',
+                scradaAutoSendDailyReceipts: document.getElementById('chkScradaAutoSend').checked,
+                scradaAutoSendHour: parseInt(document.getElementById('nudScradaAutoHour').value || '5', 10)
             };
 
             sendHostMessage({ action: "save_settings", data: payload });
@@ -1229,3 +1402,4 @@
     </script>
 </body>
 </html>
+
