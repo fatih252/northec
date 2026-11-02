@@ -401,7 +401,7 @@
                         <span class="form-label">Applicatie Taal</span>
                         <select id="cboLanguage" class="form-select">
                             <option value="nl">Nederlands (nl)</option>
-                            <option value="fr">Franais (fr)</option>
+                            <option value="fr">Français (fr)</option>
                         </select>
                     </div>
 
@@ -777,12 +777,12 @@
 
                 <div class="integration-pane active" id="integration-scrada">
                     <div class="settings-grid">
+                        
                         <div class="card">
                             <div class="card-title">Scrada API Credentials</div>
                             <div class="form-row"><span class="form-label">API Key</span><input id="txtScradaApiKey" class="form-input" type="text" style="flex:1;" /></div>
                             <div class="form-row"><span class="form-label">Password</span><input id="txtScradaPassword" class="form-input" type="password" style="flex:1;" /></div>
                             <div class="form-row"><span class="form-label">Company ID</span><input id="txtScradaCompanyId" class="form-input" type="text" style="flex:1;" /></div>
-                            <div class="form-row"><span class="form-label">Selected Journal ID</span><input id="txtScradaJournalId" class="form-input" type="text" style="flex:1;" /></div>
                             <div class="form-row"><span class="form-label">Auto Send Daily Receipts</span><label class="switch"><input type="checkbox" id="chkScradaAutoSend"><span class="slider"></span></label></div>
                             <div class="form-row"><span class="form-label">Auto Send Hour (0-23)</span><input id="nudScradaAutoHour" class="num-box" type="number" min="0" max="23" value="5" /></div>
                             
@@ -797,18 +797,20 @@
 
                         <div class="card">
                             <div class="card-title">Scrada Journal Management</div>
-                            <div class="form-row"><span class="form-label">Nieuw Journal Naam</span><input id="txtScradaJournalName" class="form-input" type="text" style="flex:1;" /></div>
-                            <div style="display:flex; gap:10px; margin-top:10px;">
-                                <button class="btn-touch btn-primary" onclick="createScradaJournal()">Journal Aanmaken</button>
+                            <div class="form-row">
+                                <span class="form-label">Actieve Journal</span>
+                                <select id="cboScradaJournals" class="form-select" style="flex:1; max-width: 250px;"></select>
                             </div>
-                            <div style="margin-top:14px;">
-                                <select id="cboScradaJournals" class="form-select" style="width:100%;"></select>
-                            </div>
-                            <div style="display:flex; gap:10px; margin-top:10px;">
-                                <button class="btn-touch btn-secondary" onclick="useSelectedScradaJournal()">Gebruik Geselecteerde Journal</button>
+
+                            <div style="border-top: 2px solid var(--border-color); padding-top: 16px; margin-top: 14px;">
+                                <div class="form-row"><span class="form-label">Nieuw Journal Naam</span><input id="txtScradaJournalName" class="form-input" type="text" style="flex:1;" /></div>
+                                <div style="display:flex; gap:10px; margin-top:10px;">
+                                    <button class="btn-touch btn-primary" onclick="createScradaJournal()">Journal Aanmaken</button>
+                                </div>
                             </div>
                             <div id="lblScradaStatus" style="margin-top:12px; font-weight:700; color:#475569;"></div>
                         </div>
+                        
                     </div>
                 </div>
             </div>
@@ -821,7 +823,7 @@
                     <div class="card-title">Cataloog Beheer & Import/Export</div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 10px;">
                         <button class="btn-touch btn-secondary" onclick="catalogAction('intake')">Intake Shop</button>
-                        <button class="btn-touch btn-secondary" onclick="catalogAction('load_category')">Laad Categorin</button>
+                        <button class="btn-touch btn-secondary" onclick="catalogAction('load_category')">Laad Categorieën</button>
                         <button class="btn-touch btn-secondary" onclick="catalogAction('load_products')">Laad Producten</button>
                         <button class="btn-touch btn-secondary" onclick="catalogAction('load_options')">Laad Opties</button>
                         <button class="btn-touch btn-secondary" onclick="catalogAction('load_extras')">Laad Extra's</button>
@@ -842,6 +844,7 @@
     <script>
         let currentStations = [];
         let selectedStationIndex = -1;
+        let _currentJournalId = '';
 
         document.addEventListener("DOMContentLoaded", () => {
             sendHostMessage({ action: "settings_ready" });
@@ -1100,7 +1103,6 @@
             });
         }
 
-        // LIVE LISTENERS FIX: INSTANTLY SYNC EDITS TO CURRENTSTATIONS ARRAY
         function updateActiveStation() {
             if (selectedStationIndex < 0 || selectedStationIndex >= currentStations.length) return;
             const st = currentStations[selectedStationIndex];
@@ -1108,7 +1110,6 @@
             st.PrinterName = document.getElementById('cboStationPrinter').value;
             st.CopyCount = parseInt(document.getElementById('nudStationCopies').value, 10) || 1;
             
-            // Refresh list item title if name changed
             const listItems = document.querySelectorAll('#stationListContainer .station-item');
             if (listItems[selectedStationIndex]) {
                 listItems[selectedStationIndex].innerText = st.Name || 'Nieuw Station';
@@ -1151,7 +1152,7 @@
             }
         }
 
-        /* --- HOURS TABLE LOGIC WITH NATIVE TIME PICKERS --- */
+        /* --- HOURS TABLE LOGIC --- */
         function parseTimeRange(rangeStr) {
             if (!rangeStr || !rangeStr.includes('-')) return { start: '', end: '' };
             const parts = rangeStr.split('-');
@@ -1233,26 +1234,32 @@
             if (target) target.classList.add('active');
         }
 
+        /* --- SCRADA INTEGRATION LOGIC --- */
         function renderScradaSettings(data) {
             data = data || {};
             const defaultItem = document.querySelector('#integrationList .integration-item[data-target="integration-scrada"]');
             if (defaultItem) selectIntegration('integration-scrada', defaultItem);
+            
             document.getElementById('txtScradaApiKey').value = data.apiKey || '';
             document.getElementById('txtScradaPassword').value = data.password || '';
             document.getElementById('txtScradaCompanyId').value = data.companyId || '';
-            document.getElementById('txtScradaJournalId').value = data.journalId || '';
+            
+            _currentJournalId = data.journalId || '';
+            
             document.getElementById('chkScradaAutoSend').checked = !!data.autoSendDailyReceipts;
             document.getElementById('nudScradaAutoHour').value = Number.isInteger(data.autoSendHour) ? data.autoSendHour : 5;
         }
 
         function renderScradaJournals(journals, selectedJournalId) {
+            _currentJournalId = selectedJournalId || '';
             const cbo = document.getElementById('cboScradaJournals');
-            cbo.innerHTML = '';
+            cbo.innerHTML = '<option value="">-- Selecteer een Journal --</option>';
+            
             (journals || []).forEach(j => {
                 const opt = document.createElement('option');
                 opt.value = j.journalID || '';
                 opt.text = j.displayName || j.nameNL || j.nameEN || j.nameFR || j.nameDE || (j.journalID || 'Journal');
-                if ((j.journalID || '') === (selectedJournalId || '')) opt.selected = true;
+                if ((j.journalID || '') === _currentJournalId) opt.selected = true;
                 cbo.appendChild(opt);
             });
         }
@@ -1262,17 +1269,25 @@
             if (!lbl) return;
             lbl.style.color = result && result.success ? '#16a34a' : '#dc2626';
             lbl.innerText = (result && result.message) ? result.message : '';
+            
             if (result && result.selectedJournalId) {
-                document.getElementById('txtScradaJournalId').value = result.selectedJournalId;
+                _currentJournalId = result.selectedJournalId;
+                const cbo = document.getElementById('cboScradaJournals');
+                if (cbo && cbo.options.length > 0) {
+                    cbo.value = _currentJournalId;
+                }
             }
         }
 
         function saveScradaSettings() {
+            const cboVal = document.getElementById('cboScradaJournals').value;
+            const finalJournalId = cboVal || _currentJournalId;
+
             const payload = {
                 apiKey: document.getElementById('txtScradaApiKey').value || '',
                 password: document.getElementById('txtScradaPassword').value || '',
                 companyId: document.getElementById('txtScradaCompanyId').value || '',
-                journalId: document.getElementById('txtScradaJournalId').value || '',
+                journalId: finalJournalId,
                 autoSendDailyReceipts: document.getElementById('chkScradaAutoSend').checked,
                 autoSendHour: parseInt(document.getElementById('nudScradaAutoHour').value || '5', 10)
             };
@@ -1284,17 +1299,14 @@
         }
         
         function saveCredentialsAndLoadJournals() {
-            // 1. Send the save command to the C# backend
             saveScradaSettings();
             
-            // Show a temporary status so the user knows it is working
             const lbl = document.getElementById('lblScradaStatus');
             if (lbl) {
-                lbl.style.color = '#2563eb'; // Primary Blue
+                lbl.style.color = '#2563eb'; 
                 lbl.innerText = 'Credentials opslaan en journals ophalen...';
             }
 
-            // 2. Add a slight delay to allow the DB save to complete, then fetch journals
             setTimeout(() => {
                 loadScradaJournals();
             }, 600);
@@ -1307,12 +1319,6 @@
                 return;
             }
             sendHostMessage({ action: 'create_scrada_journal', journalName: name });
-        }
-
-        function useSelectedScradaJournal() {
-            const id = document.getElementById('cboScradaJournals').value || '';
-            document.getElementById('txtScradaJournalId').value = id;
-            onScradaActionResult({ success:true, message:'Journal geselecteerd. Klik Opslaan & Sluiten om te bewaren.', selectedJournalId: id });
         }
 
         /* --- MASTER MULTI-TAB SAVE --- */
@@ -1346,6 +1352,9 @@
                     closeDay: closed
                 });
             });
+
+            const cboVal = document.getElementById('cboScradaJournals').value;
+            const finalJournalId = cboVal || _currentJournalId;
 
             const payload = {
                 // Shop
@@ -1410,7 +1419,7 @@
                 scradaApiKey: document.getElementById('txtScradaApiKey').value || '',
                 scradaPassword: document.getElementById('txtScradaPassword').value || '',
                 scradaCompanyId: document.getElementById('txtScradaCompanyId').value || '',
-                scradaJournalId: document.getElementById('txtScradaJournalId').value || '',
+                scradaJournalId: finalJournalId,
                 scradaAutoSendDailyReceipts: document.getElementById('chkScradaAutoSend').checked,
                 scradaAutoSendHour: parseInt(document.getElementById('nudScradaAutoHour').value || '5', 10)
             };
