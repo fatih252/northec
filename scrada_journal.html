@@ -9,7 +9,6 @@
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-top: 20px; }
         .card { border: none; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: relative; margin-bottom: 20px; }
-        .card-header { background-color: #fff; border-bottom: 1px solid #e9ecef; font-weight: 600; padding: 15px 20px; border-radius: 8px 8px 0 0 !important; color: #2b2d42; }
         .table th { background-color: #f8f9fa; color: #6c757d; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; border-bottom-width: 1px; }
         .table td { vertical-align: middle; color: #2b2d42; font-weight: 500; }
         .total-row td { font-weight: 700; background-color: #f8f9fa; font-size: 1.05rem; }
@@ -19,25 +18,27 @@
         .btn-primary { background-color: #4361ee; border-color: #4361ee; box-shadow: 0 4px 6px rgba(67, 97, 238, 0.2); }
         .btn-primary:hover { background-color: #3f37c9; border-color: #3f37c9; }
         
-        .status-badge { font-size: 0.9rem; padding: 8px 12px; border-radius: 6px; font-weight: 600; }
-        .balanced { background-color: #e3f2fd; color: #0277bd; }
+        .status-badge { font-size: 0.9rem; padding: 8px 14px; border-radius: 6px; font-weight: 600; }
+        .balanced { background-color: #e8f5e9; color: #2e7d32; }
         .unbalanced { background-color: #ffebee; color: #c62828; }
         
         .empty-state { padding: 40px 20px; text-align: center; color: #8d99ae; }
-        .empty-state i { font-size: 3rem; margin-bottom: 15px; color: #edf2f4; }
+        .empty-state i { font-size: 3rem; margin-bottom: 15px; color: #ced4da; }
+        pre.debug-box { background: #212529; color: #a5d6a7; padding: 12px; border-radius: 6px; font-size: 0.8rem; max-height: 200px; overflow: auto; }
     </style>
 </head>
 <body>
     <div class="container-fluid px-4">
-        <!-- Header & Controls -->
+        <!-- Header & Action Controls -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h4 class="mb-1 text-dark fw-bold"><i class="fa-solid fa-book-journal-whills text-primary me-2"></i> Scrada Dagontvangsten</h4>
-                <p class="text-muted mb-0 small">Bekijk de geregistreerde omzet en betaalmethoden in Scrada</p>
+                <p class="text-muted mb-0 small">Controleer geregistreerde dagtotalen en BTW categorieën in Scrada</p>
             </div>
             <div class="d-flex gap-2">
                 <input type="date" id="datePicker" class="form-control fw-bold" style="width: 160px; color: #4361ee;">
-                <button id="btnRefresh" class="btn btn-primary"><i class="fa-solid fa-rotate-right me-1"></i> Vernieuwen</button>
+                <button id="btnRefresh" class="btn btn-outline-secondary"><i class="fa-solid fa-rotate-right me-1"></i> Vernieuwen</button>
+                <button id="btnSendNow" class="btn btn-primary"><i class="fa-solid fa-cloud-arrow-up me-1"></i> Verstuur naar Scrada</button>
             </div>
         </div>
 
@@ -48,18 +49,16 @@
                 <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
             </div>
 
-            <!-- Validation Status -->
+            <!-- Date & Balance Bar -->
             <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
                 <h5 class="mb-0 fw-bold text-dark">Rapportage <span id="displayDate" class="text-primary"></span></h5>
-                <div id="balanceStatus" class="status-badge d-none">
-                    <!-- Dynamic Balance Text -->
-                </div>
+                <div id="balanceStatus" class="status-badge d-none"></div>
             </div>
 
-            <!-- Content Area -->
+            <!-- Tables -->
             <div id="contentArea">
                 <div class="row">
-                    <!-- VAT Categories Table -->
+                    <!-- VAT Categories -->
                     <div class="col-md-6 mb-4">
                         <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-pie me-2 text-muted"></i> Omzet per BTW Categorie</h6>
                         <div class="table-responsive border rounded">
@@ -67,13 +66,11 @@
                                 <thead>
                                     <tr>
                                         <th>Categorie</th>
-                                        <th class="text-end">Percentage</th>
-                                        <th class="text-end">Bedrag (€)</th>
+                                        <th class="text-end">Tarief</th>
+                                        <th class="text-end">Bedrag Incl. BTW</th>
                                     </tr>
                                 </thead>
-                                <tbody id="vatTableBody">
-                                    <!-- Dynamic Rows -->
-                                </tbody>
+                                <tbody id="vatTableBody"></tbody>
                                 <tfoot>
                                     <tr class="total-row">
                                         <td colspan="2" class="text-end">Totaal Omzet:</td>
@@ -84,7 +81,7 @@
                         </div>
                     </div>
 
-                    <!-- Payment Methods Table -->
+                    <!-- Payment Methods -->
                     <div class="col-md-6 mb-4">
                         <h6 class="fw-bold mb-3"><i class="fa-solid fa-credit-card me-2 text-muted"></i> Ontvangsten per Betaalmethode</h6>
                         <div class="table-responsive border rounded">
@@ -92,12 +89,10 @@
                                 <thead>
                                     <tr>
                                         <th>Betaalmethode</th>
-                                        <th class="text-end">Bedrag (€)</th>
+                                        <th class="text-end">Ontvangen Bedrag</th>
                                     </tr>
                                 </thead>
-                                <tbody id="paymentTableBody">
-                                    <!-- Dynamic Rows -->
-                                </tbody>
+                                <tbody id="paymentTableBody"></tbody>
                                 <tfoot>
                                     <tr class="total-row">
                                         <td class="text-end">Totaal Ontvangsten:</td>
@@ -113,21 +108,33 @@
             <!-- Empty State -->
             <div id="emptyState" class="empty-state">
                 <i class="fa-solid fa-folder-open"></i>
-                <h5>Geen gegevens gevonden</h5>
-                <p>Er zijn geen journaalregels geregistreerd in Scrada voor deze datum.</p>
+                <h5 class="fw-bold">Geen gegevens gevonden</h5>
+                <p class="text-muted">Er zijn geen regels geregistreerd in Scrada voor deze datum. Klik hierboven op <strong>"Verstuur naar Scrada"</strong> om de dagontvangsten door te sturen.</p>
+            </div>
+
+            <!-- Collapsible Raw API Debug Box -->
+            <div class="mt-3">
+                <a class="text-muted small text-decoration-none" data-bs-toggle="collapse" href="#debugCollapse" role="button">
+                    <i class="fa-solid fa-code me-1"></i> Toon ruwe Scrada API response
+                </a>
+                <div class="collapse mt-2" id="debugCollapse">
+                    <pre class="debug-box" id="rawApiResponse">Geen API response beschikbaar.</pre>
+                </div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const datePicker = document.getElementById('datePicker');
         const btnRefresh = document.getElementById('btnRefresh');
+        const btnSendNow = document.getElementById('btnSendNow');
         const spinner = document.getElementById('loadingSpinner');
         const contentArea = document.getElementById('contentArea');
         const emptyState = document.getElementById('emptyState');
         const balanceStatus = document.getElementById('balanceStatus');
+        const rawApiResponse = document.getElementById('rawApiResponse');
 
-        // Set initial date to today
         const today = new Date().toISOString().split('T')[0];
         datePicker.value = today;
 
@@ -136,21 +143,40 @@
             document.getElementById('displayDate').innerText = datePicker.value.split('-').reverse().join('-');
             document.getElementById('alertContainer').innerHTML = '';
             
-            // Call C# Backend
             if (window.chrome && window.chrome.webview) {
-                window.chrome.webview.postMessage(JSON.stringify({ 
+                window.chrome.webview.postMessage({ 
                     action: 'load_journal_data', 
                     date: datePicker.value 
-                }));
+                });
             }
         }
 
         datePicker.addEventListener('change', loadData);
         btnRefresh.addEventListener('click', loadData);
 
-        // Called by C# when data is ready
+        btnSendNow.addEventListener('click', function() {
+            if (confirm(`Wilt u de dagtotalen van ${datePicker.value} berekenen en doorsturen naar Scrada?`)) {
+                spinner.style.display = 'flex';
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage({ 
+                        action: 'send_daily_receipt', 
+                        date: datePicker.value 
+                    });
+                }
+            }
+        });
+
         window.renderJournalData = function(response) {
             spinner.style.display = 'none';
+            rawApiResponse.innerText = response.rawJson || 'Geen API response ontvangen.';
+
+            if (response.successMessage) {
+                document.getElementById('alertContainer').innerHTML = `
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm">
+                        <i class="fa-solid fa-circle-check me-2"></i> ${response.successMessage}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>`;
+            }
 
             if (!response.success) {
                 contentArea.style.display = 'none';
@@ -162,8 +188,7 @@
             }
 
             const data = response.data;
-            
-            if ((!data.vatLines || data.vatLines.length === 0) && (!data.paymentLines || data.paymentLines.length === 0)) {
+            if (!data || ((!data.vatLines || data.vatLines.length === 0) && (!data.paymentLines || data.paymentLines.length === 0))) {
                 contentArea.style.display = 'none';
                 emptyState.style.display = 'block';
                 balanceStatus.classList.add('d-none');
@@ -173,7 +198,7 @@
             contentArea.style.display = 'block';
             emptyState.style.display = 'none';
 
-            // Render VAT Table
+            // VAT Categories
             const vatBody = document.getElementById('vatTableBody');
             vatBody.innerHTML = '';
             let totalVat = 0;
@@ -181,14 +206,14 @@
                 totalVat += line.amount;
                 vatBody.innerHTML += `
                     <tr>
-                        <td>${line.categoryName || `VAT Type ID: ${line.vatTypeID}`}</td>
+                        <td><strong>${line.categoryName}</strong></td>
                         <td class="text-end">${line.vatPerc}%</td>
                         <td class="text-end">€ ${line.amount.toFixed(2)}</td>
                     </tr>`;
             });
             document.getElementById('vatTotal').innerText = `€ ${totalVat.toFixed(2)}`;
 
-            // Render Payment Table
+            // Payment Methods
             const payBody = document.getElementById('paymentTableBody');
             payBody.innerHTML = '';
             let totalPay = 0;
@@ -196,26 +221,24 @@
                 totalPay += line.amount;
                 payBody.innerHTML += `
                     <tr>
-                        <td>${line.paymentMethodName || `Payment ID: ${line.paymentMethodID}`}</td>
+                        <td><strong>${line.paymentMethodName}</strong></td>
                         <td class="text-end">€ ${line.amount.toFixed(2)}</td>
                     </tr>`;
             });
             document.getElementById('paymentTotal').innerText = `€ ${totalPay.toFixed(2)}`;
 
-            // Balance Check
+            // Saldo Balance check
             balanceStatus.classList.remove('d-none', 'balanced', 'unbalanced');
             const diff = Math.abs(totalVat - totalPay);
-            
             if (diff < 0.01) {
                 balanceStatus.classList.add('balanced');
-                balanceStatus.innerHTML = `<i class="fa-solid fa-check-circle me-1"></i> Saldo klopt perfect`;
+                balanceStatus.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> Saldo in evenwicht (€ ${totalVat.toFixed(2)})`;
             } else {
                 balanceStatus.classList.add('unbalanced');
                 balanceStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-1"></i> Verschil van € ${diff.toFixed(2)}`;
             }
         };
 
-        // Auto load on start
         window.onload = () => { setTimeout(loadData, 300); };
     </script>
 </body>
