@@ -3,33 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scrada Dagontvangsten</title>
+    <title>Scrada Dagontvangsten Overzicht</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #4361ee;
-            --primary-hover: #3a56d4;
-            --success: #2ec4b6;
-            --danger: #e63946;
-            --bg-light: #f4f6f9;
-            --touch-height: 48px;
+            --primary-hover: #3751d4;
+            --bg-light: #f8f9fc;
+            --touch-min-height: 46px;
         }
 
         body { 
             background-color: var(--bg-light); 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
-            padding: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
+            padding: 12px;
             user-select: none;
             -webkit-user-select: none;
         }
 
-        /* Touch-first component styling */
+        /* Touch-vriendelijke controls */
         .touch-btn {
-            min-height: var(--touch-height);
-            font-size: 1rem;
+            min-height: var(--touch-min-height);
+            font-size: 0.95rem;
             font-weight: 600;
-            padding: 10px 18px;
+            padding: 8px 16px;
             border-radius: 8px;
             display: inline-flex;
             align-items: center;
@@ -38,8 +36,8 @@
         }
 
         .touch-input {
-            min-height: var(--touch-height);
-            font-size: 1.05rem;
+            min-height: var(--touch-min-height);
+            font-size: 1rem;
             font-weight: 600;
             border-radius: 8px;
             color: var(--primary);
@@ -47,73 +45,101 @@
 
         .card { 
             border: none; 
-            border-radius: 12px; 
-            box-shadow: 0 3px 12px rgba(0,0,0,0.06); 
-            margin-bottom: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04); 
+            background: #fff;
+            margin-bottom: 15px;
+        }
+
+        /* Compacte KPI Samenvatting */
+        .kpi-box {
+            padding: 12px 16px;
+            border-radius: 8px;
+            background-color: #fff;
+            border: 1px solid #e9ecef;
+        }
+        .kpi-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #6c757d;
+            margin-bottom: 2px;
+        }
+        .kpi-val {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #2b2d42;
+        }
+
+        /* Tabel & Sticky Headers/Footers */
+        .table-container {
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
             background: #fff;
         }
 
-        /* Grand Totals Header Card */
-        .grand-totals-card {
-            background: linear-gradient(135deg, #2b2d42 0%, #1a1a24 100%);
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #2b2d42;
             color: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 14px 10px;
+            z-index: 2;
+            white-space: nowrap;
         }
 
-        .grand-value {
-            font-size: 1.75rem;
+        .table tbody td {
+            vertical-align: middle;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 12px 10px;
+            color: #2b2d42;
+        }
+
+        .table tbody tr {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f1f4f9;
+        }
+
+        .table tfoot td {
+            position: sticky;
+            bottom: 0;
+            background-color: #f8f9fa;
+            border-top: 2px solid #2b2d42;
+            font-size: 1.05rem;
             font-weight: 800;
+            padding: 14px 10px;
+            z-index: 2;
         }
 
-        /* Per-day Cards */
-        .day-card {
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-
-        .day-header {
-            background-color: #ffffff;
-            border-bottom: 1px solid #edf2f7;
-            padding: 16px 20px;
-        }
-
-        .table th { 
-            background-color: #f8f9fa; 
-            color: #6c757d; 
-            font-weight: 700; 
-            font-size: 0.85rem; 
-            text-transform: uppercase; 
-            padding: 12px 16px;
-        }
-
-        .table td { 
-            vertical-align: middle; 
-            color: #2b2d42; 
-            font-weight: 600; 
-            padding: 14px 16px;
-            font-size: 1rem;
-        }
-
-        .total-row td { 
-            font-weight: 800; 
-            background-color: #f8f9fa; 
-            font-size: 1.05rem; 
-        }
-
-        .status-badge { 
-            font-size: 0.95rem; 
-            padding: 8px 16px; 
-            border-radius: 8px; 
-            font-weight: 700; 
+        /* Status badges */
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 700;
             display: inline-flex;
             align-items: center;
+            white-space: nowrap;
         }
         .balanced { background-color: #e8f5e9; color: #2e7d32; }
         .unbalanced { background-color: #ffebee; color: #c62828; }
+
+        /* Detail accordeon binnen tabel */
+        .detail-row td {
+            background-color: #fafbfd !important;
+            padding: 14px 20px !important;
+            font-weight: normal;
+        }
 
         .spinner-overlay { 
             position: fixed; 
@@ -128,20 +154,9 @@
             z-index: 9999; 
         }
 
-        .empty-state { 
-            padding: 60px 20px; 
-            text-align: center; 
-            color: #8d99ae; 
-        }
-        .empty-state i { 
-            font-size: 4rem; 
-            margin-bottom: 15px; 
-            color: #ced4da; 
-        }
-
-        .quick-filter-btn {
-            min-height: 40px;
-            font-size: 0.9rem;
+        .quick-btn {
+            min-height: 38px;
+            font-size: 0.85rem;
             font-weight: 600;
             border-radius: 6px;
         }
@@ -152,33 +167,32 @@
         <div class="spinner-border text-primary" role="status" style="width: 3.5rem; height: 3.5rem;"></div>
     </div>
 
-    <div class="container-fluid">
-        <!-- Main Top Toolbar -->
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-3">
+    <div class="container-fluid px-2">
+        <!-- Toolbar -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
             <div>
-                <h3 class="mb-0 text-dark fw-bold">
-                    <i class="fa-solid fa-book-journal-whills text-primary me-2"></i> Dagontvangsten Controle
-                </h3>
-                <span class="text-muted small">Controleer per dag het evenwicht tussen geregistreerde Scrada omzet en kassa-inkomsten</span>
+                <h4 class="mb-0 text-dark fw-bold">
+                    <i class="fa-solid fa-book-journal-whills text-primary me-2"></i> Scrada Dagontvangsten
+                </h4>
             </div>
 
             <div class="d-flex flex-wrap gap-2">
-                <button id="btnSendNow" class="btn btn-primary touch-btn">
-                    <i class="fa-solid fa-cloud-arrow-up me-2"></i> Doorsturen naar Scrada
+                <button id="btnSendAll" class="btn btn-primary touch-btn">
+                    <i class="fa-solid fa-cloud-arrow-up me-1"></i> Alles Verzenden
                 </button>
                 <button id="btnRefresh" class="btn btn-outline-secondary touch-btn">
-                    <i class="fa-solid fa-rotate-right me-2"></i> Vernieuwen
+                    <i class="fa-solid fa-rotate-right me-1"></i> Vernieuwen
                 </button>
                 <button id="btnClose" class="btn btn-danger touch-btn">
-                    <i class="fa-solid fa-xmark me-2"></i> Sluiten
+                    <i class="fa-solid fa-xmark me-1"></i> Sluiten
                 </button>
             </div>
         </div>
 
-        <!-- Touch Date Controls & Quick Selectors -->
-        <div class="card p-3">
+        <!-- Filter balk -->
+        <div class="card p-2 mb-2">
             <div class="row g-2 align-items-center">
-                <div class="col-md-5 col-12">
+                <div class="col-lg-4 col-md-6 col-12">
                     <div class="input-group">
                         <span class="input-group-text bg-light fw-bold">Van</span>
                         <input type="date" id="fromDate" class="form-control touch-input">
@@ -186,42 +200,82 @@
                         <input type="date" id="tillDate" class="form-control touch-input">
                     </div>
                 </div>
-                <div class="col-md-7 col-12 d-flex gap-2 flex-wrap justify-content-md-end">
-                    <button class="btn btn-outline-primary quick-filter-btn px-3" onclick="setQuickDate('today')">Vandaag</button>
-                    <button class="btn btn-outline-primary quick-filter-btn px-3" onclick="setQuickDate('yesterday')">Gisteren</button>
-                    <button class="btn btn-outline-primary quick-filter-btn px-3" onclick="setQuickDate('last7')">Laatste 7 dagen</button>
-                    <button class="btn btn-outline-primary quick-filter-btn px-3" onclick="setQuickDate('thisMonth')">Deze Maand</button>
+                <div class="col-lg-8 col-md-6 col-12 d-flex gap-1 flex-wrap justify-content-md-end">
+                    <button class="btn btn-outline-primary quick-btn px-2" onclick="setQuickDate('today')">Vandaag</button>
+                    <button class="btn btn-outline-primary quick-btn px-2" onclick="setQuickDate('yesterday')">Gisteren</button>
+                    <button class="btn btn-outline-primary quick-btn px-2" onclick="setQuickDate('last7')">7 Dagen</button>
+                    <button class="btn btn-outline-primary quick-btn px-2" onclick="setQuickDate('last30')">30 Dagen</button>
+                    <button class="btn btn-outline-primary quick-btn px-2" onclick="setQuickDate('thisMonth')">Deze Maand</button>
                 </div>
             </div>
         </div>
 
         <div id="alertContainer"></div>
 
-        <!-- Grand Total Summary Card -->
-        <div id="grandTotalCard" class="grand-totals-card d-none">
-            <div class="row align-items-center text-center text-md-start g-3">
-                <div class="col-md-4">
-                    <span class="text-white-50 text-uppercase fw-bold small">Totale Omzet (Scrada)</span>
-                    <div class="grand-value text-white" id="grandVatText">€ 0.00</div>
+        <!-- Compacte KPI Bar -->
+        <div class="row g-2 mb-2" id="kpiBar">
+            <div class="col-6 col-md-3">
+                <div class="kpi-box border-start border-4 border-primary">
+                    <div class="kpi-label">Scrada Omzet</div>
+                    <div class="kpi-val text-primary" id="kpiVat">€ 0.00</div>
                 </div>
-                <div class="col-md-4">
-                    <span class="text-white-50 text-uppercase fw-bold small">Totale Ontvangsten (Kassa)</span>
-                    <div class="grand-value text-info" id="grandPayText">€ 0.00</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="kpi-box border-start border-4 border-info">
+                    <div class="kpi-label">Kassa Ontvangsten</div>
+                    <div class="kpi-val text-dark" id="kpiPay">€ 0.00</div>
                 </div>
-                <div class="col-md-4 text-md-end">
-                    <div id="grandBalanceBadge" class="status-badge"></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="kpi-box border-start border-4 border-warning">
+                    <div class="kpi-label">Verschil</div>
+                    <div class="kpi-val" id="kpiDiff">€ 0.00</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="kpi-box d-flex align-items-center justify-content-between h-100">
+                    <div>
+                        <div class="kpi-label">Status Periode</div>
+                        <div id="kpiStatusBadge" class="status-badge balanced mt-1">-</div>
+                    </div>
+                    <i class="fa-solid fa-scale-balanced fa-2x text-muted opacity-25"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Container where per-day cards are dynamically inserted -->
-        <div id="daysContainer"></div>
-
-        <!-- Empty State -->
-        <div id="emptyState" class="card empty-state d-none">
-            <i class="fa-solid fa-folder-open"></i>
-            <h4 class="fw-bold">Geen dagontvangsten gevonden</h4>
-            <p class="text-muted mb-0">Er zijn geen gegevens geregistreerd voor de geselecteerde datumperiode.</p>
+        <!-- Tabel: 1 Regel Per Dag -->
+        <div class="table-container">
+            <table class="table table-hover mb-0" id="mainTable">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th class="text-end">Scrada Omzet</th>
+                        <th class="text-end">Kassa Totaal</th>
+                        <th class="text-end text-muted d-none d-sm-table-cell">Contant</th>
+                        <th class="text-end text-muted d-none d-sm-table-cell">Bancontact</th>
+                        <th class="text-end text-muted d-none d-md-table-cell">Online</th>
+                        <th class="text-end">Verschil</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center" style="width: 120px;">Actie</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="9" class="text-center py-4 text-muted">Laden...</td></tr>
+                </tbody>
+                <tfoot id="tableFoot" class="d-none">
+                    <tr>
+                        <td>TOTAAL</td>
+                        <td class="text-end text-primary" id="footTotalVat">€ 0.00</td>
+                        <td class="text-end" id="footTotalPay">€ 0.00</td>
+                        <td class="text-end text-muted d-none d-sm-table-cell" id="footTotalCash">€ 0.00</td>
+                        <td class="text-end text-muted d-none d-sm-table-cell" id="footTotalCard">€ 0.00</td>
+                        <td class="text-end text-muted d-none d-md-table-cell" id="footTotalOnline">€ 0.00</td>
+                        <td class="text-end" id="footTotalDiff">€ 0.00</td>
+                        <td class="text-center" id="footStatus">-</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
     </div>
 
@@ -229,29 +283,27 @@
         const fromDateInput = document.getElementById('fromDate');
         const tillDateInput = document.getElementById('tillDate');
         const btnRefresh = document.getElementById('btnRefresh');
-        const btnSendNow = document.getElementById('btnSendNow');
+        const btnSendAll = document.getElementById('btnSendAll');
         const btnClose = document.getElementById('btnClose');
         const spinner = document.getElementById('loadingSpinner');
-        const daysContainer = document.getElementById('daysContainer');
-        const grandTotalCard = document.getElementById('grandTotalCard');
-        const grandVatText = document.getElementById('grandVatText');
-        const grandPayText = document.getElementById('grandPayText');
-        const grandBalanceBadge = document.getElementById('grandBalanceBadge');
-        const emptyState = document.getElementById('emptyState');
+        const tableBody = document.getElementById('tableBody');
+        const tableFoot = document.getElementById('tableFoot');
         const alertContainer = document.getElementById('alertContainer');
 
-        // Night-shift aware date initializer (If opened before 05:00 AM, target yesterday)
-        function initDefaultDate() {
+        // Automatische horeca-nachtshift controle (vóór 05:00 uur = gisteren)
+        function initDefaultDates() {
             const now = new Date();
-            if (now.getHours() < 5) {
-                now.setDate(now.getDate() - 1);
-            }
-            const dateStr = now.toISOString().split('T')[0];
-            fromDateInput.value = dateStr;
-            tillDateInput.value = dateStr;
+            if (now.getHours() < 5) now.setDate(now.getDate() - 1);
+            
+            const till = now.toISOString().split('T')[0];
+            const from = new Date(now);
+            from.setDate(from.getDate() - 6); // Standaard laatste 7 dagen
+
+            fromDateInput.value = from.toISOString().split('T')[0];
+            tillDateInput.value = till;
         }
 
-        initDefaultDate();
+        initDefaultDates();
 
         function setQuickDate(type) {
             const now = new Date();
@@ -261,12 +313,14 @@
             let till = new Date(now);
 
             if (type === 'today') {
-                // from & till are today
+                // vandaags
             } else if (type === 'yesterday') {
                 from.setDate(from.getDate() - 1);
                 till.setDate(till.getDate() - 1);
             } else if (type === 'last7') {
                 from.setDate(from.getDate() - 6);
+            } else if (type === 'last30') {
+                from.setDate(from.getDate() - 29);
             } else if (type === 'thisMonth') {
                 from.setDate(1);
             }
@@ -278,7 +332,7 @@
 
         function loadData() {
             if (fromDateInput.value > tillDateInput.value) {
-                alert("De startdatum mag niet later zijn dan de einddatum.");
+                alert("Startdatum mag niet groter zijn dan einddatum.");
                 return;
             }
 
@@ -304,11 +358,8 @@
             }
         });
 
-        btnSendNow.addEventListener('click', function() {
-            const msg = (fromDateInput.value === tillDateInput.value)
-                ? `Wilt u de dagontvangsten van ${fromDateInput.value.split('-').reverse().join('-')} berekenen en doorsturen naar Scrada?`
-                : `Wilt u de dagontvangsten van ${fromDateInput.value.split('-').reverse().join('-')} t/m ${tillDateInput.value.split('-').reverse().join('-')} doorsturen naar Scrada?`;
-
+        btnSendAll.addEventListener('click', function() {
+            const msg = `Wilt u alle dagontvangsten van ${fromDateInput.value.split('-').reverse().join('-')} t/m ${tillDateInput.value.split('-').reverse().join('-')} doorsturen naar Scrada?`;
             if (confirm(msg)) {
                 spinner.style.display = 'flex';
                 if (window.chrome && window.chrome.webview) {
@@ -321,151 +372,168 @@
             }
         });
 
-        // Bridge function called by C#
+        function sendSingleDay(dateStr) {
+            event.stopPropagation();
+            if (confirm(`Wilt u de dagontvangsten van ${dateStr.split('-').reverse().join('-')} doorsturen naar Scrada?`)) {
+                spinner.style.display = 'flex';
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage({ 
+                        action: 'send_daily_receipt_single', 
+                        date: dateStr,
+                        fromDate: fromDateInput.value,
+                        tillDate: tillDateInput.value
+                    });
+                }
+            }
+        }
+
+        function toggleRowDetail(index) {
+            const row = document.getElementById(`detail_${index}`);
+            if (row) {
+                row.classList.toggle('d-none');
+            }
+        }
+
+        function getPayTypeAmount(lines, term) {
+            if (!lines) return 0;
+            return lines
+                .filter(l => l.paymentMethodName.toLowerCase().includes(term))
+                .reduce((s, l) => s + l.amount, 0);
+        }
+
+        // Bridge function aangeroepen door C#
         window.renderJournalData = function(response) {
             spinner.style.display = 'none';
 
             if (response.successMessage) {
                 alertContainer.innerHTML = `
-                    <div class="alert alert-success alert-dismissible fade show shadow-sm">
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm py-2">
                         <i class="fa-solid fa-circle-check me-2"></i> ${response.successMessage}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
                     </div>`;
             }
 
             if (!response.success) {
-                daysContainer.innerHTML = '';
-                grandTotalCard.classList.add('d-none');
-                emptyState.classList.add('d-none');
-                alertContainer.innerHTML = `
-                    <div class="alert alert-danger shadow-sm"><i class="fa-solid fa-circle-exclamation me-2"></i> ${response.errorMessage}</div>`;
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-4">${response.errorMessage}</td></tr>`;
+                tableFoot.classList.add('d-none');
                 return;
             }
 
             const data = response.data;
             if (!data || !data.days || data.days.length === 0) {
-                daysContainer.innerHTML = '';
-                grandTotalCard.classList.add('d-none');
-                emptyState.classList.remove('d-none');
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4"><i class="fa-solid fa-folder-open me-2"></i> Geen gegevens gevonden in deze periode.</td></tr>`;
+                tableFoot.classList.add('d-none');
+                document.getElementById('kpiVat').innerText = '€ 0.00';
+                document.getElementById('kpiPay').innerText = '€ 0.00';
+                document.getElementById('kpiDiff').innerText = '€ 0.00';
                 return;
             }
 
-            emptyState.classList.add('d-none');
-            grandTotalCard.classList.remove('d-none');
+            // 1. Update KPI Samenvatting
+            document.getElementById('kpiVat').innerText = `€ ${data.grandTotalVatAmount.toFixed(2)}`;
+            document.getElementById('kpiPay').innerText = `€ ${data.grandTotalPaymentAmount.toFixed(2)}`;
+            
+            const diffEl = document.getElementById('kpiDiff');
+            diffEl.innerText = `€ ${data.grandTotalDiff.toFixed(2)}`;
+            diffEl.className = data.isGrandBalanced ? 'kpi-val text-success' : 'kpi-val text-danger';
 
-            // 1. Render Grand Totals
-            grandVatText.innerText = `€ ${data.grandTotalVatAmount.toFixed(2)}`;
-            grandPayText.innerText = `€ ${data.grandTotalPaymentAmount.toFixed(2)}`;
+            const badgeEl = document.getElementById('kpiStatusBadge');
+            badgeEl.className = data.isGrandBalanced ? 'status-badge balanced' : 'status-badge unbalanced';
+            badgeEl.innerHTML = data.isGrandBalanced 
+                ? `<i class="fa-solid fa-check me-1"></i> In Evenwicht`
+                : `<i class="fa-solid fa-triangle-exclamation me-1"></i> Verschil`;
 
-            if (data.isGrandBalanced) {
-                grandBalanceBadge.className = 'status-badge balanced';
-                grandBalanceBadge.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i> Totaal in evenwicht`;
-            } else {
-                grandBalanceBadge.className = 'status-badge unbalanced';
-                grandBalanceBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-2"></i> Totaalverschil: € ${data.grandTotalDiff.toFixed(2)}`;
-            }
+            // 2. Render de Tabelrijen (1 regel per dag)
+            let html = '';
+            let totalCash = 0;
+            let totalCard = 0;
+            let totalOnline = 0;
 
-            // 2. Render Each Day Card
-            daysContainer.innerHTML = '';
-            data.days.forEach(day => {
-                let statusHtml = day.isBalanced
-                    ? `<span class="status-badge balanced"><i class="fa-solid fa-check me-1"></i> In evenwicht</span>`
-                    : `<span class="status-badge unbalanced"><i class="fa-solid fa-triangle-exclamation me-1"></i> Verschil € ${day.diff.toFixed(2)}</span>`;
+            data.days.forEach((day, index) => {
+                const cashAmt = getPayTypeAmount(day.paymentLines, 'contant');
+                const cardAmt = getPayTypeAmount(day.paymentLines, 'bancontact') + getPayTypeAmount(day.paymentLines, 'pin');
+                const onlineAmt = getPayTypeAmount(day.paymentLines, 'online');
 
-                let vatRows = '';
+                totalCash += cashAmt;
+                totalCard += cardAmt;
+                totalOnline += onlineAmt;
+
+                const statusBadge = day.isBalanced
+                    ? `<span class="status-badge balanced"><i class="fa-solid fa-check me-1"></i> Klopt</span>`
+                    : `<span class="status-badge unbalanced"><i class="fa-solid fa-triangle-exclamation me-1"></i> Verschil</span>`;
+
+                // BTW regels voor detailpaneel
+                let vatDetailHtml = '';
                 if (day.vatLines && day.vatLines.length > 0) {
-                    day.vatLines.forEach(l => {
-                        vatRows += `
-                            <tr>
-                                <td>${l.categoryName}</td>
-                                <td class="text-end">${l.vatPerc}%</td>
-                                <td class="text-end">€ ${l.amount.toFixed(2)}</td>
-                            </tr>`;
+                    day.vatLines.forEach(v => {
+                        vatDetailHtml += `<span class="badge bg-light text-dark border me-1">${v.categoryName} (${v.vatPerc}%): € ${v.amount.toFixed(2)}</span>`;
                     });
                 } else {
-                    vatRows = `<tr><td colspan="3" class="text-center text-muted py-3">Geen omzet geboekt in Scrada</td></tr>`;
+                    vatDetailHtml = `<span class="text-danger small"><i class="fa-solid fa-circle-exclamation me-1"></i> Nog niet geboekt in Scrada</span>`;
                 }
 
-                let payRows = '';
+                // Betalingen voor detailpaneel
+                let payDetailHtml = '';
                 if (day.paymentLines && day.paymentLines.length > 0) {
                     day.paymentLines.forEach(p => {
-                        payRows += `
-                            <tr>
-                                <td>${p.paymentMethodName}</td>
-                                <td class="text-end">€ ${p.amount.toFixed(2)}</td>
-                            </tr>`;
+                        payDetailHtml += `<span class="badge bg-light text-dark border me-1">${p.paymentMethodName}: € ${p.amount.toFixed(2)}</span>`;
                     });
                 } else {
-                    payRows = `<tr><td colspan="2" class="text-center text-muted py-3">Geen kassa-ontvangsten gevonden</td></tr>`;
+                    payDetailHtml = `<span class="text-muted small">Geen kassa-ontvangsten</span>`;
                 }
 
-                const dayCardHtml = `
-                    <div class="card day-card">
-                        <div class="day-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-                            <div>
-                                <h5 class="mb-0 fw-bold text-dark">
-                                    <i class="fa-regular fa-calendar-days text-primary me-2"></i> ${day.formattedDate}
-                                </h5>
-                            </div>
-                            <div>${statusHtml}</div>
-                        </div>
-
-                        <div class="card-body p-3">
-                            <div class="row g-3">
-                                <!-- BTW Omzet (Scrada) -->
-                                <div class="col-lg-6">
-                                    <h6 class="fw-bold text-secondary mb-2">
-                                        <i class="fa-solid fa-chart-pie me-1"></i> Scrada Omzet per BTW
-                                    </h6>
-                                    <div class="table-responsive border rounded">
-                                        <table class="table table-hover mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>BTW Categorie</th>
-                                                    <th class="text-end">Tarief</th>
-                                                    <th class="text-end">Bedrag</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>${vatRows}</tbody>
-                                            <tfoot>
-                                                <tr class="total-row">
-                                                    <td colspan="2" class="text-end">Dagomzet:</td>
-                                                    <td class="text-end text-primary">€ ${day.totalVatAmount.toFixed(2)}</td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
+                html += `
+                    <tr onclick="toggleRowDetail(${index})">
+                        <td><strong>${day.formattedDate}</strong></td>
+                        <td class="text-end text-primary fw-bold">€ ${day.totalVatAmount.toFixed(2)}</td>
+                        <td class="text-end fw-bold">€ ${day.totalPaymentAmount.toFixed(2)}</td>
+                        <td class="text-end text-muted d-none d-sm-table-cell">€ ${cashAmt.toFixed(2)}</td>
+                        <td class="text-end text-muted d-none d-sm-table-cell">€ ${cardAmt.toFixed(2)}</td>
+                        <td class="text-end text-muted d-none d-md-table-cell">€ ${onlineAmt.toFixed(2)}</td>
+                        <td class="text-end ${day.isBalanced ? 'text-success' : 'text-danger fw-bold'}">
+                            € ${day.diff.toFixed(2)}
+                        </td>
+                        <td class="text-center">${statusBadge}</td>
+                        <td class="text-center" onclick="event.stopPropagation()">
+                            <button class="btn btn-sm btn-outline-primary px-2" onclick="sendSingleDay('${day.date}')" title="Dagontvangst versturen">
+                                <i class="fa-solid fa-paper-plane me-1"></i> Stuur
+                            </button>
+                        </td>
+                    </tr>
+                    <!-- Uitklapbaar detailpaneel -->
+                    <tr id="detail_${index}" class="d-none detail-row">
+                        <td colspan="9">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <strong class="small text-secondary d-block mb-1">Scrada BTW-opbouw:</strong>
+                                    ${vatDetailHtml}
                                 </div>
-
-                                <!-- Kassa Ontvangsten -->
-                                <div class="col-lg-6">
-                                    <h6 class="fw-bold text-secondary mb-2">
-                                        <i class="fa-solid fa-credit-card me-1"></i> Kassa Betaalmethoden
-                                    </h6>
-                                    <div class="table-responsive border rounded">
-                                        <table class="table table-hover mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Betaalmethode</th>
-                                                    <th class="text-end">Bedrag</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>${payRows}</tbody>
-                                            <tfoot>
-                                                <tr class="total-row">
-                                                    <td class="text-end">Dagontvangsten:</td>
-                                                    <td class="text-end text-primary">€ ${day.totalPaymentAmount.toFixed(2)}</td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
+                                <div class="col-md-6">
+                                    <strong class="small text-secondary d-block mb-1">Kassa Betalingsverdeling:</strong>
+                                    ${payDetailHtml}
                                 </div>
                             </div>
-                        </div>
-                    </div>`;
-
-                daysContainer.innerHTML += dayCardHtml;
+                        </td>
+                    </tr>`;
             });
+
+            tableBody.innerHTML = html;
+
+            // 3. Render Footer Totalen
+            tableFoot.classList.remove('d-none');
+            document.getElementById('footTotalVat').innerText = `€ ${data.grandTotalVatAmount.toFixed(2)}`;
+            document.getElementById('footTotalPay').innerText = `€ ${data.grandTotalPaymentAmount.toFixed(2)}`;
+            document.getElementById('footTotalCash').innerText = `€ ${totalCash.toFixed(2)}`;
+            document.getElementById('footTotalCard').innerText = `€ ${totalCard.toFixed(2)}`;
+            document.getElementById('footTotalOnline').innerText = `€ ${totalOnline.toFixed(2)}`;
+            
+            const footDiff = document.getElementById('footTotalDiff');
+            footDiff.innerText = `€ ${data.grandTotalDiff.toFixed(2)}`;
+            footDiff.className = data.isGrandBalanced ? 'text-end text-success' : 'text-end text-danger fw-bold';
+
+            document.getElementById('footStatus').innerHTML = data.isGrandBalanced
+                ? `<span class="status-badge balanced"><i class="fa-solid fa-check me-1"></i> Klopt</span>`
+                : `<span class="status-badge unbalanced"><i class="fa-solid fa-triangle-exclamation me-1"></i> Verschil</span>`;
         };
 
         window.onload = () => { setTimeout(loadData, 300); };
