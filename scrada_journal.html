@@ -7,38 +7,122 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-top: 20px; }
-        .card { border: none; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: relative; margin-bottom: 20px; }
-        .table th { background-color: #f8f9fa; color: #6c757d; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; border-bottom-width: 1px; }
-        .table td { vertical-align: middle; color: #2b2d42; font-weight: 500; }
-        .total-row td { font-weight: 700; background-color: #f8f9fa; font-size: 1.05rem; }
-        
-        .spinner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); display: none; justify-content: center; align-items: center; z-index: 10; border-radius: 8px; }
+        body { 
+            background-color: #f4f6f9; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            padding: 20px 0;
+            user-select: none;
+        }
+        .card { 
+            border: none; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+            position: relative; 
+            margin-bottom: 20px; 
+        }
+        .table th { 
+            background-color: #f8f9fa; 
+            color: #6c757d; 
+            font-weight: 600; 
+            font-size: 0.85rem; 
+            text-transform: uppercase; 
+            border-bottom-width: 1px; 
+        }
+        .table td { 
+            vertical-align: middle; 
+            color: #2b2d42; 
+            font-weight: 500; 
+        }
+        .total-row td { 
+            font-weight: 700; 
+            background-color: #f8f9fa; 
+            font-size: 1.05rem; 
+        }
+        .spinner-overlay { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(255,255,255,0.85); 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 10; 
+            border-radius: 8px; 
+        }
         .text-primary { color: #4361ee !important; }
-        .btn-primary { background-color: #4361ee; border-color: #4361ee; box-shadow: 0 4px 6px rgba(67, 97, 238, 0.2); }
-        .btn-primary:hover { background-color: #3f37c9; border-color: #3f37c9; }
-        
-        .status-badge { font-size: 0.9rem; padding: 8px 14px; border-radius: 6px; font-weight: 600; }
+        .btn-primary { 
+            background-color: #4361ee; 
+            border-color: #4361ee; 
+            box-shadow: 0 4px 6px rgba(67, 97, 238, 0.2); 
+        }
+        .btn-primary:hover { 
+            background-color: #3f37c9; 
+            border-color: #3f37c9; 
+        }
+        .status-badge { 
+            font-size: 0.95rem; 
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            font-weight: 600; 
+        }
         .balanced { background-color: #e8f5e9; color: #2e7d32; }
         .unbalanced { background-color: #ffebee; color: #c62828; }
-        
-        .empty-state { padding: 40px 20px; text-align: center; color: #8d99ae; }
-        .empty-state i { font-size: 3rem; margin-bottom: 15px; color: #ced4da; }
-        pre.debug-box { background: #212529; color: #a5d6a7; padding: 12px; border-radius: 6px; font-size: 0.8rem; max-height: 200px; overflow: auto; }
+        .empty-state { 
+            padding: 50px 20px; 
+            text-align: center; 
+            color: #8d99ae; 
+        }
+        .empty-state i { 
+            font-size: 3.5rem; 
+            margin-bottom: 15px; 
+            color: #ced4da; 
+        }
+        .date-control {
+            font-weight: 600;
+            color: #4361ee;
+            width: 145px;
+        }
+        pre.debug-box { 
+            background: #212529; 
+            color: #a5d6a7; 
+            padding: 12px; 
+            border-radius: 6px; 
+            font-size: 0.8rem; 
+            max-height: 180px; 
+            overflow: auto; 
+        }
     </style>
 </head>
 <body>
     <div class="container-fluid px-4">
-        <!-- Header & Action Controls -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <!-- Header & Date Range Toolbar -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <div>
-                <h4 class="mb-1 text-dark fw-bold"><i class="fa-solid fa-book-journal-whills text-primary me-2"></i> Scrada Dagontvangsten</h4>
-                <p class="text-muted mb-0 small">Controleer geregistreerde dagtotalen en BTW categorieën in Scrada</p>
+                <h4 class="mb-1 text-dark fw-bold">
+                    <i class="fa-solid fa-book-journal-whills text-primary me-2"></i> Scrada Dagontvangsten
+                </h4>
+                <p class="text-muted mb-0 small">Controleer geboekte dagtotalen, BTW en betaalmethoden over één of meerdere dagen</p>
             </div>
-            <div class="d-flex gap-2">
-                <input type="date" id="datePicker" class="form-control fw-bold" style="width: 160px; color: #4361ee;">
-                <button id="btnRefresh" class="btn btn-outline-secondary"><i class="fa-solid fa-rotate-right me-1"></i> Vernieuwen</button>
-                <button id="btnSendNow" class="btn btn-primary"><i class="fa-solid fa-cloud-arrow-up me-1"></i> Verstuur naar Scrada</button>
+            
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <div class="input-group input-group-sm" style="width: auto;">
+                    <span class="input-group-text bg-white fw-bold text-muted">Van</span>
+                    <input type="date" id="fromDate" class="form-control date-control form-control-sm">
+                    <span class="input-group-text bg-white fw-bold text-muted">Tot</span>
+                    <input type="date" id="tillDate" class="form-control date-control form-control-sm">
+                </div>
+
+                <button id="btnRefresh" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa-solid fa-rotate-right me-1"></i> Vernieuwen
+                </button>
+                <button id="btnSendNow" class="btn btn-sm btn-primary">
+                    <i class="fa-solid fa-cloud-arrow-up me-1"></i> Verstuur naar Scrada
+                </button>
+                <button id="btnClose" class="btn btn-sm btn-outline-danger">
+                    <i class="fa-solid fa-xmark me-1"></i> Sluiten
+                </button>
             </div>
         </div>
 
@@ -49,19 +133,29 @@
                 <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
             </div>
 
-            <!-- Date & Balance Bar -->
-            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                <h5 class="mb-0 fw-bold text-dark">Rapportage <span id="displayDate" class="text-primary"></span></h5>
+            <!-- Header Info & Balance Result -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom gap-2">
+                <div>
+                    <h5 class="mb-0 fw-bold text-dark">
+                        Periode: <span id="displayDateRange" class="text-primary"></span>
+                    </h5>
+                    <small id="dayCountBadge" class="text-muted"></small>
+                </div>
                 <div id="balanceStatus" class="status-badge d-none"></div>
             </div>
 
-            <!-- Tables -->
+            <!-- Content Area: Dual Tables -->
             <div id="contentArea">
                 <div class="row">
-                    <!-- VAT Categories -->
-                    <div class="col-md-6 mb-4">
-                        <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-pie me-2 text-muted"></i> Omzet per BTW Categorie</h6>
-                        <div class="table-responsive border rounded">
+                    <!-- Left: Scrada VAT Turnover -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold mb-0">
+                                <i class="fa-solid fa-chart-pie me-2 text-muted"></i> Scrada Omzet per BTW-tarief
+                            </h6>
+                            <span class="badge bg-light text-dark border">Scrada API</span>
+                        </div>
+                        <div class="table-responsive border rounded bg-white">
                             <table class="table table-hover mb-0">
                                 <thead>
                                     <tr>
@@ -81,10 +175,15 @@
                         </div>
                     </div>
 
-                    <!-- Payment Methods -->
-                    <div class="col-md-6 mb-4">
-                        <h6 class="fw-bold mb-3"><i class="fa-solid fa-credit-card me-2 text-muted"></i> Ontvangsten per Betaalmethode</h6>
-                        <div class="table-responsive border rounded">
+                    <!-- Right: Local POS Payment Receipts -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold mb-0">
+                                <i class="fa-solid fa-credit-card me-2 text-muted"></i> Ontvangsten per Betaalmethode
+                            </h6>
+                            <span class="badge bg-light text-dark border">Kassa Database</span>
+                        </div>
+                        <div class="table-responsive border rounded bg-white">
                             <table class="table table-hover mb-0">
                                 <thead>
                                     <tr>
@@ -108,17 +207,17 @@
             <!-- Empty State -->
             <div id="emptyState" class="empty-state">
                 <i class="fa-solid fa-folder-open"></i>
-                <h5 class="fw-bold">Geen gegevens gevonden</h5>
-                <p class="text-muted">Er zijn geen regels geregistreerd in Scrada voor deze datum. Klik hierboven op <strong>"Verstuur naar Scrada"</strong> om de dagontvangsten door te sturen.</p>
+                <h5 class="fw-bold">Geen dagontvangsten gevonden</h5>
+                <p class="text-muted">Er zijn geen regels geregistreerd in Scrada voor deze periode. Klik op <strong>"Verstuur naar Scrada"</strong> om de geselecteerde dagtotalen door te sturen.</p>
             </div>
 
-            <!-- Collapsible Raw API Debug Box -->
+            <!-- Collapsible Raw Response -->
             <div class="mt-3">
                 <a class="text-muted small text-decoration-none" data-bs-toggle="collapse" href="#debugCollapse" role="button">
                     <i class="fa-solid fa-code me-1"></i> Toon ruwe Scrada API response
                 </a>
                 <div class="collapse mt-2" id="debugCollapse">
-                    <pre class="debug-box" id="rawApiResponse">Geen API response beschikbaar.</pre>
+                    <pre class="debug-box" id="rawApiResponse">Geen data geladen.</pre>
                 </div>
             </div>
         </div>
@@ -126,49 +225,94 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const datePicker = document.getElementById('datePicker');
+        const fromDateInput = document.getElementById('fromDate');
+        const tillDateInput = document.getElementById('tillDate');
         const btnRefresh = document.getElementById('btnRefresh');
         const btnSendNow = document.getElementById('btnSendNow');
+        const btnClose = document.getElementById('btnClose');
         const spinner = document.getElementById('loadingSpinner');
         const contentArea = document.getElementById('contentArea');
         const emptyState = document.getElementById('emptyState');
         const balanceStatus = document.getElementById('balanceStatus');
         const rawApiResponse = document.getElementById('rawApiResponse');
+        const displayDateRange = document.getElementById('displayDateRange');
+        const dayCountBadge = document.getElementById('dayCountBadge');
 
-        const today = new Date().toISOString().split('T')[0];
-        datePicker.value = today;
+        // Initial default: if opened between 00:00 and 05:00 AM, shift target to yesterday
+        const now = new Date();
+        if (now.getHours() < 5) {
+            now.setDate(now.getDate() - 1);
+        }
+        const defaultDateStr = now.toISOString().split('T')[0];
+        fromDateInput.value = defaultDateStr;
+        tillDateInput.value = defaultDateStr;
+
+        function formatDateNL(dStr) {
+            return dStr.split('-').reverse().join('-');
+        }
 
         function loadData() {
+            if (fromDateInput.value > tillDateInput.value) {
+                alert("De startdatum kan niet later zijn dan de einddatum.");
+                return;
+            }
+
             spinner.style.display = 'flex';
-            document.getElementById('displayDate').innerText = datePicker.value.split('-').reverse().join('-');
             document.getElementById('alertContainer').innerHTML = '';
+
+            if (fromDateInput.value === tillDateInput.value) {
+                displayDateRange.innerText = formatDateNL(fromDateInput.value);
+                dayCountBadge.innerText = "1 dag geselecteerd";
+            } else {
+                displayDateRange.innerText = `${formatDateNL(fromDateInput.value)} t/m ${formatDateNL(tillDateInput.value)}`;
+                const diffTime = Math.abs(new Date(tillDateInput.value) - new Date(fromDateInput.value));
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                dayCountBadge.innerText = `${diffDays} dagen geselecteerd`;
+            }
             
             if (window.chrome && window.chrome.webview) {
                 window.chrome.webview.postMessage({ 
                     action: 'load_journal_data', 
-                    date: datePicker.value 
+                    fromDate: fromDateInput.value,
+                    tillDate: tillDateInput.value
                 });
             }
         }
 
-        datePicker.addEventListener('change', loadData);
+        fromDateInput.addEventListener('change', loadData);
+        tillDateInput.addEventListener('change', loadData);
         btnRefresh.addEventListener('click', loadData);
 
+        // Close window trigger
+        btnClose.addEventListener('click', function() {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({ action: 'close' });
+            }
+        });
+
+        // Send to Scrada trigger
         btnSendNow.addEventListener('click', function() {
-            if (confirm(`Wilt u de dagtotalen van ${datePicker.value} berekenen en doorsturen naar Scrada?`)) {
+            const isSingle = (fromDateInput.value === tillDateInput.value);
+            const promptMsg = isSingle 
+                ? `Wilt u de dagtotalen van ${formatDateNL(fromDateInput.value)} doorsturen naar Scrada?`
+                : `Wilt u de dagtotalen voor ALLE dagen van ${formatDateNL(fromDateInput.value)} t/m ${formatDateNL(tillDateInput.value)} doorsturen naar Scrada?`;
+
+            if (confirm(promptMsg)) {
                 spinner.style.display = 'flex';
                 if (window.chrome && window.chrome.webview) {
                     window.chrome.webview.postMessage({ 
                         action: 'send_daily_receipt', 
-                        date: datePicker.value 
+                        fromDate: fromDateInput.value,
+                        tillDate: tillDateInput.value
                     });
                 }
             }
         });
 
+        // Bridge function called by C# WebMessage runner
         window.renderJournalData = function(response) {
             spinner.style.display = 'none';
-            rawApiResponse.innerText = response.rawJson || 'Geen API response ontvangen.';
+            rawApiResponse.innerText = response.rawJson || 'Geen ruwe API response ontvangen.';
 
             if (response.successMessage) {
                 document.getElementById('alertContainer').innerHTML = `
@@ -188,7 +332,10 @@
             }
 
             const data = response.data;
-            if (!data || ((!data.vatLines || data.vatLines.length === 0) && (!data.paymentLines || data.paymentLines.length === 0))) {
+            const hasVat = data && data.vatLines && data.vatLines.length > 0;
+            const hasPay = data && data.paymentLines && data.paymentLines.length > 0;
+
+            if (!hasVat && !hasPay) {
                 contentArea.style.display = 'none';
                 emptyState.style.display = 'block';
                 balanceStatus.classList.add('d-none');
@@ -198,36 +345,40 @@
             contentArea.style.display = 'block';
             emptyState.style.display = 'none';
 
-            // VAT Categories
+            // Populate VAT table
             const vatBody = document.getElementById('vatTableBody');
             vatBody.innerHTML = '';
             let totalVat = 0;
-            data.vatLines.forEach(line => {
-                totalVat += line.amount;
-                vatBody.innerHTML += `
-                    <tr>
-                        <td><strong>${line.categoryName}</strong></td>
-                        <td class="text-end">${line.vatPerc}%</td>
-                        <td class="text-end">€ ${line.amount.toFixed(2)}</td>
-                    </tr>`;
-            });
+            if (hasVat) {
+                data.vatLines.forEach(line => {
+                    totalVat += line.amount;
+                    vatBody.innerHTML += `
+                        <tr>
+                            <td><strong>${line.categoryName}</strong></td>
+                            <td class="text-end">${line.vatPerc}%</td>
+                            <td class="text-end">€ ${line.amount.toFixed(2)}</td>
+                        </tr>`;
+                });
+            }
             document.getElementById('vatTotal').innerText = `€ ${totalVat.toFixed(2)}`;
 
-            // Payment Methods
+            // Populate Payments table
             const payBody = document.getElementById('paymentTableBody');
             payBody.innerHTML = '';
             let totalPay = 0;
-            data.paymentLines.forEach(line => {
-                totalPay += line.amount;
-                payBody.innerHTML += `
-                    <tr>
-                        <td><strong>${line.paymentMethodName}</strong></td>
-                        <td class="text-end">€ ${line.amount.toFixed(2)}</td>
-                    </tr>`;
-            });
+            if (hasPay) {
+                data.paymentLines.forEach(line => {
+                    totalPay += line.amount;
+                    payBody.innerHTML += `
+                        <tr>
+                            <td><strong>${line.paymentMethodName}</strong></td>
+                            <td class="text-end">€ ${line.amount.toFixed(2)}</td>
+                        </tr>`;
+                });
+            }
             document.getElementById('paymentTotal').innerText = `€ ${totalPay.toFixed(2)}`;
 
-            // Saldo Balance check
+            // Balance Verification Check
             balanceStatus.classList.remove('d-none', 'balanced', 'unbalanced');
             const diff = Math.abs(totalVat - totalPay);
             if (diff < 0.01) {
