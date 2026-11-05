@@ -2,44 +2,121 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Scrada Dagontvangsten</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { 
-            background-color: #f4f6f9; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            padding: 20px 0;
-            user-select: none;
+        :root {
+            --primary: #4361ee;
+            --primary-hover: #3a56d4;
+            --success: #2ec4b6;
+            --danger: #e63946;
+            --bg-light: #f4f6f9;
+            --touch-height: 48px;
         }
+
+        body { 
+            background-color: var(--bg-light); 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            padding: 15px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Touch-first component styling */
+        .touch-btn {
+            min-height: var(--touch-height);
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+
+        .touch-input {
+            min-height: var(--touch-height);
+            font-size: 1.05rem;
+            font-weight: 600;
+            border-radius: 8px;
+            color: var(--primary);
+        }
+
         .card { 
             border: none; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
-            position: relative; 
+            border-radius: 12px; 
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06); 
             margin-bottom: 20px; 
+            background: #fff;
         }
+
+        /* Grand Totals Header Card */
+        .grand-totals-card {
+            background: linear-gradient(135deg, #2b2d42 0%, #1a1a24 100%);
+            color: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .grand-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+        }
+
+        /* Per-day Cards */
+        .day-card {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .day-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #edf2f7;
+            padding: 16px 20px;
+        }
+
         .table th { 
             background-color: #f8f9fa; 
             color: #6c757d; 
-            font-weight: 600; 
+            font-weight: 700; 
             font-size: 0.85rem; 
             text-transform: uppercase; 
-            border-bottom-width: 1px; 
+            padding: 12px 16px;
         }
+
         .table td { 
             vertical-align: middle; 
             color: #2b2d42; 
-            font-weight: 500; 
+            font-weight: 600; 
+            padding: 14px 16px;
+            font-size: 1rem;
         }
+
         .total-row td { 
-            font-weight: 700; 
+            font-weight: 800; 
             background-color: #f8f9fa; 
             font-size: 1.05rem; 
         }
+
+        .status-badge { 
+            font-size: 0.95rem; 
+            padding: 8px 16px; 
+            border-radius: 8px; 
+            font-weight: 700; 
+            display: inline-flex;
+            align-items: center;
+        }
+        .balanced { background-color: #e8f5e9; color: #2e7d32; }
+        .unbalanced { background-color: #ffebee; color: #c62828; }
+
         .spinner-overlay { 
-            position: absolute; 
+            position: fixed; 
             top: 0; 
             left: 0; 
             width: 100%; 
@@ -48,182 +125,106 @@
             display: none; 
             justify-content: center; 
             align-items: center; 
-            z-index: 10; 
-            border-radius: 8px; 
+            z-index: 9999; 
         }
-        .text-primary { color: #4361ee !important; }
-        .btn-primary { 
-            background-color: #4361ee; 
-            border-color: #4361ee; 
-            box-shadow: 0 4px 6px rgba(67, 97, 238, 0.2); 
-        }
-        .btn-primary:hover { 
-            background-color: #3f37c9; 
-            border-color: #3f37c9; 
-        }
-        .status-badge { 
-            font-size: 0.95rem; 
-            padding: 8px 16px; 
-            border-radius: 6px; 
-            font-weight: 600; 
-        }
-        .balanced { background-color: #e8f5e9; color: #2e7d32; }
-        .unbalanced { background-color: #ffebee; color: #c62828; }
+
         .empty-state { 
-            padding: 50px 20px; 
+            padding: 60px 20px; 
             text-align: center; 
             color: #8d99ae; 
         }
         .empty-state i { 
-            font-size: 3.5rem; 
+            font-size: 4rem; 
             margin-bottom: 15px; 
             color: #ced4da; 
         }
-        .date-control {
+
+        .quick-filter-btn {
+            min-height: 40px;
+            font-size: 0.9rem;
             font-weight: 600;
-            color: #4361ee;
-            width: 145px;
-        }
-        pre.debug-box { 
-            background: #212529; 
-            color: #a5d6a7; 
-            padding: 12px; 
-            border-radius: 6px; 
-            font-size: 0.8rem; 
-            max-height: 180px; 
-            overflow: auto; 
+            border-radius: 6px;
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid px-4">
-        <!-- Header & Date Range Toolbar -->
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <div>
-                <h4 class="mb-1 text-dark fw-bold">
-                    <i class="fa-solid fa-book-journal-whills text-primary me-2"></i> Scrada Dagontvangsten
-                </h4>
-                <p class="text-muted mb-0 small">Controleer geboekte dagtotalen, BTW en betaalmethoden over één of meerdere dagen</p>
-            </div>
-            
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <div class="input-group input-group-sm" style="width: auto;">
-                    <span class="input-group-text bg-white fw-bold text-muted">Van</span>
-                    <input type="date" id="fromDate" class="form-control date-control form-control-sm">
-                    <span class="input-group-text bg-white fw-bold text-muted">Tot</span>
-                    <input type="date" id="tillDate" class="form-control date-control form-control-sm">
-                </div>
+    <div class="spinner-overlay" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status" style="width: 3.5rem; height: 3.5rem;"></div>
+    </div>
 
-                <button id="btnRefresh" class="btn btn-sm btn-outline-secondary">
-                    <i class="fa-solid fa-rotate-right me-1"></i> Vernieuwen
+    <div class="container-fluid">
+        <!-- Main Top Toolbar -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-3">
+            <div>
+                <h3 class="mb-0 text-dark fw-bold">
+                    <i class="fa-solid fa-book-journal-whills text-primary me-2"></i> Dagontvangsten Controle
+                </h3>
+                <span class="text-muted small">Controleer per dag het evenwicht tussen geregistreerde Scrada omzet en kassa-inkomsten</span>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                <button id="btnSendNow" class="btn btn-primary touch-btn">
+                    <i class="fa-solid fa-cloud-arrow-up me-2"></i> Doorsturen naar Scrada
                 </button>
-                <button id="btnSendNow" class="btn btn-sm btn-primary">
-                    <i class="fa-solid fa-cloud-arrow-up me-1"></i> Verstuur naar Scrada
+                <button id="btnRefresh" class="btn btn-outline-secondary touch-btn">
+                    <i class="fa-solid fa-rotate-right me-2"></i> Vernieuwen
                 </button>
-                <button id="btnClose" class="btn btn-sm btn-outline-danger">
-                    <i class="fa-solid fa-xmark me-1"></i> Sluiten
+                <button id="btnClose" class="btn btn-danger touch-btn">
+                    <i class="fa-solid fa-xmark me-2"></i> Sluiten
                 </button>
+            </div>
+        </div>
+
+        <!-- Touch Date Controls & Quick Selectors -->
+        <div class="card p-3">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-5 col-12">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light fw-bold">Van</span>
+                        <input type="date" id="fromDate" class="form-control touch-input">
+                        <span class="input-group-text bg-light fw-bold">Tot</span>
+                        <input type="date" id="tillDate" class="form-control touch-input">
+                    </div>
+                </div>
+                <div class="col-md-7 col-12 d-flex gap-2 flex-wrap justify-content-md-end">
+                    <button class="btn btn-outline-primary quick-filter-btn px-3" onclick="setQuickDate('today')">Vandaag</button>
+                    <button class="btn btn-outline-primary quick-filter-btn px-3" onclick="setQuickDate('yesterday')">Gisteren</button>
+                    <button class="btn btn-outline-primary quick-filter-btn px-3" onclick="setQuickDate('last7')">Laatste 7 dagen</button>
+                    <button class="btn btn-outline-primary quick-filter-btn px-3" onclick="setQuickDate('thisMonth')">Deze Maand</button>
+                </div>
             </div>
         </div>
 
         <div id="alertContainer"></div>
 
-        <div class="card p-4">
-            <div class="spinner-overlay" id="loadingSpinner">
-                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-            </div>
-
-            <!-- Header Info & Balance Result -->
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom gap-2">
-                <div>
-                    <h5 class="mb-0 fw-bold text-dark">
-                        Periode: <span id="displayDateRange" class="text-primary"></span>
-                    </h5>
-                    <small id="dayCountBadge" class="text-muted"></small>
+        <!-- Grand Total Summary Card -->
+        <div id="grandTotalCard" class="grand-totals-card d-none">
+            <div class="row align-items-center text-center text-md-start g-3">
+                <div class="col-md-4">
+                    <span class="text-white-50 text-uppercase fw-bold small">Totale Omzet (Scrada)</span>
+                    <div class="grand-value text-white" id="grandVatText">€ 0.00</div>
                 </div>
-                <div id="balanceStatus" class="status-badge d-none"></div>
-            </div>
-
-            <!-- Content Area: Dual Tables -->
-            <div id="contentArea">
-                <div class="row">
-                    <!-- Left: Scrada VAT Turnover -->
-                    <div class="col-lg-6 mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="fw-bold mb-0">
-                                <i class="fa-solid fa-chart-pie me-2 text-muted"></i> Scrada Omzet per BTW-tarief
-                            </h6>
-                            <span class="badge bg-light text-dark border">Scrada API</span>
-                        </div>
-                        <div class="table-responsive border rounded bg-white">
-                            <table class="table table-hover mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Categorie</th>
-                                        <th class="text-end">Tarief</th>
-                                        <th class="text-end">Bedrag Incl. BTW</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="vatTableBody"></tbody>
-                                <tfoot>
-                                    <tr class="total-row">
-                                        <td colspan="2" class="text-end">Totaal Omzet:</td>
-                                        <td id="vatTotal" class="text-end text-primary">€ 0.00</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Right: Local POS Payment Receipts -->
-                    <div class="col-lg-6 mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="fw-bold mb-0">
-                                <i class="fa-solid fa-credit-card me-2 text-muted"></i> Ontvangsten per Betaalmethode
-                            </h6>
-                            <span class="badge bg-light text-dark border">Kassa Database</span>
-                        </div>
-                        <div class="table-responsive border rounded bg-white">
-                            <table class="table table-hover mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Betaalmethode</th>
-                                        <th class="text-end">Ontvangen Bedrag</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="paymentTableBody"></tbody>
-                                <tfoot>
-                                    <tr class="total-row">
-                                        <td class="text-end">Totaal Ontvangsten:</td>
-                                        <td id="paymentTotal" class="text-end text-primary">€ 0.00</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
+                <div class="col-md-4">
+                    <span class="text-white-50 text-uppercase fw-bold small">Totale Ontvangsten (Kassa)</span>
+                    <div class="grand-value text-info" id="grandPayText">€ 0.00</div>
                 </div>
-            </div>
-            
-            <!-- Empty State -->
-            <div id="emptyState" class="empty-state">
-                <i class="fa-solid fa-folder-open"></i>
-                <h5 class="fw-bold">Geen dagontvangsten gevonden</h5>
-                <p class="text-muted">Er zijn geen regels geregistreerd in Scrada voor deze periode. Klik op <strong>"Verstuur naar Scrada"</strong> om de geselecteerde dagtotalen door te sturen.</p>
-            </div>
-
-            <!-- Collapsible Raw Response -->
-            <div class="mt-3">
-                <a class="text-muted small text-decoration-none" data-bs-toggle="collapse" href="#debugCollapse" role="button">
-                    <i class="fa-solid fa-code me-1"></i> Toon ruwe Scrada API response
-                </a>
-                <div class="collapse mt-2" id="debugCollapse">
-                    <pre class="debug-box" id="rawApiResponse">Geen data geladen.</pre>
+                <div class="col-md-4 text-md-end">
+                    <div id="grandBalanceBadge" class="status-badge"></div>
                 </div>
             </div>
         </div>
+
+        <!-- Container where per-day cards are dynamically inserted -->
+        <div id="daysContainer"></div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="card empty-state d-none">
+            <i class="fa-solid fa-folder-open"></i>
+            <h4 class="fw-bold">Geen dagontvangsten gevonden</h4>
+            <p class="text-muted mb-0">Er zijn geen gegevens geregistreerd voor de geselecteerde datumperiode.</p>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const fromDateInput = document.getElementById('fromDate');
         const tillDateInput = document.getElementById('tillDate');
@@ -231,44 +232,58 @@
         const btnSendNow = document.getElementById('btnSendNow');
         const btnClose = document.getElementById('btnClose');
         const spinner = document.getElementById('loadingSpinner');
-        const contentArea = document.getElementById('contentArea');
+        const daysContainer = document.getElementById('daysContainer');
+        const grandTotalCard = document.getElementById('grandTotalCard');
+        const grandVatText = document.getElementById('grandVatText');
+        const grandPayText = document.getElementById('grandPayText');
+        const grandBalanceBadge = document.getElementById('grandBalanceBadge');
         const emptyState = document.getElementById('emptyState');
-        const balanceStatus = document.getElementById('balanceStatus');
-        const rawApiResponse = document.getElementById('rawApiResponse');
-        const displayDateRange = document.getElementById('displayDateRange');
-        const dayCountBadge = document.getElementById('dayCountBadge');
+        const alertContainer = document.getElementById('alertContainer');
 
-        // Initial default: if opened between 00:00 and 05:00 AM, shift target to yesterday
-        const now = new Date();
-        if (now.getHours() < 5) {
-            now.setDate(now.getDate() - 1);
+        // Night-shift aware date initializer (If opened before 05:00 AM, target yesterday)
+        function initDefaultDate() {
+            const now = new Date();
+            if (now.getHours() < 5) {
+                now.setDate(now.getDate() - 1);
+            }
+            const dateStr = now.toISOString().split('T')[0];
+            fromDateInput.value = dateStr;
+            tillDateInput.value = dateStr;
         }
-        const defaultDateStr = now.toISOString().split('T')[0];
-        fromDateInput.value = defaultDateStr;
-        tillDateInput.value = defaultDateStr;
 
-        function formatDateNL(dStr) {
-            return dStr.split('-').reverse().join('-');
+        initDefaultDate();
+
+        function setQuickDate(type) {
+            const now = new Date();
+            if (now.getHours() < 5) now.setDate(now.getDate() - 1);
+
+            let from = new Date(now);
+            let till = new Date(now);
+
+            if (type === 'today') {
+                // from & till are today
+            } else if (type === 'yesterday') {
+                from.setDate(from.getDate() - 1);
+                till.setDate(till.getDate() - 1);
+            } else if (type === 'last7') {
+                from.setDate(from.getDate() - 6);
+            } else if (type === 'thisMonth') {
+                from.setDate(1);
+            }
+
+            fromDateInput.value = from.toISOString().split('T')[0];
+            tillDateInput.value = till.toISOString().split('T')[0];
+            loadData();
         }
 
         function loadData() {
             if (fromDateInput.value > tillDateInput.value) {
-                alert("De startdatum kan niet later zijn dan de einddatum.");
+                alert("De startdatum mag niet later zijn dan de einddatum.");
                 return;
             }
 
             spinner.style.display = 'flex';
-            document.getElementById('alertContainer').innerHTML = '';
-
-            if (fromDateInput.value === tillDateInput.value) {
-                displayDateRange.innerText = formatDateNL(fromDateInput.value);
-                dayCountBadge.innerText = "1 dag geselecteerd";
-            } else {
-                displayDateRange.innerText = `${formatDateNL(fromDateInput.value)} t/m ${formatDateNL(tillDateInput.value)}`;
-                const diffTime = Math.abs(new Date(tillDateInput.value) - new Date(fromDateInput.value));
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                dayCountBadge.innerText = `${diffDays} dagen geselecteerd`;
-            }
+            alertContainer.innerHTML = '';
             
             if (window.chrome && window.chrome.webview) {
                 window.chrome.webview.postMessage({ 
@@ -283,21 +298,18 @@
         tillDateInput.addEventListener('change', loadData);
         btnRefresh.addEventListener('click', loadData);
 
-        // Close window trigger
         btnClose.addEventListener('click', function() {
             if (window.chrome && window.chrome.webview) {
                 window.chrome.webview.postMessage({ action: 'close' });
             }
         });
 
-        // Send to Scrada trigger
         btnSendNow.addEventListener('click', function() {
-            const isSingle = (fromDateInput.value === tillDateInput.value);
-            const promptMsg = isSingle 
-                ? `Wilt u de dagtotalen van ${formatDateNL(fromDateInput.value)} doorsturen naar Scrada?`
-                : `Wilt u de dagtotalen voor ALLE dagen van ${formatDateNL(fromDateInput.value)} t/m ${formatDateNL(tillDateInput.value)} doorsturen naar Scrada?`;
+            const msg = (fromDateInput.value === tillDateInput.value)
+                ? `Wilt u de dagontvangsten van ${fromDateInput.value.split('-').reverse().join('-')} berekenen en doorsturen naar Scrada?`
+                : `Wilt u de dagontvangsten van ${fromDateInput.value.split('-').reverse().join('-')} t/m ${tillDateInput.value.split('-').reverse().join('-')} doorsturen naar Scrada?`;
 
-            if (confirm(promptMsg)) {
+            if (confirm(msg)) {
                 spinner.style.display = 'flex';
                 if (window.chrome && window.chrome.webview) {
                     window.chrome.webview.postMessage({ 
@@ -309,13 +321,12 @@
             }
         });
 
-        // Bridge function called by C# WebMessage runner
+        // Bridge function called by C#
         window.renderJournalData = function(response) {
             spinner.style.display = 'none';
-            rawApiResponse.innerText = response.rawJson || 'Geen ruwe API response ontvangen.';
 
             if (response.successMessage) {
-                document.getElementById('alertContainer').innerHTML = `
+                alertContainer.innerHTML = `
                     <div class="alert alert-success alert-dismissible fade show shadow-sm">
                         <i class="fa-solid fa-circle-check me-2"></i> ${response.successMessage}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -323,71 +334,138 @@
             }
 
             if (!response.success) {
-                contentArea.style.display = 'none';
-                emptyState.style.display = 'none';
-                balanceStatus.classList.add('d-none');
-                document.getElementById('alertContainer').innerHTML = `
+                daysContainer.innerHTML = '';
+                grandTotalCard.classList.add('d-none');
+                emptyState.classList.add('d-none');
+                alertContainer.innerHTML = `
                     <div class="alert alert-danger shadow-sm"><i class="fa-solid fa-circle-exclamation me-2"></i> ${response.errorMessage}</div>`;
                 return;
             }
 
             const data = response.data;
-            const hasVat = data && data.vatLines && data.vatLines.length > 0;
-            const hasPay = data && data.paymentLines && data.paymentLines.length > 0;
-
-            if (!hasVat && !hasPay) {
-                contentArea.style.display = 'none';
-                emptyState.style.display = 'block';
-                balanceStatus.classList.add('d-none');
+            if (!data || !data.days || data.days.length === 0) {
+                daysContainer.innerHTML = '';
+                grandTotalCard.classList.add('d-none');
+                emptyState.classList.remove('d-none');
                 return;
             }
 
-            contentArea.style.display = 'block';
-            emptyState.style.display = 'none';
+            emptyState.classList.add('d-none');
+            grandTotalCard.classList.remove('d-none');
 
-            // Populate VAT table
-            const vatBody = document.getElementById('vatTableBody');
-            vatBody.innerHTML = '';
-            let totalVat = 0;
-            if (hasVat) {
-                data.vatLines.forEach(line => {
-                    totalVat += line.amount;
-                    vatBody.innerHTML += `
-                        <tr>
-                            <td><strong>${line.categoryName}</strong></td>
-                            <td class="text-end">${line.vatPerc}%</td>
-                            <td class="text-end">€ ${line.amount.toFixed(2)}</td>
-                        </tr>`;
-                });
-            }
-            document.getElementById('vatTotal').innerText = `€ ${totalVat.toFixed(2)}`;
+            // 1. Render Grand Totals
+            grandVatText.innerText = `€ ${data.grandTotalVatAmount.toFixed(2)}`;
+            grandPayText.innerText = `€ ${data.grandTotalPaymentAmount.toFixed(2)}`;
 
-            // Populate Payments table
-            const payBody = document.getElementById('paymentTableBody');
-            payBody.innerHTML = '';
-            let totalPay = 0;
-            if (hasPay) {
-                data.paymentLines.forEach(line => {
-                    totalPay += line.amount;
-                    payBody.innerHTML += `
-                        <tr>
-                            <td><strong>${line.paymentMethodName}</strong></td>
-                            <td class="text-end">€ ${line.amount.toFixed(2)}</td>
-                        </tr>`;
-                });
-            }
-            document.getElementById('paymentTotal').innerText = `€ ${totalPay.toFixed(2)}`;
-
-            // Balance Verification Check
-            balanceStatus.classList.remove('d-none', 'balanced', 'unbalanced');
-            const diff = Math.abs(totalVat - totalPay);
-            if (diff < 0.01) {
-                balanceStatus.classList.add('balanced');
-                balanceStatus.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> Saldo in evenwicht (€ ${totalVat.toFixed(2)})`;
+            if (data.isGrandBalanced) {
+                grandBalanceBadge.className = 'status-badge balanced';
+                grandBalanceBadge.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i> Totaal in evenwicht`;
             } else {
-                balanceStatus.classList.add('unbalanced');
-                balanceStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-1"></i> Verschil van € ${diff.toFixed(2)}`;
+                grandBalanceBadge.className = 'status-badge unbalanced';
+                grandBalanceBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-2"></i> Totaalverschil: € ${data.grandTotalDiff.toFixed(2)}`;
             }
+
+            // 2. Render Each Day Card
+            daysContainer.innerHTML = '';
+            data.days.forEach(day => {
+                let statusHtml = day.isBalanced
+                    ? `<span class="status-badge balanced"><i class="fa-solid fa-check me-1"></i> In evenwicht</span>`
+                    : `<span class="status-badge unbalanced"><i class="fa-solid fa-triangle-exclamation me-1"></i> Verschil € ${day.diff.toFixed(2)}</span>`;
+
+                let vatRows = '';
+                if (day.vatLines && day.vatLines.length > 0) {
+                    day.vatLines.forEach(l => {
+                        vatRows += `
+                            <tr>
+                                <td>${l.categoryName}</td>
+                                <td class="text-end">${l.vatPerc}%</td>
+                                <td class="text-end">€ ${l.amount.toFixed(2)}</td>
+                            </tr>`;
+                    });
+                } else {
+                    vatRows = `<tr><td colspan="3" class="text-center text-muted py-3">Geen omzet geboekt in Scrada</td></tr>`;
+                }
+
+                let payRows = '';
+                if (day.paymentLines && day.paymentLines.length > 0) {
+                    day.paymentLines.forEach(p => {
+                        payRows += `
+                            <tr>
+                                <td>${p.paymentMethodName}</td>
+                                <td class="text-end">€ ${p.amount.toFixed(2)}</td>
+                            </tr>`;
+                    });
+                } else {
+                    payRows = `<tr><td colspan="2" class="text-center text-muted py-3">Geen kassa-ontvangsten gevonden</td></tr>`;
+                }
+
+                const dayCardHtml = `
+                    <div class="card day-card">
+                        <div class="day-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <div>
+                                <h5 class="mb-0 fw-bold text-dark">
+                                    <i class="fa-regular fa-calendar-days text-primary me-2"></i> ${day.formattedDate}
+                                </h5>
+                            </div>
+                            <div>${statusHtml}</div>
+                        </div>
+
+                        <div class="card-body p-3">
+                            <div class="row g-3">
+                                <!-- BTW Omzet (Scrada) -->
+                                <div class="col-lg-6">
+                                    <h6 class="fw-bold text-secondary mb-2">
+                                        <i class="fa-solid fa-chart-pie me-1"></i> Scrada Omzet per BTW
+                                    </h6>
+                                    <div class="table-responsive border rounded">
+                                        <table class="table table-hover mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>BTW Categorie</th>
+                                                    <th class="text-end">Tarief</th>
+                                                    <th class="text-end">Bedrag</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>${vatRows}</tbody>
+                                            <tfoot>
+                                                <tr class="total-row">
+                                                    <td colspan="2" class="text-end">Dagomzet:</td>
+                                                    <td class="text-end text-primary">€ ${day.totalVatAmount.toFixed(2)}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Kassa Ontvangsten -->
+                                <div class="col-lg-6">
+                                    <h6 class="fw-bold text-secondary mb-2">
+                                        <i class="fa-solid fa-credit-card me-1"></i> Kassa Betaalmethoden
+                                    </h6>
+                                    <div class="table-responsive border rounded">
+                                        <table class="table table-hover mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Betaalmethode</th>
+                                                    <th class="text-end">Bedrag</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>${payRows}</tbody>
+                                            <tfoot>
+                                                <tr class="total-row">
+                                                    <td class="text-end">Dagontvangsten:</td>
+                                                    <td class="text-end text-primary">€ ${day.totalPaymentAmount.toFixed(2)}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+
+                daysContainer.innerHTML += dayCardHtml;
+            });
         };
 
         window.onload = () => { setTimeout(loadData, 300); };
