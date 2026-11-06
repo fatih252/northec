@@ -89,10 +89,10 @@
             top: 0;
             background-color: #1e293b;
             color: #fff;
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             font-weight: 700;
             text-transform: uppercase;
-            padding: 12px 10px;
+            padding: 14px 16px;
             z-index: 2;
             white-space: nowrap;
         }
@@ -110,7 +110,7 @@
             vertical-align: middle;
             font-size: 0.95rem;
             font-weight: 600;
-            padding: 12px 10px;
+            padding: 14px 16px;
             color: #1e293b;
         }
 
@@ -121,14 +121,14 @@
             border-top: 2px solid #1e293b;
             font-size: 1.05rem;
             font-weight: 800;
-            padding: 14px 10px;
+            padding: 14px 16px;
             z-index: 2;
         }
 
         /* Badges */
         .status-badge {
             font-size: 0.85rem;
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 6px;
             font-weight: 700;
             display: inline-flex;
@@ -148,7 +148,7 @@
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
-            padding: 12px 16px;
+            padding: 14px 18px;
         }
 
         .spinner-overlay { 
@@ -250,25 +250,19 @@
                         <th>Datum</th>
                         <th class="text-end">Kassa Omzet</th>
                         <th class="text-end">Scrada Omzet</th>
-                        <th class="text-end text-muted d-none d-sm-table-cell">Contant</th>
-                        <th class="text-end text-muted d-none d-sm-table-cell">Bancontact</th>
-                        <th class="text-end text-muted d-none d-md-table-cell">Online</th>
                         <th class="text-end">Verschil</th>
                         <th class="text-center">Status</th>
                         <th class="text-center" style="width: 140px;">Actie</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="9" class="text-center py-4 text-muted">Laden...</td></tr>
+                    <tr><td colspan="6" class="text-center py-4 text-muted">Laden...</td></tr>
                 </tbody>
                 <tfoot id="tableFoot" class="d-none">
                     <tr>
                         <td>TOTAAL</td>
                         <td class="text-end text-primary" id="footKassa">€ 0.00</td>
                         <td class="text-end text-dark" id="footScrada">€ 0.00</td>
-                        <td class="text-end text-muted d-none d-sm-table-cell" id="footCash">€ 0.00</td>
-                        <td class="text-end text-muted d-none d-sm-table-cell" id="footCard">€ 0.00</td>
-                        <td class="text-end text-muted d-none d-md-table-cell" id="footOnline">€ 0.00</td>
                         <td class="text-end" id="footDiff">€ 0.00</td>
                         <td class="text-center" id="footStatus">-</td>
                         <td></td>
@@ -375,13 +369,6 @@
             if (el) el.classList.toggle('d-none');
         }
 
-        function getPayAmt(lines, key) {
-            if (!lines) return 0;
-            return lines
-                .filter(l => l.paymentMethodName.toLowerCase().includes(key))
-                .reduce((s, l) => s + l.amount, 0);
-        }
-
         window.renderJournalData = function(response) {
             spinner.style.display = 'none';
 
@@ -394,14 +381,14 @@
             }
 
             if (!response.success) {
-                tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-4">${response.errorMessage}</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${response.errorMessage}</td></tr>`;
                 tableFoot.classList.add('d-none');
                 return;
             }
 
             const data = response.data;
             if (!data || !data.days || data.days.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4"><i class="fa-solid fa-folder-open me-2"></i> Geen gegevens gevonden voor deze periode.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4"><i class="fa-solid fa-folder-open me-2"></i> Geen gegevens gevonden voor deze periode.</td></tr>`;
                 tableFoot.classList.add('d-none');
                 return;
             }
@@ -420,26 +407,15 @@
                 ? `<i class="fa-solid fa-check me-1"></i> In Evenwicht`
                 : `<i class="fa-solid fa-triangle-exclamation me-1"></i> Verschil`;
 
-            // Render Table Rows
+            // Render Table Rows (6 columns)
             let html = '';
-            let totalCash = 0;
-            let totalCard = 0;
-            let totalOnline = 0;
 
             data.days.forEach((day, idx) => {
-                const cash = getPayAmt(day.paymentLines, 'contant');
-                const card = getPayAmt(day.paymentLines, 'bancontact') + getPayAmt(day.paymentLines, 'pin');
-                const online = getPayAmt(day.paymentLines, 'online');
-
-                totalCash += cash;
-                totalCard += card;
-                totalOnline += online;
-
                 const statusBadge = day.isBalanced
                     ? `<span class="status-badge balanced"><i class="fa-solid fa-check me-1"></i> Klopt</span>`
                     : `<span class="status-badge unbalanced"><i class="fa-solid fa-triangle-exclamation me-1"></i> Verschil</span>`;
 
-                // Actie-knop regel: Alleen tonen als NIET verzonden én binnen LAATSTE 2 DAGEN
+                // Actie-knop: Alleen tonen als NIET verzonden én binnen LAATSTE 2 DAGEN
                 let actionHtml = '';
                 if (day.isSent) {
                     actionHtml = `<span class="text-success small fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Verzonden</span>`;
@@ -483,9 +459,6 @@
                         <td><strong>${day.formattedDate}</strong> <i class="fa-solid fa-chevron-down ms-1 text-muted small"></i></td>
                         <td class="text-end text-primary fw-bold">€ ${day.kassaOmzet.toFixed(2)}</td>
                         <td class="text-end text-dark fw-bold">€ ${day.scradaOmzet.toFixed(2)}</td>
-                        <td class="text-end text-muted d-none d-sm-table-cell">€ ${cash.toFixed(2)}</td>
-                        <td class="text-end text-muted d-none d-sm-table-cell">€ ${card.toFixed(2)}</td>
-                        <td class="text-end text-muted d-none d-md-table-cell">€ ${online.toFixed(2)}</td>
                         <td class="text-end ${day.isBalanced ? 'text-success' : 'text-danger fw-bold'}">
                             € ${day.diff.toFixed(2)}
                         </td>
@@ -494,7 +467,7 @@
                     </tr>
                     <!-- Detail Paneel -->
                     <tr id="detail_${idx}" class="d-none detail-row">
-                        <td colspan="9">
+                        <td colspan="6">
                             <div class="row g-3">
                                 <div class="col-md-7 col-12">
                                     <div class="detail-card">
@@ -533,9 +506,6 @@
             tableFoot.classList.remove('d-none');
             document.getElementById('footKassa').innerText = `€ ${data.grandKassaOmzet.toFixed(2)}`;
             document.getElementById('footScrada').innerText = `€ ${data.grandScradaOmzet.toFixed(2)}`;
-            document.getElementById('footCash').innerText = `€ ${totalCash.toFixed(2)}`;
-            document.getElementById('footCard').innerText = `€ ${totalCard.toFixed(2)}`;
-            document.getElementById('footOnline').innerText = `€ ${totalOnline.toFixed(2)}`;
             
             const footDiff = document.getElementById('footDiff');
             footDiff.innerText = `€ ${data.grandDiff.toFixed(2)}`;
