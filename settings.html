@@ -137,6 +137,7 @@
             align-items: center;
             min-height: 48px;
             gap: 16px;
+            transition: opacity 0.2s ease;
         }
         .form-label { font-size: 15px; font-weight: 700; color: var(--text-main); }
         .form-input, .form-select {
@@ -192,6 +193,7 @@
         }
         input:checked + .slider { background-color: var(--success-color); border-color: var(--success-active); }
         input:checked + .slider:before { transform: translateX(30px); }
+        input:disabled + .slider { opacity: 0.4; cursor: not-allowed; }
 
         /* --- NUMBER STEPPERS --- */
         .stepper { display: flex; align-items: center; }
@@ -543,7 +545,7 @@
                     </div>
                 </div>
 
-                <!-- Center: Station Details (WITH LIVE STATE LISTENERS) -->
+                <!-- Center: Station Details -->
                 <div class="card">
                     <div class="card-title">Configureer Regio</div>
                     
@@ -583,7 +585,7 @@
             </div>
         </div>
 
-        <!-- TAB 4: OPENINGSUREN (WITH TIME PICKERS & AUTO DISABLE) -->
+        <!-- TAB 4: OPENINGSUREN -->
         <div id="tab-hours" class="tab-pane">
             <div class="card">
                 <div class="card-title">Winkel Openingsuren</div>
@@ -601,7 +603,7 @@
             </div>
         </div>
 
-        <!-- TAB 5: TAFELS (WITH DEDICATED SCROLL CONTAINER) -->
+        <!-- TAB 5: TAFELS -->
         <div id="tab-tables" class="tab-pane">
             <div class="settings-grid">
                 <div class="card">
@@ -783,8 +785,17 @@
                             <div class="form-row"><span class="form-label">API Key</span><input id="txtScradaApiKey" class="form-input" type="text" style="flex:1;" /></div>
                             <div class="form-row"><span class="form-label">Password</span><input id="txtScradaPassword" class="form-input" type="password" style="flex:1;" /></div>
                             <div class="form-row"><span class="form-label">Company ID</span><input id="txtScradaCompanyId" class="form-input" type="text" style="flex:1;" /></div>
-                            <div class="form-row"><span class="form-label">Auto Send Daily Receipts</span><label class="switch"><input type="checkbox" id="chkScradaAutoSend"><span class="slider"></span></label></div>
-                            <div class="form-row"><span class="form-label">Auto Send Hour (0-23)</span><input id="nudScradaAutoHour" class="num-box" type="number" min="0" max="23" value="5" /></div>
+                            
+                            <!-- Nieuwe configuratievelden: scrada_auto_send en scrada_send_zero -->
+                            <div class="form-row">
+                                <span class="form-label">Automatisch Verzenden</span>
+                                <label class="switch"><input type="checkbox" id="chkScradaAutoSend" onchange="toggleScradaAutoSend()"><span class="slider"></span></label>
+                            </div>
+                            <div class="form-row" id="rowScradaSendZero">
+                                <span class="form-label">Nulomzet Verzenden (€ 0.00)</span>
+                                <label class="switch"><input type="checkbox" id="chkScradaSendZero"><span class="slider"></span></label>
+                            </div>
+                            <div class="form-row"><span class="form-label">Uur Automatisch Verzenden (0-23)</span><input id="nudScradaAutoHour" class="num-box" type="number" min="0" max="23" value="5" /></div>
                             
                             <div style="display:flex; gap:10px; margin-top:14px;">
                                 <button class="btn-touch btn-primary" onclick="saveCredentialsAndLoadJournals()" style="width: 100%;">Opslaan & Haal Journals Op</button>
@@ -799,7 +810,6 @@
                             <div class="card-title">Scrada Journal Management</div>
                             <div class="form-row">
                                 <span class="form-label">Actieve Journal</span>
-                                <!-- NEW: Added onchange="onJournalSelectionChanged()" here -->
                                 <select id="cboScradaJournals" class="form-select" style="flex:1; max-width: 250px;" onchange="onJournalSelectionChanged()"></select>
                             </div>
 
@@ -864,7 +874,6 @@
             event.currentTarget.classList.add('active');
             document.getElementById(tabId).classList.add('active');
 
-            // DEFAULT PRINTER TAB TO LEVERING (FIRST SUB-TAB)
             if (tabId === 'tab-printer') {
                 switchPrinterTab('ptab-delivery');
             }
@@ -903,6 +912,19 @@
         function togglePicSize() {
             const isChecked = document.getElementById('chkProductImage').checked;
             document.getElementById('rowPicSize').style.display = isChecked ? 'flex' : 'none';
+        }
+
+        function toggleScradaAutoSend() {
+            const isChecked = document.getElementById('chkScradaAutoSend').checked;
+            const chkZero = document.getElementById('chkScradaSendZero');
+            chkZero.disabled = !isChecked;
+            if (!isChecked) {
+                chkZero.checked = false;
+            }
+            const rowZero = document.getElementById('rowScradaSendZero');
+            if (rowZero) {
+                rowZero.style.opacity = isChecked ? '1' : '0.4';
+            }
         }
 
         function playSound() {
@@ -1241,14 +1263,23 @@
             const defaultItem = document.querySelector('#integrationList .integration-item[data-target="integration-scrada"]');
             if (defaultItem) selectIntegration('integration-scrada', defaultItem);
             
-            document.getElementById('txtScradaApiKey').value = data.apiKey || '';
-            document.getElementById('txtScradaPassword').value = data.password || '';
-            document.getElementById('txtScradaCompanyId').value = data.companyId || '';
+            document.getElementById('txtScradaApiKey').value = data.apiKey || data.scrada_api_key || '';
+            document.getElementById('txtScradaPassword').value = data.password || data.scrada_password || '';
+            document.getElementById('txtScradaCompanyId').value = data.companyId || data.scrada_company_id || '';
             
-            _currentJournalId = data.journalId || '';
+            _currentJournalId = data.journalId || data.scrada_journal_id || '';
             
-            document.getElementById('chkScradaAutoSend').checked = !!data.autoSendDailyReceipts;
-            document.getElementById('nudScradaAutoHour').value = Number.isInteger(data.autoSendHour) ? data.autoSendHour : 5;
+            // Kolommen scrada_auto_send en scrada_send_zero hydrateren
+            const autoSend = !!(data.scradaAutoSend ?? data.scrada_auto_send);
+            const sendZero = !!(data.scradaSendZero ?? data.scrada_send_zero);
+
+            document.getElementById('chkScradaAutoSend').checked = autoSend;
+            document.getElementById('chkScradaSendZero').checked = sendZero;
+            toggleScradaAutoSend();
+
+            document.getElementById('nudScradaAutoHour').value = Number.isInteger(data.autoSendHour ?? data.auto_send_hour) 
+                ? (data.autoSendHour ?? data.auto_send_hour) 
+                : 5;
         }
 
         function renderScradaJournals(journals, selectedJournalId) {
@@ -1258,10 +1289,7 @@
             
             (journals || []).forEach(j => {
                 const opt = document.createElement('option');
-                // Capture the ID (using both variations just in case)
                 opt.value = j.journalID || j.JournalID || j.id || j.Id || '';
-                
-                // Read the actual name string from Scrada API properties
                 opt.text = j.name || j.Name || j.nameNL || j.displayName || opt.value || 'Journal';
                 
                 if ((opt.value === _currentJournalId) && _currentJournalId !== '') {
@@ -1271,12 +1299,11 @@
             });
         }
 
-        // NEW: This triggers a save automatically when the user selects a journal from the dropdown
         function onJournalSelectionChanged() {
             _currentJournalId = document.getElementById('cboScradaJournals').value;
             
             if (_currentJournalId) {
-                saveScradaSettings(); // Sends the current journal ID to C# to save in DB immediately
+                saveScradaSettings();
                 
                 const lbl = document.getElementById('lblScradaStatus');
                 if (lbl) {
@@ -1310,7 +1337,8 @@
                 password: document.getElementById('txtScradaPassword').value || '',
                 companyId: document.getElementById('txtScradaCompanyId').value || '',
                 journalId: finalJournalId,
-                autoSendDailyReceipts: document.getElementById('chkScradaAutoSend').checked,
+                scradaAutoSend: document.getElementById('chkScradaAutoSend').checked,
+                scradaSendZero: document.getElementById('chkScradaSendZero').checked,
                 autoSendHour: parseInt(document.getElementById('nudScradaAutoHour').value || '5', 10)
             };
             sendHostMessage({ action: 'save_scrada_settings', data: payload });
@@ -1345,7 +1373,7 @@
 
         /* --- MASTER MULTI-TAB SAVE --- */
         function saveAllSettings() {
-            updateActiveStation(); // Sync current station edits before saving
+            updateActiveStation();
 
             const collectPrinters = (tblId) => {
                 const list = [];
@@ -1437,12 +1465,13 @@
                 receiptProductSize: parseInt(document.getElementById('nudReceiptProductSize').value, 10),
                 receiptExtraSize: parseInt(document.getElementById('nudReceiptExtraSize').value, 10),
 
-                // Integraties - Scrada
+                // Integraties - Scrada met scrada_auto_send en scrada_send_zero
                 scradaApiKey: document.getElementById('txtScradaApiKey').value || '',
                 scradaPassword: document.getElementById('txtScradaPassword').value || '',
                 scradaCompanyId: document.getElementById('txtScradaCompanyId').value || '',
                 scradaJournalId: finalJournalId,
-                scradaAutoSendDailyReceipts: document.getElementById('chkScradaAutoSend').checked,
+                scradaAutoSend: document.getElementById('chkScradaAutoSend').checked,
+                scradaSendZero: document.getElementById('chkScradaSendZero').checked,
                 scradaAutoSendHour: parseInt(document.getElementById('nudScradaAutoHour').value || '5', 10)
             };
 
