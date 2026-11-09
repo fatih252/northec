@@ -137,6 +137,7 @@
         }
         .balanced { background-color: #dcfce7; color: #166534; }
         .unbalanced { background-color: #fee2e2; color: #991b1b; }
+        .pending { background-color: #fef3c7; color: #92400e; }
 
         /* Detail Accordion Panel */
         .detail-row td {
@@ -182,7 +183,6 @@
             color: #92400e;
         }
 
-        /* Modal Touch Optimization */
         .modal-content {
             border: none;
             border-radius: 14px;
@@ -206,7 +206,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
                 </div>
                 <div class="modal-body py-4 text-center">
-                    <p class="text-muted mb-3">Weet u zeker dat u de dagontvangsten van deze datum wilt berekenen en doorsturen naar Scrada?</p>
+                    <p class="text-muted mb-3" id="modalDescription">Weet u zeker dat u de dagontvangsten van deze datum wilt berekenen en doorsturen naar Scrada?</p>
                     <div class="p-3 bg-light rounded-3 mb-2">
                         <span class="text-muted small text-uppercase fw-bold d-block mb-1">Geselecteerde Bedrijfsdag</span>
                         <h4 class="fw-bold text-primary mb-1" id="modalTargetDate">-</h4>
@@ -344,11 +344,11 @@
         const unsentAlertBox = document.getElementById('unsentAlertBox');
         const unsentAlertMessage = document.getElementById('unsentAlertMessage');
 
-        // Modal Elements
         const modalElement = document.getElementById('confirmSendModal');
         const confirmModal = new bootstrap.Modal(modalElement);
         const modalTargetDate = document.getElementById('modalTargetDate');
         const modalTargetAmount = document.getElementById('modalTargetAmount');
+        const modalDescription = document.getElementById('modalDescription');
         const btnModalConfirmSend = document.getElementById('btnModalConfirmSend');
         let pendingDateToSend = null;
 
@@ -428,16 +428,22 @@
             }
         });
 
-        // Trigger modal popup in plaats van native confirm()
         function openSendConfirmation(dateStr, formattedDate, kassaOmzet) {
             event.stopPropagation();
             pendingDateToSend = dateStr;
             modalTargetDate.innerText = formattedDate;
-            modalTargetAmount.innerText = `Kassa Omzet: € ${kassaOmzet.toFixed(2)}`;
+
+            if (kassaOmzet === 0) {
+                modalTargetAmount.innerText = `Kassa Omzet: € 0.00 (Sluitingsdag / Nulomzet)`;
+                modalDescription.innerText = `Er is geen omzet geregistreerd voor deze datum. Weet u zeker dat u een nulontvangst (€ 0.00) wilt registreren in Scrada?`;
+            } else {
+                modalTargetAmount.innerText = `Kassa Omzet: € ${kassaOmzet.toFixed(2)}`;
+                modalDescription.innerText = `Weet u zeker dat u de dagontvangsten van deze datum wilt berekenen en doorsturen naar Scrada?`;
+            }
+
             confirmModal.show();
         }
 
-        // Uitvoeren verzending na akkoord in modal
         btnModalConfirmSend.addEventListener('click', function() {
             if (!pendingDateToSend) return;
             confirmModal.hide();
@@ -512,11 +518,16 @@
             let html = '';
 
             data.days.forEach((day, idx) => {
-                const statusBadge = day.isBalanced
-                    ? `<span class="status-badge balanced"><i class="fa-solid fa-check me-1"></i> Klopt</span>`
-                    : `<span class="status-badge unbalanced"><i class="fa-solid fa-triangle-exclamation me-1"></i> Verschil</span>`;
+                let statusBadge = '';
+                if (!day.isSent) {
+                    statusBadge = `<span class="status-badge pending"><i class="fa-solid fa-clock me-1"></i> Niet geboekt</span>`;
+                } else if (day.isBalanced) {
+                    statusBadge = `<span class="status-badge balanced"><i class="fa-solid fa-check me-1"></i> Klopt</span>`;
+                } else {
+                    statusBadge = `<span class="status-badge unbalanced"><i class="fa-solid fa-triangle-exclamation me-1"></i> Verschil</span>`;
+                }
 
-                // Actie-knop: Alleen tonen als NIET verzonden én binnen LAATSTE 5 DAGEN
+                // Actie-knop
                 let actionHtml = '';
                 if (day.isSent) {
                     actionHtml = `<span class="text-success small fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Verzonden</span>`;
@@ -540,7 +551,7 @@
                             <td class="text-end fw-bold">€ ${v.grossAmount.toFixed(2)}</td>
                         </tr>`).join('');
                 } else {
-                    kassaVatHtml = `<tr><td colspan="4" class="text-muted text-center py-2">Geen BTW data</td></tr>`;
+                    kassaVatHtml = `<tr><td colspan="4" class="text-muted text-center py-2">Geen BTW-omzet (omzet € 0.00)</td></tr>`;
                 }
 
                 // Betalingen
@@ -552,14 +563,14 @@
                             <strong>€ ${p.amount.toFixed(2)}</strong>
                         </div>`).join('');
                 } else {
-                    payDetailHtml = `<div class="text-muted small py-1">Geen betalingen</div>`;
+                    payDetailHtml = `<div class="text-muted small py-1">Geen betalingen ontvangen (€ 0.00)</div>`;
                 }
 
                 html += `
                     <tr class="day-row" onclick="toggleDetail(${idx})">
                         <td><strong>${day.formattedDate}</strong> <i class="fa-solid fa-chevron-down ms-1 text-muted small"></i></td>
                         <td class="text-end text-primary fw-bold">€ ${day.kassaOmzet.toFixed(2)}</td>
-                        <td class="text-end text-dark fw-bold">€ ${day.scradaOmzet.toFixed(2)}</td>
+                        <td class="text-end text-dark fw-bold">${day.isSent ? `€ ${day.scradaOmzet.toFixed(2)}` : `<span class="text-muted">-</span>`}</td>
                         <td class="text-end ${day.isBalanced ? 'text-success' : 'text-danger fw-bold'}">
                             € ${day.diff.toFixed(2)}
                         </td>
