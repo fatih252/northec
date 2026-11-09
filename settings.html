@@ -7,19 +7,19 @@
     <style>
         :root {
             /* DASHBOARD LIGHT COLOR PALETTE */
-            --bg-color: #f8fafc;          /* Soft slate background */
-            --surface-color: #ffffff;     /* White card & header background */
-            --surface-hover: #f1f5f9;     /* Subtle hover background */
-            --primary-color: #2563eb;     /* Dashboard Primary Blue */
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --surface-hover: #f1f5f9;
+            --primary-color: #2563eb;
             --primary-hover: #1d4ed8;
-            --success-color: #10b981;     /* Emerald Green */
+            --success-color: #10b981;
             --success-active: #059669;
-            --warning-color: #d97706;     /* Amber Warning */
-            --danger-color: #ef4444;      /* Rose Red */
+            --warning-color: #d97706;
+            --danger-color: #ef4444;
             --danger-active: #dc2626;
-            --text-main: #0f172a;         /* High contrast slate text */
-            --text-muted: #64748b;        /* Muted slate text */
-            --border-color: #e2e8f0;      /* Soft light borders */
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
             --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
         }
 
@@ -44,7 +44,6 @@
             flex-direction: column;
         }
 
-        /* CUSTOM LIGHT SCROLLBARS */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg-color); }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; }
@@ -137,7 +136,6 @@
             align-items: center;
             min-height: 48px;
             gap: 16px;
-            transition: opacity 0.2s ease;
         }
         .form-label { font-size: 15px; font-weight: 700; color: var(--text-main); }
         .form-input, .form-select {
@@ -193,7 +191,6 @@
         }
         input:checked + .slider { background-color: var(--success-color); border-color: var(--success-active); }
         input:checked + .slider:before { transform: translateX(30px); }
-        input:disabled + .slider { opacity: 0.4; cursor: not-allowed; }
 
         /* --- NUMBER STEPPERS --- */
         .stepper { display: flex; align-items: center; }
@@ -262,7 +259,6 @@
             background-color: #f8fafc;
         }
 
-        /* DEDICATED SCROLL BOX FOR TABLES LIST */
         .tables-scroll-box {
             max-height: 480px;
             overflow-y: auto;
@@ -270,7 +266,7 @@
             background-color: #ffffff;
         }
 
-        /* --- KITCHEN ROUTING 3-COLUMN LAYOUT --- */
+        /* --- KITCHEN ROUTING LAYOUT --- */
         .kitchen-layout {
             display: grid;
             grid-template-columns: 300px 1fr 320px;
@@ -535,7 +531,6 @@
         <!-- TAB 3: KITCHEN ROUTING STATIONS -->
         <div id="tab-kitchen" class="tab-pane">
             <div class="kitchen-layout">
-                <!-- Left: Station List -->
                 <div class="card">
                     <div class="card-title">Selecteer Regio</div>
                     <div class="station-list" id="stationListContainer"></div>
@@ -545,7 +540,6 @@
                     </div>
                 </div>
 
-                <!-- Center: Station Details -->
                 <div class="card">
                     <div class="card-title">Configureer Regio</div>
                     
@@ -577,7 +571,6 @@
                     </div>
                 </div>
 
-                <!-- Right: Category Mapping -->
                 <div class="card">
                     <div class="card-title">Wijs Categorie Toe</div>
                     <div class="checkbox-grid" id="stationCategoriesContainer"></div>
@@ -786,13 +779,13 @@
                             <div class="form-row"><span class="form-label">Password</span><input id="txtScradaPassword" class="form-input" type="password" style="flex:1;" /></div>
                             <div class="form-row"><span class="form-label">Company ID</span><input id="txtScradaCompanyId" class="form-input" type="text" style="flex:1;" /></div>
                             
-                            <!-- Nieuwe configuratievelden: scrada_auto_send en scrada_send_zero -->
+                            <!-- Volledig onafhankelijke switches -->
                             <div class="form-row">
-                                <span class="form-label">Automatisch Verzenden</span>
-                                <label class="switch"><input type="checkbox" id="chkScradaAutoSend" onchange="toggleScradaAutoSend()"><span class="slider"></span></label>
+                                <span class="form-label">Automatisch Verzenden (met omzet)</span>
+                                <label class="switch"><input type="checkbox" id="chkScradaAutoSend"><span class="slider"></span></label>
                             </div>
-                            <div class="form-row" id="rowScradaSendZero">
-                                <span class="form-label">Nulomzet Verzenden (€ 0.00)</span>
+                            <div class="form-row">
+                                <span class="form-label">Automatisch Nulomzet Verzenden (€ 0.00)</span>
                                 <label class="switch"><input type="checkbox" id="chkScradaSendZero"><span class="slider"></span></label>
                             </div>
                             <div class="form-row"><span class="form-label">Uur Automatisch Verzenden (0-23)</span><input id="nudScradaAutoHour" class="num-box" type="number" min="0" max="23" value="5" /></div>
@@ -912,19 +905,6 @@
         function togglePicSize() {
             const isChecked = document.getElementById('chkProductImage').checked;
             document.getElementById('rowPicSize').style.display = isChecked ? 'flex' : 'none';
-        }
-
-        function toggleScradaAutoSend() {
-            const isChecked = document.getElementById('chkScradaAutoSend').checked;
-            const chkZero = document.getElementById('chkScradaSendZero');
-            chkZero.disabled = !isChecked;
-            if (!isChecked) {
-                chkZero.checked = false;
-            }
-            const rowZero = document.getElementById('rowScradaSendZero');
-            if (rowZero) {
-                rowZero.style.opacity = isChecked ? '1' : '0.4';
-            }
         }
 
         function playSound() {
@@ -1269,13 +1249,9 @@
             
             _currentJournalId = data.journalId || data.scrada_journal_id || '';
             
-            // Kolommen scrada_auto_send en scrada_send_zero hydrateren
-            const autoSend = !!(data.scradaAutoSend ?? data.scrada_auto_send);
-            const sendZero = !!(data.scradaSendZero ?? data.scrada_send_zero);
-
-            document.getElementById('chkScradaAutoSend').checked = autoSend;
-            document.getElementById('chkScradaSendZero').checked = sendZero;
-            toggleScradaAutoSend();
+            // Volledig onafhankelijke initialisatie
+            document.getElementById('chkScradaAutoSend').checked = !!(data.scradaAutoSend ?? data.scrada_auto_send);
+            document.getElementById('chkScradaSendZero').checked = !!(data.scradaSendZero ?? data.scrada_send_zero);
 
             document.getElementById('nudScradaAutoHour').value = Number.isInteger(data.autoSendHour ?? data.auto_send_hour) 
                 ? (data.autoSendHour ?? data.auto_send_hour) 
@@ -1465,7 +1441,7 @@
                 receiptProductSize: parseInt(document.getElementById('nudReceiptProductSize').value, 10),
                 receiptExtraSize: parseInt(document.getElementById('nudReceiptExtraSize').value, 10),
 
-                // Integraties - Scrada met scrada_auto_send en scrada_send_zero
+                // Integraties - Scrada
                 scradaApiKey: document.getElementById('txtScradaApiKey').value || '',
                 scradaPassword: document.getElementById('txtScradaPassword').value || '',
                 scradaCompanyId: document.getElementById('txtScradaCompanyId').value || '',
