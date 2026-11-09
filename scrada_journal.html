@@ -181,11 +181,48 @@
             margin-bottom: 12px;
             color: #92400e;
         }
+
+        /* Modal Touch Optimization */
+        .modal-content {
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 <body>
     <div class="spinner-overlay" id="loadingSpinner">
         <div class="spinner-border text-primary" role="status" style="width: 3.5rem; height: 3.5rem;"></div>
+    </div>
+
+    <!-- Bootstrap Confirmation Modal -->
+    <div class="modal fade" id="confirmSendModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark">
+                        <i class="fa-solid fa-cloud-arrow-up text-primary me-2"></i> Dagontvangst Doorsturen
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+                </div>
+                <div class="modal-body py-4 text-center">
+                    <p class="text-muted mb-3">Weet u zeker dat u de dagontvangsten van deze datum wilt berekenen en doorsturen naar Scrada?</p>
+                    <div class="p-3 bg-light rounded-3 mb-2">
+                        <span class="text-muted small text-uppercase fw-bold d-block mb-1">Geselecteerde Bedrijfsdag</span>
+                        <h4 class="fw-bold text-primary mb-1" id="modalTargetDate">-</h4>
+                        <div class="text-dark fw-bold" id="modalTargetAmount">Kassa Omzet: € 0.00</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0 d-flex gap-2">
+                    <button type="button" class="btn btn-secondary touch-btn flex-fill" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-xmark me-1"></i> Annuleren
+                    </button>
+                    <button type="button" class="btn btn-primary touch-btn flex-fill" id="btnModalConfirmSend">
+                        <i class="fa-solid fa-paper-plane me-1"></i> Ja, Doorsturen
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="container-fluid px-1">
@@ -294,6 +331,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const fromDateInput = document.getElementById('fromDate');
         const tillDateInput = document.getElementById('tillDate');
@@ -305,6 +343,14 @@
         const alertContainer = document.getElementById('alertContainer');
         const unsentAlertBox = document.getElementById('unsentAlertBox');
         const unsentAlertMessage = document.getElementById('unsentAlertMessage');
+
+        // Modal Elements
+        const modalElement = document.getElementById('confirmSendModal');
+        const confirmModal = new bootstrap.Modal(modalElement);
+        const modalTargetDate = document.getElementById('modalTargetDate');
+        const modalTargetAmount = document.getElementById('modalTargetAmount');
+        const btnModalConfirmSend = document.getElementById('btnModalConfirmSend');
+        let pendingDateToSend = null;
 
         function initDefaultDates() {
             const now = new Date();
@@ -338,7 +384,7 @@
             let till = new Date(now);
 
             if (type === 'today') {
-                // vandaags
+                // Vandaag
             } else if (type === 'yesterday') {
                 from.setDate(from.getDate() - 1);
                 till.setDate(till.getDate() - 1);
@@ -355,14 +401,12 @@
             loadData();
         }
 
-        // Als de datums handmatig worden aangepast, vervalt de geselecteerde knopstatus
         fromDateInput.addEventListener('change', () => { clearQuickButtonStates(); loadData(); });
         tillDateInput.addEventListener('change', () => { clearQuickButtonStates(); loadData(); });
         btnRefresh.addEventListener('click', loadData);
 
         function loadData() {
             if (fromDateInput.value > tillDateInput.value) {
-                alert("Startdatum mag niet later zijn dan einddatum.");
                 return;
             }
 
@@ -384,20 +428,31 @@
             }
         });
 
-        function sendDay(dateStr) {
+        // Trigger modal popup in plaats van native confirm()
+        function openSendConfirmation(dateStr, formattedDate, kassaOmzet) {
             event.stopPropagation();
-            if (confirm(`Wilt u de dagontvangsten van ${dateStr.split('-').reverse().join('-')} nu doorsturen naar Scrada?`)) {
-                spinner.style.display = 'flex';
-                if (window.chrome && window.chrome.webview) {
-                    window.chrome.webview.postMessage({ 
-                        action: 'send_daily_receipt_single', 
-                        date: dateStr,
-                        fromDate: fromDateInput.value,
-                        tillDate: tillDateInput.value
-                    });
-                }
-            }
+            pendingDateToSend = dateStr;
+            modalTargetDate.innerText = formattedDate;
+            modalTargetAmount.innerText = `Kassa Omzet: € ${kassaOmzet.toFixed(2)}`;
+            confirmModal.show();
         }
+
+        // Uitvoeren verzending na akkoord in modal
+        btnModalConfirmSend.addEventListener('click', function() {
+            if (!pendingDateToSend) return;
+            confirmModal.hide();
+            spinner.style.display = 'flex';
+
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({ 
+                    action: 'send_daily_receipt_single', 
+                    date: pendingDateToSend,
+                    fromDate: fromDateInput.value,
+                    tillDate: tillDateInput.value
+                });
+            }
+            pendingDateToSend = null;
+        });
 
         function toggleDetail(idx) {
             const el = document.getElementById(`detail_${idx}`);
@@ -407,7 +462,6 @@
         window.renderJournalData = function(response) {
             spinner.style.display = 'none';
 
-            // Waarschuwingsbanner voor niet-verzonden dagen (ondersteunt camelCase & PascalCase)
             const alertData = response.alert || response.Alert;
             const hasAlert = alertData && (alertData.hasAlert || alertData.HasAlert);
             const alertMsg = alertData ? (alertData.message || alertData.Message) : '';
@@ -462,12 +516,13 @@
                     ? `<span class="status-badge balanced"><i class="fa-solid fa-check me-1"></i> Klopt</span>`
                     : `<span class="status-badge unbalanced"><i class="fa-solid fa-triangle-exclamation me-1"></i> Verschil</span>`;
 
+                // Actie-knop: Alleen tonen als NIET verzonden én binnen LAATSTE 5 DAGEN
                 let actionHtml = '';
                 if (day.isSent) {
                     actionHtml = `<span class="text-success small fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Verzonden</span>`;
                 } else if (day.canSend) {
                     actionHtml = `
-                        <button class="btn btn-sm btn-primary touch-btn py-1 px-3" onclick="sendDay('${day.date}')">
+                        <button class="btn btn-sm btn-primary touch-btn py-1 px-3" onclick="openSendConfirmation('${day.date}', '${day.formattedDate}', ${day.kassaOmzet})">
                             <i class="fa-solid fa-paper-plane me-1"></i> Stuur
                         </button>`;
                 } else {
