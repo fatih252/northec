@@ -169,6 +169,7 @@
             font-size: 0.85rem;
             font-weight: 600;
             border-radius: 6px;
+            transition: all 0.15s ease-in-out;
         }
 
         .unsent-alert-box {
@@ -217,7 +218,7 @@
             </div>
         </div>
 
-        <!-- Filter Bar (Standaard Vandaag) -->
+        <!-- Filter Bar -->
         <div class="card p-2">
             <div class="row g-2 align-items-center">
                 <div class="col-lg-4 col-md-6 col-12">
@@ -228,12 +229,12 @@
                         <input type="date" id="tillDate" class="form-control touch-input">
                     </div>
                 </div>
-                <div class="col-lg-8 col-md-6 col-12 d-flex gap-1 flex-wrap justify-content-md-end">
-                    <button class="btn btn-primary quick-btn px-3" onclick="setQuickDate('today')">Vandaag</button>
-                    <button class="btn btn-outline-primary quick-btn px-2" onclick="setQuickDate('yesterday')">Gisteren</button>
-                    <button class="btn btn-outline-primary quick-btn px-2" onclick="setQuickDate('last7')">7 Dagen</button>
-                    <button class="btn btn-outline-primary quick-btn px-2" onclick="setQuickDate('last30')">30 Dagen</button>
-                    <button class="btn btn-outline-primary quick-btn px-2" onclick="setQuickDate('thisMonth')">Deze Maand</button>
+                <div class="col-lg-8 col-md-6 col-12 d-flex gap-1 flex-wrap justify-content-md-end" id="quickBtnGroup">
+                    <button class="btn btn-primary quick-btn px-3" data-range="today" onclick="setQuickDate('today', this)">Vandaag</button>
+                    <button class="btn btn-outline-primary quick-btn px-2" data-range="yesterday" onclick="setQuickDate('yesterday', this)">Gisteren</button>
+                    <button class="btn btn-outline-primary quick-btn px-2" data-range="last7" onclick="setQuickDate('last7', this)">7 Dagen</button>
+                    <button class="btn btn-outline-primary quick-btn px-2" data-range="last30" onclick="setQuickDate('last30', this)">30 Dagen</button>
+                    <button class="btn btn-outline-primary quick-btn px-2" data-range="thisMonth" onclick="setQuickDate('thisMonth', this)">Deze Maand</button>
                 </div>
             </div>
         </div>
@@ -243,7 +244,7 @@
         <!-- KPI Summary Cards -->
         <div class="kpi-container" id="kpiBar">
             <div class="kpi-box border-start border-4 border-primary">
-                <div class="kpi-title">Kassa Omzet (Z-Rapport)</div>
+                <div class="kpi-title">Kassa Omzet</div>
                 <div class="kpi-amount text-primary" id="kpiKassa">€ 0.00</div>
             </div>
             <div class="kpi-box border-start border-4 border-info">
@@ -305,7 +306,6 @@
         const unsentAlertBox = document.getElementById('unsentAlertBox');
         const unsentAlertMessage = document.getElementById('unsentAlertMessage');
 
-        // Standaard VANDAAG (met nachthoreca-afhandeling vóór 05:00)
         function initDefaultDates() {
             const now = new Date();
             if (now.getHours() < 5) now.setDate(now.getDate() - 1);
@@ -317,7 +317,20 @@
 
         initDefaultDates();
 
-        function setQuickDate(type) {
+        function clearQuickButtonStates() {
+            document.querySelectorAll('#quickBtnGroup .quick-btn').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-primary');
+            });
+        }
+
+        function setQuickDate(type, btnElement) {
+            clearQuickButtonStates();
+            if (btnElement) {
+                btnElement.classList.remove('btn-outline-primary');
+                btnElement.classList.add('btn-primary');
+            }
+
             const now = new Date();
             if (now.getHours() < 5) now.setDate(now.getDate() - 1);
 
@@ -342,6 +355,11 @@
             loadData();
         }
 
+        // Als de datums handmatig worden aangepast, vervalt de geselecteerde knopstatus
+        fromDateInput.addEventListener('change', () => { clearQuickButtonStates(); loadData(); });
+        tillDateInput.addEventListener('change', () => { clearQuickButtonStates(); loadData(); });
+        btnRefresh.addEventListener('click', loadData);
+
         function loadData() {
             if (fromDateInput.value > tillDateInput.value) {
                 alert("Startdatum mag niet later zijn dan einddatum.");
@@ -359,10 +377,6 @@
                 });
             }
         }
-
-        fromDateInput.addEventListener('change', loadData);
-        tillDateInput.addEventListener('change', loadData);
-        btnRefresh.addEventListener('click', loadData);
 
         btnClose.addEventListener('click', function() {
             if (window.chrome && window.chrome.webview) {
@@ -393,10 +407,14 @@
         window.renderJournalData = function(response) {
             spinner.style.display = 'none';
 
-            // Waarschuwingsbanner voor niet-verzonden dagen (vandaag/gisteren)
-            if (response.alert && response.alert.hasAlert) {
+            // Waarschuwingsbanner voor niet-verzonden dagen (ondersteunt camelCase & PascalCase)
+            const alertData = response.alert || response.Alert;
+            const hasAlert = alertData && (alertData.hasAlert || alertData.HasAlert);
+            const alertMsg = alertData ? (alertData.message || alertData.Message) : '';
+
+            if (hasAlert) {
                 unsentAlertBox.classList.remove('d-none');
-                unsentAlertMessage.innerText = response.alert.message;
+                unsentAlertMessage.innerText = alertMsg;
             } else {
                 unsentAlertBox.classList.add('d-none');
             }
@@ -456,7 +474,7 @@
                     actionHtml = `<span class="text-muted small">&mdash;</span>`;
                 }
 
-                // Detail BTW regels (Kassa uitsplitsing)
+                // BTW regels
                 let kassaVatHtml = '';
                 if (day.kassaVatBreakdown && day.kassaVatBreakdown.length > 0) {
                     kassaVatHtml = day.kassaVatBreakdown.map(v => `
@@ -467,10 +485,10 @@
                             <td class="text-end fw-bold">€ ${v.grossAmount.toFixed(2)}</td>
                         </tr>`).join('');
                 } else {
-                    kassaVatHtml = `<tr><td colspan="4" class="text-muted text-center py-2">Geen Kassa BTW data</td></tr>`;
+                    kassaVatHtml = `<tr><td colspan="4" class="text-muted text-center py-2">Geen BTW data</td></tr>`;
                 }
 
-                // Detail Betalingen
+                // Betalingen
                 let payDetailHtml = '';
                 if (day.paymentLines && day.paymentLines.length > 0) {
                     payDetailHtml = day.paymentLines.map(p => `
@@ -500,7 +518,7 @@
                                 <div class="col-md-7 col-12">
                                     <div class="detail-card">
                                         <div class="fw-bold text-secondary mb-2 small text-uppercase">
-                                            <i class="fa-solid fa-chart-pie me-1"></i> Kassa BTW Specificatie (Z-Rapport)
+                                            <i class="fa-solid fa-chart-pie me-1"></i> Kassa BTW Specificatie
                                         </div>
                                         <table class="table table-sm table-borderless mb-0">
                                             <thead>
