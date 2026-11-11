@@ -6,7 +6,6 @@
     <title>Instellingen</title>
     <style>
         :root {
-            /* DASHBOARD LIGHT COLOR PALETTE */
             --bg-color: #f8fafc;
             --surface-color: #ffffff;
             --surface-hover: #f1f5f9;
@@ -49,7 +48,6 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
 
-        /* --- APP HEADER --- */
         .app-header {
             background-color: var(--surface-color);
             padding: 16px 28px;
@@ -66,7 +64,6 @@
             font-size: 13px; font-weight: 800; padding: 4px 12px; border-radius: 12px !important; text-transform: uppercase;
         }
 
-        /* --- TAB NAVIGATION --- */
         .nav-tabs {
             display: flex;
             background-color: var(--surface-color);
@@ -94,7 +91,6 @@
             background-color: var(--bg-color);
         }
 
-        /* --- CONTENT AREA --- */
         .tab-container {
             flex: 1;
             padding: 24px;
@@ -104,7 +100,6 @@
         .tab-pane { display: none; height: 100%; }
         .tab-pane.active { display: block; }
 
-        /* --- GRID & CARDS --- */
         .settings-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
@@ -129,7 +124,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* --- FORM CONTROLS --- */
         .form-row {
             display: flex;
             justify-content: space-between;
@@ -167,7 +161,6 @@
         }
         .num-box:focus { border-color: var(--primary-color); }
 
-        /* --- TOUCH TOGGLE SWITCH --- */
         .switch {
             position: relative;
             display: inline-block;
@@ -192,7 +185,6 @@
         input:checked + .slider { background-color: var(--success-color); border-color: var(--success-active); }
         input:checked + .slider:before { transform: translateX(30px); }
 
-        /* --- NUMBER STEPPERS --- */
         .stepper { display: flex; align-items: center; }
         .stepper-btn {
             width: 48px; height: 48px;
@@ -213,7 +205,6 @@
             color: var(--text-main); font-size: 17px; font-weight: 900; text-align: center;
         }
 
-        /* --- DATA TABLES & TIME CONTROLS --- */
         .table-view {
             width: 100%;
             border-collapse: collapse;
@@ -221,10 +212,10 @@
             border: 2px solid var(--border-color);
         }
         .table-view th, .table-view td {
-            padding: 14px 16px;
+            padding: 12px 14px;
             text-align: left;
             border-bottom: 1px solid var(--border-color);
-            font-size: 15px;
+            font-size: 14px;
         }
         .table-view th {
             background-color: #f1f5f9;
@@ -239,13 +230,14 @@
             gap: 6px;
         }
         .time-picker-input {
-            height: 44px;
-            padding: 0 8px;
+            height: 42px;
+            width: 100px;
+            padding: 0 6px;
             background-color: #ffffff;
             border: 2px solid var(--border-color);
             color: var(--text-main);
             font-weight: 700;
-            font-size: 15px;
+            font-size: 14px;
             outline: none;
         }
         .time-picker-input:disabled {
@@ -266,7 +258,6 @@
             background-color: #ffffff;
         }
 
-        /* --- KITCHEN ROUTING LAYOUT --- */
         .kitchen-layout {
             display: grid;
             grid-template-columns: 300px 1fr 320px;
@@ -320,7 +311,6 @@
         .integration-pane { display: none; }
         .integration-pane.active { display: block; }
 
-        /* --- BUTTONS --- */
         .btn-touch {
             height: 52px;
             padding: 0 24px;
@@ -342,7 +332,6 @@
         .btn-danger:active { background-color: var(--danger-color); color: white; }
         .btn-secondary { background-color: #e2e8f0; color: var(--text-main); }
 
-        /* --- ACTION BAR --- */
         .action-bar {
             background-color: var(--surface-color);
             border-top: 2px solid var(--border-color);
@@ -356,7 +345,6 @@
 </head>
 <body>
 
-    <!-- App Header -->
     <div class="app-header">
         <div class="header-title-group">
             <div class="app-title">INSTELLINGEN</div>
@@ -367,7 +355,6 @@
         </div>
     </div>
 
-    <!-- Navigation Tabs -->
     <div class="nav-tabs">
         <div class="nav-tab active" onclick="switchTab('tab-shop')">Winkel & Kassa</div>
         <div class="nav-tab" onclick="switchTab('tab-printer')">Printers</div>
@@ -380,7 +367,6 @@
         <div class="nav-tab" id="tabHeadCatalog" onclick="switchTab('tab-catalog')">Cataloog Beheer</div>
     </div>
 
-    <!-- Main Container -->
     <div class="tab-container">
 
         <!-- TAB 1: SHOP & POS GENERAL -->
@@ -578,21 +564,35 @@
             </div>
         </div>
 
-        <!-- TAB 4: OPENINGSUREN -->
+        <!-- TAB 4: OPENINGSUREN (LEVERING + AFHALING GESPLITST) -->
         <div id="tab-hours" class="tab-pane">
             <div class="card">
-                <div class="card-title">Winkel Openingsuren</div>
-                <table class="table-view">
-                    <thead>
-                        <tr>
-                            <th style="width: 150px;">Dag</th>
-                            <th>Opening Voormiddag (VM)</th>
-                            <th>Opening Namiddag (NM)</th>
-                            <th style="width: 140px; text-align: center;">Sluitingsdag</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tblHoursBody"></tbody>
-                </table>
+                <div class="card-title d-flex justify-content-between align-items-center">
+                    <span>Winkel Openingsuren</span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="table-view">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" style="width: 130px; vertical-align: middle;">Dag</th>
+                                <th colspan="2" style="text-align: center; border-right: 2px solid var(--border-color); background-color: #f1f5f9;">
+                                    🚚 Levering Uren
+                                </th>
+                                <th colspan="2" style="text-align: center; border-right: 2px solid var(--border-color); background-color: #f8fafc;">
+                                    🛍️ Afhaling Uren <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">(leeg = gelijk aan levering)</span>
+                                </th>
+                                <th rowspan="2" style="width: 120px; text-align: center; vertical-align: middle;">Sluitingsdag</th>
+                            </tr>
+                            <tr>
+                                <th>Voormiddag (VM)</th>
+                                <th style="border-right: 2px solid var(--border-color);">Namiddag (NM)</th>
+                                <th>Voormiddag (VM)</th>
+                                <th style="border-right: 2px solid var(--border-color);">Namiddag (NM)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tblHoursBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -779,7 +779,6 @@
                             <div class="form-row"><span class="form-label">Password</span><input id="txtScradaPassword" class="form-input" type="password" style="flex:1;" /></div>
                             <div class="form-row"><span class="form-label">Company ID</span><input id="txtScradaCompanyId" class="form-input" type="text" style="flex:1;" /></div>
                             
-                            <!-- Volledig onafhankelijke switches -->
                             <div class="form-row">
                                 <span class="form-label">Automatisch Verzenden (met omzet)</span>
                                 <label class="switch"><input type="checkbox" id="chkScradaAutoSend"><span class="slider"></span></label>
@@ -912,7 +911,6 @@
             sendHostMessage({ action: "play_sound", soundName: sound });
         }
 
-        /* --- DATA HYDRATION (POPULATE FROM C#) --- */
         window.renderSettings = function(data) {
             if (!data.isAdmin) {
                 document.getElementById('tabHeadCatalog').style.display = 'none';
@@ -924,13 +922,11 @@
                 document.getElementById('rowComStatus').style.display = 'none';
             }
 
-            // Populate Shop Settings
             document.getElementById('chkCloseShop').checked = !data.shopIsOpen;
             document.getElementById('cboLanguage').value = data.language || 'nl';
             document.getElementById('chkGeneralComment').checked = !!data.generalComment;
             document.getElementById('chkComPort').checked = !!data.phoneModule;
             
-            // Populate COM Ports List
             const comSelect = document.getElementById('cboComList');
             comSelect.innerHTML = '';
             (data.comPorts || []).forEach(p => {
@@ -946,7 +942,6 @@
             document.getElementById('chkBannerVisible').checked = !!data.showPromo;
             document.getElementById('txtBannerText').value = data.promoText || '';
 
-            // Populate Sounds
             const soundSelect = document.getElementById('cboOrderSound');
             soundSelect.innerHTML = '';
             (data.orderSounds || []).forEach(s => {
@@ -963,31 +958,26 @@
             document.getElementById('chkOrderTracking').checked = !!data.orderTracking;
             document.getElementById('chkModernUi').checked = !!data.modernUI;
 
-            // Populate Printers Options
             document.getElementById('chkNoAutomaticPrint').checked = !!data.disableAutoPrint;
             document.getElementById('chkCashDrawerAuto').checked = !!data.cashDrawerAuto;
             document.getElementById('chkDelteKitchenPrint').checked = !!data.deltaKitchenPrint;
 
-            // Render Printer Grids
             renderPrinterGrid('tblPrintersDelivery', data.installedPrinters, data.deliveryPrinters);
             renderPrinterGrid('tblPrintersTakeaway', data.installedPrinters, data.takeawayPrinters);
             renderPrinterGrid('tblPrintersTable', data.installedPrinters, data.tablePrinters);
             renderPrinterGrid('tblPrintersZReport', data.installedPrinters, data.zreportPrinters);
             renderPrinterGrid('tblPrintersCourier', data.installedPrinters, data.courierPrinters);
 
-            // Populate Kitchen Stations
             currentStations = data.kitchenStations || [];
             populateStationPrinters(data.installedPrinters, data.fallbackPrinter);
             populateStationCategories(data.allCategories);
             renderStationList();
 
-            // Populate Opening Hours Table with Time Pickers
+            // Populate Opening Hours (Levering + Afhaling met fallback)
             renderHoursTable(data.hoursList);
 
-            // Populate Tables Grid
             renderTablesGrid(data.tablesList);
 
-            // Populate Menu Settings
             document.getElementById('chkPricesVisibleMenu').checked = !!data.showPriceInOrdering;
             document.getElementById('chkClientNameVisible').checked = !!data.visibleClientName;
             document.getElementById('chkProductImage').checked = !!data.productImage;
@@ -1001,7 +991,6 @@
             document.getElementById('cboProductSorting').value = data.productSorting || 'abc';
             document.getElementById('cboExtrasSorting').value = data.extrasSorting || 'abc';
 
-            // Populate Receipt Settings
             document.getElementById('chkQrCodeAddress').checked = !!data.printQRcode;
             document.getElementById('chkAutoPrintTable').checked = !!data.autoPrintTable;
             document.getElementById('chkGroupedPrinting').checked = !!data.groupPrinting;
@@ -1015,7 +1004,6 @@
             togglePicSize();
         };
 
-        /* --- PRINTER GRID HELPER --- */
         function renderPrinterGrid(tblId, installedPrinters, mappedPrinters) {
             const tbl = document.getElementById(tblId);
             tbl.innerHTML = `<thead><tr><th>Printer Naam</th><th>Aantal Kopies</th></tr></thead><tbody></tbody>`;
@@ -1048,7 +1036,6 @@
             input.value = val;
         }
 
-        /* --- KITCHEN STATIONS LOGIC --- */
         function populateStationPrinters(installedPrinters, fallbackPrinter) {
             const cbo1 = document.getElementById('cboStationPrinter');
             const cbo2 = document.getElementById('cboFallbackPrinter');
@@ -1155,11 +1142,11 @@
             }
         }
 
-        /* --- HOURS TABLE LOGIC --- */
+        /* --- HOURS TABLE LOGIC MET AFHALING FALLBACK --- */
         function parseTimeRange(rangeStr) {
             if (!rangeStr || !rangeStr.includes('-')) return { start: '', end: '' };
             const parts = rangeStr.split('-');
-            return { start: parts[0] || '', end: parts[1] || '' };
+            return { start: parts[0] ? parts[0].trim() : '', end: parts[1] ? parts[1].trim() : '' };
         }
 
         function renderHoursTable(hoursList) {
@@ -1168,13 +1155,25 @@
             (hoursList || []).forEach(h => {
                 const am = parseTimeRange(h.am_hour);
                 const pm = parseTimeRange(h.pm_hour);
+
+                // Fallback: Als afhaling null of leeg is, neem leveringsuren over
+                const amTakeawayRaw = (h.am_hour_takeaway && h.am_hour_takeaway.trim() !== '') 
+                    ? h.am_hour_takeaway 
+                    : (h.am_hour || '');
+                const pmTakeawayRaw = (h.pm_hour_takeaway && h.pm_hour_takeaway.trim() !== '') 
+                    ? h.pm_hour_takeaway 
+                    : (h.pm_hour || '');
+
+                const amTakeaway = parseTimeRange(amTakeawayRaw);
+                const pmTakeaway = parseTimeRange(pmTakeawayRaw);
+
                 const isClosed = !!h.closeDay;
 
                 const tr = document.createElement('tr');
                 if (isClosed) tr.className = 'hours-row-disabled';
 
                 tr.innerHTML = `
-                    <td style="font-weight:800;">${h.name}</td>
+                    <td style="font-weight:800; vertical-align:middle;">${h.name}</td>
                     <td>
                         <div class="time-picker-range">
                             <input type="time" class="time-picker-input hour-am-start" data-hid="${h.hours_id}" value="${am.start}" ${isClosed ? 'disabled' : ''} />
@@ -1182,14 +1181,28 @@
                             <input type="time" class="time-picker-input hour-am-end" data-hid="${h.hours_id}" value="${am.end}" ${isClosed ? 'disabled' : ''} />
                         </div>
                     </td>
-                    <td>
+                    <td style="border-right: 2px solid var(--border-color);">
                         <div class="time-picker-range">
                             <input type="time" class="time-picker-input hour-pm-start" data-hid="${h.hours_id}" value="${pm.start}" ${isClosed ? 'disabled' : ''} />
                             <span>tot</span>
                             <input type="time" class="time-picker-input hour-pm-end" data-hid="${h.hours_id}" value="${pm.end}" ${isClosed ? 'disabled' : ''} />
                         </div>
                     </td>
-                    <td style="text-align:center;">
+                    <td>
+                        <div class="time-picker-range">
+                            <input type="time" class="time-picker-input hour-takeaway-am-start" data-hid="${h.hours_id}" value="${amTakeaway.start}" ${isClosed ? 'disabled' : ''} />
+                            <span>tot</span>
+                            <input type="time" class="time-picker-input hour-takeaway-am-end" data-hid="${h.hours_id}" value="${amTakeaway.end}" ${isClosed ? 'disabled' : ''} />
+                        </div>
+                    </td>
+                    <td style="border-right: 2px solid var(--border-color);">
+                        <div class="time-picker-range">
+                            <input type="time" class="time-picker-input hour-takeaway-pm-start" data-hid="${h.hours_id}" value="${pmTakeaway.start}" ${isClosed ? 'disabled' : ''} />
+                            <span>tot</span>
+                            <input type="time" class="time-picker-input hour-takeaway-pm-end" data-hid="${h.hours_id}" value="${pmTakeaway.end}" ${isClosed ? 'disabled' : ''} />
+                        </div>
+                    </td>
+                    <td style="text-align:center; vertical-align:middle;">
                         <label class="switch">
                             <input type="checkbox" class="hour-closed" data-hid="${h.hours_id}" ${isClosed ? 'checked' : ''} onchange="toggleHoursRowDisabled(this)" />
                             <span class="slider"></span>
@@ -1207,7 +1220,6 @@
             row.classList.toggle('hours-row-disabled', chk.checked);
         }
 
-        /* --- TABLES LIST LOGIC --- */
         function renderTablesGrid(tablesList) {
             const tbody = document.getElementById('tblTablesBody');
             tbody.innerHTML = '';
@@ -1237,7 +1249,6 @@
             if (target) target.classList.add('active');
         }
 
-        /* --- SCRADA INTEGRATION LOGIC --- */
         function renderScradaSettings(data) {
             data = data || {};
             const defaultItem = document.querySelector('#integrationList .integration-item[data-target="integration-scrada"]');
@@ -1249,7 +1260,6 @@
             
             _currentJournalId = data.journalId || data.scrada_journal_id || '';
             
-            // Volledig onafhankelijke initialisatie
             document.getElementById('chkScradaAutoSend').checked = !!(data.scradaAutoSend ?? data.scrada_auto_send);
             document.getElementById('chkScradaSendZero').checked = !!(data.scradaSendZero ?? data.scrada_send_zero);
 
@@ -1347,7 +1357,7 @@
             sendHostMessage({ action: 'create_scrada_journal', journalName: name });
         }
 
-        /* --- MASTER MULTI-TAB SAVE --- */
+        /* --- MASTER MULTI-TAB SAVE (INCLUSIEF TAKEAWAY UREN) --- */
         function saveAllSettings() {
             updateActiveStation();
 
@@ -1361,20 +1371,31 @@
 
             const hoursPayload = [];
             document.querySelectorAll('#tblHoursBody tr').forEach(tr => {
-                const amStart = tr.querySelector('.hour-am-start').value;
-                const amEnd = tr.querySelector('.hour-am-end').value;
-                const pmStart = tr.querySelector('.hour-pm-start').value;
-                const pmEnd = tr.querySelector('.hour-pm-end').value;
+                const amStart = tr.querySelector('.hour-am-start')?.value || '';
+                const amEnd = tr.querySelector('.hour-am-end')?.value || '';
+                const pmStart = tr.querySelector('.hour-pm-start')?.value || '';
+                const pmEnd = tr.querySelector('.hour-pm-end')?.value || '';
+
+                const amTakeawayStart = tr.querySelector('.hour-takeaway-am-start')?.value || '';
+                const amTakeawayEnd = tr.querySelector('.hour-takeaway-am-end')?.value || '';
+                const pmTakeawayStart = tr.querySelector('.hour-takeaway-pm-start')?.value || '';
+                const pmTakeawayEnd = tr.querySelector('.hour-takeaway-pm-end')?.value || '';
+
                 const closed = tr.querySelector('.hour-closed').checked;
                 const hid = parseInt(tr.querySelector('.hour-closed').dataset.hid, 10);
 
                 const amStr = (amStart && amEnd) ? `${amStart}-${amEnd}` : '';
                 const pmStr = (pmStart && pmEnd) ? `${pmStart}-${pmEnd}` : '';
 
+                const amTakeawayStr = (amTakeawayStart && amTakeawayEnd) ? `${amTakeawayStart}-${amTakeawayEnd}` : '';
+                const pmTakeawayStr = (pmTakeawayStart && pmTakeawayEnd) ? `${pmTakeawayStart}-${pmTakeawayEnd}` : '';
+
                 hoursPayload.push({
                     hours_id: hid,
                     am_hour: amStr,
                     pm_hour: pmStr,
+                    am_hour_takeaway: amTakeawayStr,
+                    pm_hour_takeaway: pmTakeawayStr,
                     closeDay: closed
                 });
             });
@@ -1383,7 +1404,6 @@
             const finalJournalId = cboVal || _currentJournalId;
 
             const payload = {
-                // Shop
                 shopIsOpen: !document.getElementById('chkCloseShop').checked,
                 language: document.getElementById('cboLanguage').value,
                 generalComment: document.getElementById('chkGeneralComment').checked,
@@ -1399,7 +1419,6 @@
                 orderTracking: document.getElementById('chkOrderTracking').checked,
                 modernUI: document.getElementById('chkModernUi').checked,
 
-                // Printers
                 disableAutoPrint: document.getElementById('chkNoAutomaticPrint').checked,
                 cashDrawerAuto: document.getElementById('chkCashDrawerAuto').checked,
                 deltaKitchenPrint: document.getElementById('chkDelteKitchenPrint').checked,
@@ -1410,14 +1429,11 @@
                 zreportPrinters: collectPrinters('tblPrintersZReport'),
                 courierPrinters: collectPrinters('tblPrintersCourier'),
 
-                // Kitchen Stations
                 kitchenStations: currentStations,
                 fallbackPrinter: document.getElementById('cboFallbackPrinter').value,
 
-                // Hours
                 hoursList: hoursPayload,
 
-                // Menu
                 showPriceInOrdering: document.getElementById('chkPricesVisibleMenu').checked,
                 visibleClientName: document.getElementById('chkClientNameVisible').checked,
                 productImage: document.getElementById('chkProductImage').checked,
@@ -1431,7 +1447,6 @@
                 productSorting: document.getElementById('cboProductSorting').value,
                 extrasSorting: document.getElementById('cboExtrasSorting').value,
 
-                // Receipt
                 printQRcode: document.getElementById('chkQrCodeAddress').checked,
                 autoPrintTable: document.getElementById('chkAutoPrintTable').checked,
                 groupPrinting: document.getElementById('chkGroupedPrinting').checked,
@@ -1441,7 +1456,6 @@
                 receiptProductSize: parseInt(document.getElementById('nudReceiptProductSize').value, 10),
                 receiptExtraSize: parseInt(document.getElementById('nudReceiptExtraSize').value, 10),
 
-                // Integraties - Scrada
                 scradaApiKey: document.getElementById('txtScradaApiKey').value || '',
                 scradaPassword: document.getElementById('txtScradaPassword').value || '',
                 scradaCompanyId: document.getElementById('txtScradaCompanyId').value || '',
