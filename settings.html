@@ -6,6 +6,7 @@
     <title>Instellingen</title>
     <style>
         :root {
+            /* DASHBOARD LIGHT COLOR PALETTE */
             --bg-color: #f8fafc;
             --surface-color: #ffffff;
             --surface-hover: #f1f5f9;
@@ -212,10 +213,10 @@
             border: 2px solid var(--border-color);
         }
         .table-view th, .table-view td {
-            padding: 12px 14px;
+            padding: 14px 16px;
             text-align: left;
             border-bottom: 1px solid var(--border-color);
-            font-size: 14px;
+            font-size: 15px;
         }
         .table-view th {
             background-color: #f1f5f9;
@@ -227,17 +228,16 @@
         .time-picker-range {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
         .time-picker-input {
-            height: 42px;
-            width: 100px;
-            padding: 0 6px;
+            height: 44px;
+            padding: 0 10px;
             background-color: #ffffff;
             border: 2px solid var(--border-color);
             color: var(--text-main);
             font-weight: 700;
-            font-size: 14px;
+            font-size: 15px;
             outline: none;
         }
         .time-picker-input:disabled {
@@ -564,33 +564,46 @@
             </div>
         </div>
 
-        <!-- TAB 4: OPENINGSUREN (LEVERING + AFHALING GESPLITST) -->
+        <!-- TAB 4: OPENINGSUREN (SUB-TABS VOOR LEVERING & AFHALING) -->
         <div id="tab-hours" class="tab-pane">
             <div class="card">
-                <div class="card-title d-flex justify-content-between align-items-center">
-                    <span>Winkel Openingsuren</span>
+                <div class="card-title">Winkel Openingsuren</div>
+                
+                <div class="nav-tabs" style="background: none; border-bottom: 2px solid var(--border-color); margin-bottom: 16px;">
+                    <div class="nav-tab active" onclick="switchHoursTab('htab-delivery')">🚚 Levering Uren</div>
+                    <div class="nav-tab" onclick="switchHoursTab('htab-takeaway')">🛍️ Afhaling Uren</div>
                 </div>
-                <div style="overflow-x: auto;">
+
+                <!-- Sub-tab 1: Levering -->
+                <div id="htab-delivery" class="hours-pane active">
                     <table class="table-view">
                         <thead>
                             <tr>
-                                <th rowspan="2" style="width: 130px; vertical-align: middle;">Dag</th>
-                                <th colspan="2" style="text-align: center; border-right: 2px solid var(--border-color); background-color: #f1f5f9;">
-                                    🚚 Levering Uren
-                                </th>
-                                <th colspan="2" style="text-align: center; border-right: 2px solid var(--border-color); background-color: #f8fafc;">
-                                    🛍️ Afhaling Uren <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">(leeg = gelijk aan levering)</span>
-                                </th>
-                                <th rowspan="2" style="width: 120px; text-align: center; vertical-align: middle;">Sluitingsdag</th>
-                            </tr>
-                            <tr>
-                                <th>Voormiddag (VM)</th>
-                                <th style="border-right: 2px solid var(--border-color);">Namiddag (NM)</th>
-                                <th>Voormiddag (VM)</th>
-                                <th style="border-right: 2px solid var(--border-color);">Namiddag (NM)</th>
+                                <th style="width: 160px;">Dag</th>
+                                <th>Opening Voormiddag (VM)</th>
+                                <th>Opening Namiddag (NM)</th>
+                                <th style="width: 140px; text-align: center;">Sluitingsdag</th>
                             </tr>
                         </thead>
-                        <tbody id="tblHoursBody"></tbody>
+                        <tbody id="tblHoursDeliveryBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Sub-tab 2: Afhaling -->
+                <div id="htab-takeaway" class="hours-pane" style="display:none;">
+                    <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; background: #eff6ff; border: 1px solid #bfdbfe; padding: 10px 14px;">
+                        💡 <strong>Opmerking:</strong> Indien afhalingsuren niet specifiek zijn ingevuld, worden automatisch de leveringsuren gehanteerd.
+                    </div>
+                    <table class="table-view">
+                        <thead>
+                            <tr>
+                                <th style="width: 160px;">Dag</th>
+                                <th>Afhaling Voormiddag (VM)</th>
+                                <th>Afhaling Namiddag (NM)</th>
+                                <th style="width: 140px; text-align: center;">Sluitingsdag</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tblHoursTakeawayBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -838,9 +851,9 @@
 
     </div>
 
-    <!-- Action Bar -->
+    <!-- Action Bar: Annuleren aangepast naar Sluiten -->
     <div class="action-bar">
-        <button class="btn-touch btn-secondary" onclick="sendAction('close')">Annuleren</button>
+        <button class="btn-touch btn-secondary" onclick="sendAction('close')">Sluiten</button>
         <button class="btn-touch btn-success" style="min-width: 220px;" onclick="saveAllSettings()">Opslaan & Sluiten</button>
     </div>
 
@@ -870,6 +883,10 @@
                 switchPrinterTab('ptab-delivery');
             }
 
+            if (tabId === 'tab-hours') {
+                switchHoursTab('htab-delivery');
+            }
+
             if (tabId === 'tab-integrations') {
                 loadScradaJournals();
             }
@@ -885,6 +902,18 @@
             if (targetTab) targetTab.classList.add('active');
 
             document.getElementById(ptabId).style.display = 'block';
+        }
+
+        function switchHoursTab(htabId) {
+            document.querySelectorAll('#tab-hours .nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.hours-pane').forEach(p => p.style.display = 'none');
+
+            const targetTab = Array.from(document.querySelectorAll('#tab-hours .nav-tab')).find(
+                t => t.getAttribute('onclick').includes(htabId)
+            );
+            if (targetTab) targetTab.classList.add('active');
+
+            document.getElementById(htabId).style.display = 'block';
         }
 
         function stepVal(inputId, delta) {
@@ -973,7 +1002,6 @@
             populateStationCategories(data.allCategories);
             renderStationList();
 
-            // Populate Opening Hours (Levering + Afhaling met fallback)
             renderHoursTable(data.hoursList);
 
             renderTablesGrid(data.tablesList);
@@ -1142,7 +1170,7 @@
             }
         }
 
-        /* --- HOURS TABLE LOGIC MET AFHALING FALLBACK --- */
+        /* --- HOURS TABLE LOGIC MET SUB-TABS & SYNCHROON SLUITINGSDAG --- */
         function parseTimeRange(rangeStr) {
             if (!rangeStr || !rangeStr.includes('-')) return { start: '', end: '' };
             const parts = rangeStr.split('-');
@@ -1150,56 +1178,36 @@
         }
 
         function renderHoursTable(hoursList) {
-            const tbody = document.getElementById('tblHoursBody');
-            tbody.innerHTML = '';
+            const tbodyDel = document.getElementById('tblHoursDeliveryBody');
+            const tbodyTak = document.getElementById('tblHoursTakeawayBody');
+            tbodyDel.innerHTML = '';
+            tbodyTak.innerHTML = '';
+
             (hoursList || []).forEach(h => {
+                const isClosed = !!h.closeDay;
+
+                // 1. Levering Uren
                 const am = parseTimeRange(h.am_hour);
                 const pm = parseTimeRange(h.pm_hour);
 
-                // Fallback: Als afhaling null of leeg is, neem leveringsuren over
-                const amTakeawayRaw = (h.am_hour_takeaway && h.am_hour_takeaway.trim() !== '') 
-                    ? h.am_hour_takeaway 
-                    : (h.am_hour || '');
-                const pmTakeawayRaw = (h.pm_hour_takeaway && h.pm_hour_takeaway.trim() !== '') 
-                    ? h.pm_hour_takeaway 
-                    : (h.pm_hour || '');
+                const trDel = document.createElement('tr');
+                trDel.setAttribute('data-hid', h.hours_id);
+                if (isClosed) trDel.className = 'hours-row-disabled';
 
-                const amTakeaway = parseTimeRange(amTakeawayRaw);
-                const pmTakeaway = parseTimeRange(pmTakeawayRaw);
-
-                const isClosed = !!h.closeDay;
-
-                const tr = document.createElement('tr');
-                if (isClosed) tr.className = 'hours-row-disabled';
-
-                tr.innerHTML = `
+                trDel.innerHTML = `
                     <td style="font-weight:800; vertical-align:middle;">${h.name}</td>
                     <td>
                         <div class="time-picker-range">
-                            <input type="time" class="time-picker-input hour-am-start" data-hid="${h.hours_id}" value="${am.start}" ${isClosed ? 'disabled' : ''} />
+                            <input type="time" class="time-picker-input hour-am-start" value="${am.start}" ${isClosed ? 'disabled' : ''} />
                             <span>tot</span>
-                            <input type="time" class="time-picker-input hour-am-end" data-hid="${h.hours_id}" value="${am.end}" ${isClosed ? 'disabled' : ''} />
-                        </div>
-                    </td>
-                    <td style="border-right: 2px solid var(--border-color);">
-                        <div class="time-picker-range">
-                            <input type="time" class="time-picker-input hour-pm-start" data-hid="${h.hours_id}" value="${pm.start}" ${isClosed ? 'disabled' : ''} />
-                            <span>tot</span>
-                            <input type="time" class="time-picker-input hour-pm-end" data-hid="${h.hours_id}" value="${pm.end}" ${isClosed ? 'disabled' : ''} />
+                            <input type="time" class="time-picker-input hour-am-end" value="${am.end}" ${isClosed ? 'disabled' : ''} />
                         </div>
                     </td>
                     <td>
                         <div class="time-picker-range">
-                            <input type="time" class="time-picker-input hour-takeaway-am-start" data-hid="${h.hours_id}" value="${amTakeaway.start}" ${isClosed ? 'disabled' : ''} />
+                            <input type="time" class="time-picker-input hour-pm-start" value="${pm.start}" ${isClosed ? 'disabled' : ''} />
                             <span>tot</span>
-                            <input type="time" class="time-picker-input hour-takeaway-am-end" data-hid="${h.hours_id}" value="${amTakeaway.end}" ${isClosed ? 'disabled' : ''} />
-                        </div>
-                    </td>
-                    <td style="border-right: 2px solid var(--border-color);">
-                        <div class="time-picker-range">
-                            <input type="time" class="time-picker-input hour-takeaway-pm-start" data-hid="${h.hours_id}" value="${pmTakeaway.start}" ${isClosed ? 'disabled' : ''} />
-                            <span>tot</span>
-                            <input type="time" class="time-picker-input hour-takeaway-pm-end" data-hid="${h.hours_id}" value="${pmTakeaway.end}" ${isClosed ? 'disabled' : ''} />
+                            <input type="time" class="time-picker-input hour-pm-end" value="${pm.end}" ${isClosed ? 'disabled' : ''} />
                         </div>
                     </td>
                     <td style="text-align:center; vertical-align:middle;">
@@ -1209,15 +1217,55 @@
                         </label>
                     </td>
                 `;
-                tbody.appendChild(tr);
+                tbodyDel.appendChild(trDel);
+
+                // 2. Afhaling Uren (Fallback: neem levering als afhaling leeg is)
+                const amTakRaw = (h.am_hour_takeaway && h.am_hour_takeaway.trim() !== '') ? h.am_hour_takeaway : (h.am_hour || '');
+                const pmTakRaw = (h.pm_hour_takeaway && h.pm_hour_takeaway.trim() !== '') ? h.pm_hour_takeaway : (h.pm_hour || '');
+                const amTak = parseTimeRange(amTakRaw);
+                const pmTak = parseTimeRange(pmTakRaw);
+
+                const trTak = document.createElement('tr');
+                trTak.setAttribute('data-hid', h.hours_id);
+                if (isClosed) trTak.className = 'hours-row-disabled';
+
+                trTak.innerHTML = `
+                    <td style="font-weight:800; vertical-align:middle;">${h.name}</td>
+                    <td>
+                        <div class="time-picker-range">
+                            <input type="time" class="time-picker-input hour-takeaway-am-start" value="${amTak.start}" ${isClosed ? 'disabled' : ''} />
+                            <span>tot</span>
+                            <input type="time" class="time-picker-input hour-takeaway-am-end" value="${amTak.end}" ${isClosed ? 'disabled' : ''} />
+                        </div>
+                    </td>
+                    <td>
+                        <div class="time-picker-range">
+                            <input type="time" class="time-picker-input hour-takeaway-pm-start" value="${pmTak.start}" ${isClosed ? 'disabled' : ''} />
+                            <span>tot</span>
+                            <input type="time" class="time-picker-input hour-takeaway-pm-end" value="${pmTak.end}" ${isClosed ? 'disabled' : ''} />
+                        </div>
+                    </td>
+                    <td style="text-align:center; vertical-align:middle;">
+                        <label class="switch">
+                            <input type="checkbox" class="hour-closed" data-hid="${h.hours_id}" ${isClosed ? 'checked' : ''} onchange="toggleHoursRowDisabled(this)" />
+                            <span class="slider"></span>
+                        </label>
+                    </td>
+                `;
+                tbodyTak.appendChild(trTak);
             });
         }
 
+        // Zorgt dat het uitschakelen/dimmen en de switch in BEIDE sub-tabs synchroon verloopt
         function toggleHoursRowDisabled(chk) {
-            const row = chk.closest('tr');
-            const inputs = row.querySelectorAll('.time-picker-input');
-            inputs.forEach(inp => inp.disabled = chk.checked);
-            row.classList.toggle('hours-row-disabled', chk.checked);
+            const hid = chk.dataset.hid;
+            const isClosed = chk.checked;
+            
+            document.querySelectorAll(`.hour-closed[data-hid="${hid}"]`).forEach(c => c.checked = isClosed);
+            document.querySelectorAll(`tr[data-hid="${hid}"]`).forEach(tr => {
+                tr.querySelectorAll('.time-picker-input').forEach(inp => inp.disabled = isClosed);
+                tr.classList.toggle('hours-row-disabled', isClosed);
+            });
         }
 
         function renderTablesGrid(tablesList) {
@@ -1357,7 +1405,7 @@
             sendHostMessage({ action: 'create_scrada_journal', journalName: name });
         }
 
-        /* --- MASTER MULTI-TAB SAVE (INCLUSIEF TAKEAWAY UREN) --- */
+        /* --- MASTER SAVE: VERZAMELT ZOWEL LEVERING ALS AFHALING --- */
         function saveAllSettings() {
             updateActiveStation();
 
@@ -1370,32 +1418,33 @@
             };
 
             const hoursPayload = [];
-            document.querySelectorAll('#tblHoursBody tr').forEach(tr => {
-                const amStart = tr.querySelector('.hour-am-start')?.value || '';
-                const amEnd = tr.querySelector('.hour-am-end')?.value || '';
-                const pmStart = tr.querySelector('.hour-pm-start')?.value || '';
-                const pmEnd = tr.querySelector('.hour-pm-end')?.value || '';
+            document.querySelectorAll('#tblHoursDeliveryBody tr').forEach(trDel => {
+                const hid = parseInt(trDel.dataset.hid, 10);
+                const closed = trDel.querySelector('.hour-closed').checked;
 
-                const amTakeawayStart = tr.querySelector('.hour-takeaway-am-start')?.value || '';
-                const amTakeawayEnd = tr.querySelector('.hour-takeaway-am-end')?.value || '';
-                const pmTakeawayStart = tr.querySelector('.hour-takeaway-pm-start')?.value || '';
-                const pmTakeawayEnd = tr.querySelector('.hour-takeaway-pm-end')?.value || '';
+                const amStart = trDel.querySelector('.hour-am-start')?.value || '';
+                const amEnd = trDel.querySelector('.hour-am-end')?.value || '';
+                const pmStart = trDel.querySelector('.hour-pm-start')?.value || '';
+                const pmEnd = trDel.querySelector('.hour-pm-end')?.value || '';
 
-                const closed = tr.querySelector('.hour-closed').checked;
-                const hid = parseInt(tr.querySelector('.hour-closed').dataset.hid, 10);
+                const trTak = document.querySelector(`#tblHoursTakeawayBody tr[data-hid="${hid}"]`);
+                const amTakStart = trTak?.querySelector('.hour-takeaway-am-start')?.value || '';
+                const amTakEnd = trTak?.querySelector('.hour-takeaway-am-end')?.value || '';
+                const pmTakStart = trTak?.querySelector('.hour-takeaway-pm-start')?.value || '';
+                const pmTakEnd = trTak?.querySelector('.hour-takeaway-pm-end')?.value || '';
 
                 const amStr = (amStart && amEnd) ? `${amStart}-${amEnd}` : '';
                 const pmStr = (pmStart && pmEnd) ? `${pmStart}-${pmEnd}` : '';
 
-                const amTakeawayStr = (amTakeawayStart && amTakeawayEnd) ? `${amTakeawayStart}-${amTakeawayEnd}` : '';
-                const pmTakeawayStr = (pmTakeawayStart && pmTakeawayEnd) ? `${pmTakeawayStart}-${pmTakeawayEnd}` : '';
+                const amTakStr = (amTakStart && amTakEnd) ? `${amTakStart}-${amTakEnd}` : '';
+                const pmTakStr = (pmTakStart && pmTakEnd) ? `${pmTakStart}-${pmTakEnd}` : '';
 
                 hoursPayload.push({
                     hours_id: hid,
                     am_hour: amStr,
                     pm_hour: pmStr,
-                    am_hour_takeaway: amTakeawayStr,
-                    pm_hour_takeaway: pmTakeawayStr,
+                    am_hour_takeaway: amTakStr,
+                    pm_hour_takeaway: pmTakStr,
                     closeDay: closed
                 });
             });
@@ -1474,3 +1523,4 @@
     </script>
 </body>
 </html>
+```[cite: 6]
